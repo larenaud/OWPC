@@ -5,3 +5,6 @@ plot(y~x+y)
 
 
 x+x
+
+
+# modif a gab sur le compte a Lou
