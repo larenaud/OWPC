@@ -9,3 +9,5 @@ library(dplyr)
 
 females = females[females$code.sr == "1",]
 females$lamb_id = paste(females$ID, females$yr, sep = "-")
+
+x=2
