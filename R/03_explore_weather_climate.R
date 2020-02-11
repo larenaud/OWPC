@@ -88,7 +88,7 @@ results_surv$aic <-sort(results_surv$aic, decreasing = F)
 
 getwd()
 print.xtable(results_surv,type="html",
-             file= "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/graph/climate_model_outputs.html") # 
+             file= "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/graph/climate_surv_model_outputs.html") # 
 
 # double check one model 
 
