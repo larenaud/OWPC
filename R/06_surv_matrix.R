@@ -1,14 +1,12 @@
 # Ménage Données OWPC
 library(popbio)
 
-surv <- read_csv("Documents/Sherbrooke/OWPC/OWPC/SURV20170328.csv")
+# this has been moved to 02_tiding_sheep_data.R
 
-
-colnames(surv)
-surv <- surv[, c("yr","age","ID","sex","alive_t1","reproduced", "age.class")]
-
-
-survF <- surv[surv$sex =="female",]
+# surv <- read_csv("Documents/Sherbrooke/OWPC/OWPC/SURV20170328.csv")
+# colnames(surv)
+# surv <- surv[, c("yr","age","ID","sex","alive_t1","reproduced", "age.class")]
+# survF <- surv[surv$sex =="female",]
 
 library(readr)
 pheno <- read_csv("Documents/Sherbrooke/OWPC/OWPC/pheno_ram.csv", 
