@@ -41,7 +41,7 @@ df[c(2:15, 17:18)] <- scale(df[c(2:15, 17:18)])# CHANGE COLUMN NUMBER IF MODIFY 
 colnames(df)
 
 ml=which(colnames(df) %in% 
-           c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","Sum,merPSNNET", "SummerFPAR",
+           c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET", "SummerFPAR",
              "WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR"))
 
 res2 <- ldply(ml,function(i){ # prepare dataframe of results
