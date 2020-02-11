@@ -19,7 +19,6 @@ pheno = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/
 # first part to this df is not good anymore - select needed only
 colnames(pheno)
 
-
 # merge dataframes # no need to have duplicated data in pheno (inflated...)
 df= merge(unique(pheno[, c("yr","SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET",
                            "SummerFPAR","WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR")]),
@@ -48,7 +47,7 @@ ml=which(colnames(df) %in%
 res2 <- ldply(ml,function(i){ # prepare dataframe of results
   
   # autumn mass and age are correlated 
-  mod1 <- glmer(alive_t1 ~ df[,i] + MassSpring + age + (1|ID) + (1|yr), # here write the model
+  mod1 <- glmer(alive_t1 ~ df[,i] + MassSpring + age + pred + (1|ID) + (1|yr), # here write the model
                 data=df, 
                 family="binomial",
                 control = glmerControl(optimizer="bobyqa", 
@@ -72,12 +71,12 @@ res2 <- ldply(ml,function(i){ # prepare dataframe of results
 # export a nice table
 results_surv <- xtable(res2)
 
-
 results_surv[, 2:10] <- round(results_surv[, 2:10], digits = 3)
+results_surv$aic <-sort(results_surv$aic, decreasing = F)
 
 getwd()
 print.xtable(results_surv,type="html",
-             file= "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/pheno_model_outputs.html") # 
+             file= "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/graph/pheno_model_outputs.html") # 
 
 # inv logit results since it is a log link
 # check out how to get deviance - what's important to report for glmer 
