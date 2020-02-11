@@ -7,112 +7,158 @@ library(cowplot)
 library(googledrive)
 library(xtable)
 library(AICcmodavg)
+library(readxl)
 
 rm(list = ls())
 # merging to existing dataframe # would be nice to have a RData and not tons of .csv
 setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data")
 
-#drive_download("~/OWPC/Analyses/data/repro_mass.csv")
-repro = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/repro_mass.csv",
-                       na.string = c("", "NA"),sep = ",")
-
-#get climate date 
-#drive_download("~/OWPC/Analyses/data/Climat/season_climate_ram")
-# add .csv
+sheep_data <- read_excel("sheep_data.xlsx")
 clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/season_climate_ram.csv",
                   na.string = c("", "NA"),sep = ",")
 
-
-# add time lag 
+# add time lag # careful this is tricky
 clim$yr <- as.numeric(as.character(clim$yr))
 colnames(clim)
 
-tmp <- clim[, c("yr","PDO.winter", "PDO.spring", "PDO.summer", "PDO.fall","SOI.winter","SOI.spring", "SOI.summer","SOI.fall")]
+# PDO/ENSO for for survival to t1
+tmp <- clim[, c("yr","PDO.winter", "PDO.spring", "SOI.winter","SOI.spring")]
 
-tmp$yr <- tmp$yr + 1
+tmp$yr <- tmp$yr - 1
 dim(tmp)
 tmp <- tmp %>% 
-  rename(PDO.winter_tm1 = PDO.winter,
-         PDO.spring_tm1 =PDO.spring, 
-         PDO.summer_tm1 =PDO.summer,
-         PDO.fall_tm1 =PDO.fall,
-         SOI.winter_tm1 =SOI.winter,
-         SOI.spring_tm1 =SOI.spring,
-         SOI.summer_tm1 =SOI.summer,
-         SOI.fall_tm1=SOI.fall)
+  rename(PDO.winter_surv = PDO.winter,
+         PDO.spring_surv =PDO.spring, 
+         SOI.winter_surv =SOI.winter,
+         SOI.spring_surv =SOI.spring)
 head(tmp)
 
-clim <- merge(clim,
+colnames(clim)
+clim_surv <- merge(clim[, c("yr","PDO.summer", "PDO.fall", "SOI.summer","SOI.fall")],
               tmp,
               by.x = c("yr"), 
               by.y = c("yr"))
-
+clim_surv <- clim_surv %>% 
+  rename(PDO.summer_surv = PDO.summer,
+         PDO.fall_surv=PDO.fall,
+         SOI.summer_surv = SOI.summer,
+         SOI.fall_surv = SOI.fall)
 getwd()
-#write.csv(clim, "season_climate_data", row.names = FALSE)
-#drive_upload("season_climate_data", path = "OWPC/Analyses/data/season_climate_data.csv", overwrite = T)
 
 # merge dataframes 
-colnames(clim)
-df= merge(repro,
-          clim,
+colnames(clim_surv)
+colnames(sheep_data)
+df_surv= merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
+          clim_surv,
           by.x = "yr", 
-          by.y =  "yr")
+          by.y =  "yr", 
+          all.x=T) # keep all years even if NA
+#write.csv(df_surv, "surv_climate_data.csv", row.names = FALSE)
+#drive_upload("surv_climate_data.csv", path = "OWPC/Analyses/data/surv_climate_data.csv", overwrite = T)
 
-# selection of relevant variables  ----------------------------------------
+
+# create fecundity data ---------------------------------------------------
+sheep_data <- read_excel("sheep_data.xlsx")
+clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/season_climate_ram.csv",
+                 na.string = c("", "NA"),sep = ",")
+
+# add time lag # careful this is tricky
+clim$yr <- as.numeric(as.character(clim$yr))
+
+# PDO/ENSO for for survival to t1
+colnames(clim)
+tmp <- clim[, c("yr", "PDO.summer", "PDO.fall", "SOI.summer" ,"SOI.fall")]
+
+#now add backward time lag for fall and summer seasons 
+tmp$yr <- tmp$yr+1
+dim(tmp)
+tmp <- tmp %>% 
+  rename(PDO.summer_fec= PDO.summer,
+         PDO.fall_fec=PDO.fall, 
+         SOI.summer_fec =SOI.summer,
+         SOI.fall_fec =SOI.fall)
+head(tmp)
+
+colnames(clim)
+clim_fec <- merge(clim,
+                   tmp,
+                   by.x = c("yr"), 
+                   by.y = c("yr"))
+
+clim_fec <- clim_fec %>% 
+  rename(PDO.winter_fec = PDO.winter,
+         PDO.spring_fec =PDO.spring, 
+         SOI.winter_fec =SOI.winter,
+         SOI.spring_fec =SOI.spring)
+getwd()
+
+colnames(clim_fec)
+clim_fec <- clim_fec[, c("yr", "PDO.winter_fec", "PDO.spring_fec", "SOI.winter_fec", "SOI.spring_fec",
+                         "PDO.summer_fec", "PDO.fall_fec",   "SOI.summer_fec", "SOI.fall_fec")]
+# merge dataframes 
+colnames(clim_fec)
+colnames(sheep_data)
+df_fec= merge(sheep_data[c("yr","ID", "raw_repro", "true_repro", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
+               clim_fec,
+               by.x = "yr", 
+               by.y =  "yr", 
+               all.x=T) # keep all years even if NA
+
+#write.csv(df_fec, "fecun_climate_data.csv", row.names = FALSE)
+#drive_upload("fecun_climate_data.csv", path = "OWPC/Analyses/data/fecun_climate_data.csv", overwrite = T)
+
+# survival : selection of relevant variables  ----------------------------------------
 
 # check variable distribution
-
 # tidy variables 
 rm(clim, repro, tmp)
 
-df$yr<-as.factor(df$yr)
-df$MassSpring<-as.numeric(as.character(df$MassSpring))
-df$MassAutumn<-as.numeric(as.character(df$MassAutumn))
+df_surv$yr<-as.factor(df_surv$yr)
+df_surv$MassSpring<-as.numeric(as.character(df_surv$MassSpring))
+df_surv$MassAutumn<-as.numeric(as.character(df_surv$MassAutumn))
 
-df$PDO.winter<-as.numeric(as.character(df$PDO.winter))
-df$PDO.summer<-as.numeric(as.character(df$PDO.summer))
-df$PDO.spring<-as.numeric(as.character(df$PDO.spring))
-df$PDO.fall<-as.numeric(as.character(df$PDO.fall))
-df$SOI.winter<-as.numeric(as.character(df$SOI.winter))
-df$SOI.summer<-as.numeric(as.character(df$SOI.summer))
-df$SOI.spring<-as.numeric(as.character(df$SOI.spring))
-df$SOI.fall<-as.numeric(as.character(df$SOI.fall))
+df_surv$PDO.winter_surv<-as.numeric(as.character(df_surv$PDO.winter_surv))
+df_surv$PDO.summer_surv<-as.numeric(as.character(df_surv$PDO.summer_surv))
+df_surv$PDO.spring_surv<-as.numeric(as.character(df_surv$PDO.spring_surv))
+df_surv$PDO.fall_surv<-as.numeric(as.character(df_surv$PDO.fall_surv))
+df_surv$SOI.winter_surv<-as.numeric(as.character(df_surv$SOI.winter_surv))
+df_surv$SOI.summer_surv<-as.numeric(as.character(df_surv$SOI.summer_surv))
+df_surv$SOI.spring_surv<-as.numeric(as.character(df_surv$SOI.spring_surv))
+df_surv$SOI.fall_surv<-as.numeric(as.character(df_surv$SOI.fall_surv))
 
-df$PDO.winter_tm1<-as.numeric(as.character(df$PDO.winter_tm1))
-df$PDO.summer_tm1<-as.numeric(as.character(df$PDO.summer_tm1))
-df$PDO.spring_tm1<-as.numeric(as.character(df$PDO.spring_tm1))
-df$PDO.fall_tm1<-as.numeric(as.character(df$PDO.fall_tm1))
-df$SOI.winter_tm1<-as.numeric(as.character(df$SOI.winter_tm1))
-df$SOI.summer_tm1<-as.numeric(as.character(df$SOI.summer_tm1))
-df$SOI.spring_tm1<-as.numeric(as.character(df$SOI.spring_tm1))
-df$SOI.fall_tm1<-as.numeric(as.character(df$SOI.fall_tm1))
+df_surv$PDO.winter_surv<-as.numeric(as.character(df_surv$PDO.winter_surv))
+df_surv$PDO.summer_surv<-as.numeric(as.character(df_surv$PDO.summer_surv))
+df_surv$PDO.spring_surv<-as.numeric(as.character(df_surv$PDO.spring_surv))
+df_surv$PDO.fall_surv<-as.numeric(as.character(df_surv$PDO.fall_surv))
+df_surv$SOI.winter_surv<-as.numeric(as.character(df_surv$SOI.winter_surv))
+df_surv$SOI.summer_surv<-as.numeric(as.character(df_surv$SOI.summer_surv))
+df_surv$SOI.spring_surv<-as.numeric(as.character(df_surv$SOI.spring_surv))
+df_surv$SOI.fall_surv<-as.numeric(as.character(df_surv$SOI.fall_surv))
 
-df$alive_t1<-as.factor(df$alive_t1)
-df$raw_repro<-as.factor(df$raw_repro)
-df$true_repro<-as.factor(df$true_repro)
+df_surv$alive_t1<-as.factor(df_surv$alive_t1)
 
 # scale
-df[c(3,4, 10:25)] <- scale(df[c(3,4, 10:25)])# CHANGE COLUMN NUMBER IF MODIFY DF!! 
+df_surv[c(4,5, 9:16)] <- scale(df_surv[c(4,5, 9:16)])# CHANGE COLUMN NUMBER IF MODIFY df_surv!! 
 
 # run models
-df$alive_t1<-as.factor(df$alive_t1)
-colnames(df)
+df_surv$alive_t1<-as.factor(df_surv$alive_t1)
+colnames(df_surv)
 
-ml=which(colnames(df) %in% 
-           c("PDO.winter", "PDO.spring", "PDO.summer", "PDO.fall","SOI.winter", "SOI.spring", "SOI.summer",
-             "SOI.fall"))
+ml=which(colnames(df_surv) %in% 
+           c("PDO.summer_surv", "PDO.fall_surv","SOI.summer_surv", "SOI.fall_surv",
+             "PDO.winter_surv","PDO.spring_surv", "SOI.winter_surv" ,"SOI.spring_surv"))
 
 res2 <- ldply(ml,function(i){ # prepare dataframe of results
   
   # autumn mass and age are correlated 
-  mod1 <- glmer(alive_t1 ~ df[,i] + MassSpring + age + pred+ (1|ID) + (1|yr), # here write the model
-               data=df, 
+  mod1 <- glmer(alive_t1 ~ df_surv[,i] + MassSpring + age + pred+ (1|ID) + (1|yr), # here write the model
+               data=df_surv, 
                family="binomial",
                control = glmerControl(optimizer="bobyqa", 
                                      optCtrl = list(maxfun = 100000))) 
   #sjt.glmer(mod1, file="sjt_linear.doc")
   var=as.data.frame(VarCorr(mod1))[,4] # to get the variance, not SD
-  r1=data.frame(colnames(df)[i],
+  r1=data.frame(colnames(df_surv)[i],
                 aic = AICc(mod1), # or AIC(logLik(mod2)) ?? 
                 V.id=var[1],
                 V.yr=var[2],
@@ -128,7 +174,6 @@ res2 <- ldply(ml,function(i){ # prepare dataframe of results
 
 # export a nice table
 results_surv <- xtable(res2)
-
 results_surv[, 2:10] <- round(results_surv[, 2:10], digits = 3)
 results_surv$aic <-sort(results_surv$aic, decreasing = F)
 
@@ -138,8 +183,8 @@ print.xtable(results_surv,type="html",
 
 # double check one model 
 
-mod1 <- glmer(alive_t1 ~ PDO.fall + MassSpring + age + pred+ (1|ID) + (1|yr), # here write the model
-              data=df, 
+mod1 <- glmer(alive_t1 ~ PDO.fall_surv + MassSpring + age + pred+ (1|ID) + (1|yr), # here write the model
+              data=df_surv, 
               family="binomial",
               control = glmerControl(optimizer="bobyqa", 
                                      optCtrl = list(maxfun = 100000))) 
@@ -155,24 +200,55 @@ r.squaredGLMM(mod1)
 
 
 # fecundity ---------------------------------------------------------------
+df_fec$yr<-as.factor(df_fec$yr)
+df_fec$MassSpring<-as.numeric(as.character(df_fec$MassSpring))
+df_fec$MassAutumn<-as.numeric(as.character(df_fec$MassAutumn))
+
+df_fec$PDO.winter_fec<-as.numeric(as.character(df_fec$PDO.winter_fec))
+df_fec$PDO.summer_fec<-as.numeric(as.character(df_fec$PDO.summer_fec))
+df_fec$PDO.spring_fec<-as.numeric(as.character(df_fec$PDO.spring_fec))
+df_fec$PDO.fall_fec<-as.numeric(as.character(df_fec$PDO.fall_fec))
+df_fec$SOI.winter_fec<-as.numeric(as.character(df_fec$SOI.winter_fec))
+df_fec$SOI.summer_fec<-as.numeric(as.character(df_fec$SOI.summer_fec))
+df_fec$SOI.spring_fec<-as.numeric(as.character(df_fec$SOI.spring_fec))
+df_fec$SOI.fall_fec<-as.numeric(as.character(df_fec$SOI.fall_fec))
+
+df_fec$PDO.winter_fec<-as.numeric(as.character(df_fec$PDO.winter_fec))
+df_fec$PDO.summer_fec<-as.numeric(as.character(df_fec$PDO.summer_fec))
+df_fec$PDO.spring_fec<-as.numeric(as.character(df_fec$PDO.spring_fec))
+df_fec$PDO.fall_fec<-as.numeric(as.character(df_fec$PDO.fall_fec))
+df_fec$SOI.winter_fec<-as.numeric(as.character(df_fec$SOI.winter_fec))
+df_fec$SOI.summer_fec<-as.numeric(as.character(df_fec$SOI.summer_fec))
+df_fec$SOI.spring_fec<-as.numeric(as.character(df_fec$SOI.spring_fec))
+df_fec$SOI.fall_fec<-as.numeric(as.character(df_fec$SOI.fall_fec))
+
+df_fec$raw_repro<-as.factor(df_fec$raw_repro)
+df_fec$true_repro<-as.factor(df_fec$true_repro)
+
+df_fec<- df_fec[!is.na(df_fec$PDO.winter_fec),]
+df_fec<- df_fec[!is.na(df_fec$MassSpring),]
+df_fec<- df_fec[!is.na(df_fec$MassAutumn),]
+
+# scale
+df_fec[c(5,6, 10:17)] <- scale(df_fec[c(5,6, 10:17)])# CHANGE COLUMN NUMBER IF MODIFY df_fec!! 
 # run models and add time lags but keep current spring 
 
-colnames(df)
-ml=which(colnames(df) %in% 
-           c("PDO.winter_tm1", "PDO.spring", "PDO.spring_tm1", "PDO.summer_tm1", "PDO.fall_tm1","SOI.winter_tm1", "SOI.spring", "SOI.spring_tm1","SOI.summer_tm1",
-             "SOI.fall_tm1"))
+colnames(df_fec)
+ml=which(colnames(df_fec) %in% 
+           c("PDO.winter_fec", "PDO.spring_fec", "PDO.summer_fec", "PDO.fall_fec",
+             "SOI.winter_fec","SOI.spring_fec","SOI.summer_fec", "SOI.fall_fec"))
 
 res2 <- ldply(ml,function(i){ # prepare dataframe of results
   
   # autumn mass and age are correlated 
-  mod1 <- glmer(raw_repro ~ df[,i] + MassSpring + age + pred+ (1|ID) + (1|yr), # here write the model
-                data=df, 
+  mod1 <- glmer(raw_repro ~ df_fec[,i] + MassSpring + age + pred+ (1|ID) + (1|yr), # here write the model
+                data=df_fec, 
                 family="binomial",
                 control = glmerControl(optimizer="bobyqa", 
-                                       optCtrl = list(maxfun = 100000))) 
+                                       optCtrl = list(maxfun = 1000000))) 
   #sjt.glmer(mod1, file="sjt_linear.doc")
   var=as.data.frame(VarCorr(mod1))[,4] # to get the variance, not SD
-  r1=data.frame(colnames(df)[i],
+  r1=data.frame(colnames(df_fec)[i],
                 aic = AICc(mod1), # or AIC(logLik(mod2)) ?? 
                 V.id=var[1],
                 V.yr=var[2],
@@ -188,7 +264,6 @@ res2 <- ldply(ml,function(i){ # prepare dataframe of results
 
 # export a nice table
 results_fec <- xtable(res2)
-
 results_fec[, 2:10] <- round(results_fec[, 2:10], digits = 3)
 results_fec$aic <-sort(results_fec$aic, decreasing = F)
 
@@ -198,25 +273,25 @@ print.xtable(results_fec,type="html",
 
 # true reproduction -------------------------------------------------------
 
-df$true_repro<-as.factor(df$true_repro)
+df_fec$true_repro<-as.factor(df_fec$true_repro)
 # run models
-colnames(df)
+colnames(df_fec)
 
-ml=which(colnames(df) %in% 
-           c("PDO.winter_tm1", "PDO.spring", "PDO.spring_tm1", "PDO.summer_tm1", "PDO.fall_tm1",
-             "SOI.winter_tm1", "SOI.spring","SOI.spring_tm1", "SOI.summer_tm1","SOI.fall_tm1"))
+ml=which(colnames(df_fec) %in% 
+           c("PDO.winter_fec", "PDO.spring_fec", "SOI.winter_fec", "SOI.spring_fec",
+             "PDO.summer_fec", "PDO.fall_fec" ,  "SOI.summer_fec", "SOI.fall_fec"))
 
 res2 <- ldply(ml,function(i){ # prepare dataframe of results
   
   # autumn mass and age are correlated 
-  mod1 <- glmer(true_repro ~ df[,i] + MassSpring + age + pred+ (1|ID) + (1|yr), # here write the model
-                data=df, 
+  mod1 <- glmer(true_repro ~ df_fec[,i] + MassSpring + age + pred+ (1|ID) + (1|yr), # here write the model
+                data=df_fec, 
                 family="binomial",
                 control = glmerControl(optimizer="bobyqa", 
                                        optCtrl = list(maxfun = 100000))) 
   #sjt.glmer(mod1, file="sjt_linear.doc")
   var=as.data.frame(VarCorr(mod1))[,4] # to get the variance, not SD
-  r1=data.frame(colnames(df)[i],
+  r1=data.frame(colnames(df_fec)[i],
                 aic = AICc(mod1), # or AIC(logLik(mod2)) ?? 
                 V.id=var[1],
                 V.yr=var[2],
@@ -232,7 +307,6 @@ res2 <- ldply(ml,function(i){ # prepare dataframe of results
 
 # export a nice table
 results_true_rep <- xtable(res2)
-
 results_true_rep[, 2:10] <- round(results_true_rep[, 2:10], digits = 3)
 results_true_rep$aic <-sort(results_true_rep$aic, decreasing = F)
 
