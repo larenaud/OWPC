@@ -62,4 +62,6 @@ dat<-df
   # Precision on correlation values
   symnum(C)
   
+  # moyennes correlations : SOI winter + PDO (0.6-0.8); Mass et repro (0.6-0.8)
+  # Forte correlation : MS & MA (0.95)
   
