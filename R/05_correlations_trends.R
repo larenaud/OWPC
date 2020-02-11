@@ -3,9 +3,6 @@ rm(list = ls())
 library(googledrive)
 setwd("~/uSherbrooke/Hiver 2020/NDVI/OWPC")
 
-
-rm(list = ls())
-
 drive_download("OWPC/Analyses/data/repro_mass.csv")
 repro<-read.csv("repro_mass.csv", header=T, sep=",")
 
@@ -52,6 +49,7 @@ dat<-df
 # Correlation test
   C<-cor(dat, method="pearson", use="complete.obs")
   
+  write.table(C, file = "Correlations_Pheno.txt", sep = ",", quote = FALSE)
  
 # Draw correlation matrix
   library(corrplot)
