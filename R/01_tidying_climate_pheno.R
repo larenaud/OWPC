@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+
+pheno<-drive_get("~/OWPC/Analyses/data/pheno_ram.csv")
+View(pheno)
+=======
 # Tidying data pheno #
 library(googledrive)
 
@@ -119,3 +124,4 @@ legend("topleft", legend = c("NDVI","EVI","LAI","GPP","Snow","PSNNET","FPAR"),
 
 
 
+>>>>>>> 5855572c1b719f96e9bf0a7eac0ba8a4bb789b43
