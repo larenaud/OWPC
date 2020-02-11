@@ -41,7 +41,7 @@ df[c(2:15, 17:18)] <- scale(df[c(2:15, 17:18)])# CHANGE COLUMN NUMBER IF MODIFY 
 colnames(df)
 
 ml=which(colnames(df) %in% 
-           c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","Sum,merPSNNET", "SummerFPAR",
+           c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET", "SummerFPAR",
              "WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR"))
 
 res2 <- ldply(ml,function(i){ # prepare dataframe of results
@@ -76,7 +76,7 @@ results_surv$aic <-sort(results_surv$aic, decreasing = F)
 
 getwd()
 print.xtable(results_surv,type="html",
-             file= "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/graph/pheno_model_outputs.html") # 
+             file= "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/graph/pheno_surv_model_outputs.html") # 
 
 # inv logit results since it is a log link
 # check out how to get deviance - what's important to report for glmer 

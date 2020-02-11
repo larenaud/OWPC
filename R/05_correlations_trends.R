@@ -40,33 +40,26 @@ df$alive_t1<-as.numeric(df$alive_t1)
 df$raw_repro<-as.numeric(df$raw_repro)
 df$true_repro<-as.numeric(df$true_repro)
 
-names(df)
-
-
 # scale
 df[c(2:9, 11:12)] <- scale(df[c(2:9, 11:12)])# CHANGE COLUMN NUMBER IF MODIFY DF!! 
 
+# Removing year, ID, age
 dat<-df
   dat$yr<-NULL
   dat$ID<-NULL
   dat$age<-NULL
-  #dat<-dat[, c("PDO.winter", "PDO.spring", "PDO.summer", "PDO.fall", "SOI.winter", "SOI.spring",
-   #            "SOI.summer", "SOI.fall", "MassSpring", "MassAutumn")]
 
+# Correlation test
+  C<-cor(dat, method="pearson", use="complete.obs")
+  
+ 
+# Draw correlation matrix
+  library(corrplot)
+  Colour <- colorRampPalette(c("blue", "white", "orangered"))(200)
+  corrplot(C, insig="n", method="color", col=Colour, addgrid.col = "darkgray", cl.pos="r",
+          tl.col="black", tl.cex=1, cl.cex=1, type="full", tl.pos="tl", bg="white", diag=TRUE)
 
-  for(j in 1: length(dat)) {
-
-    for (i in 1:length(dat)) {
-      a <- cor.test(dat[,j], dat[,i])
-        print(paste(colnames(dat)[i], " est:", a$estimate, " p=value:", a$p.value))
-    }
-  }
-
-install.packages("corrplot")
-
-
-
-write.csv(mass, "Ram_mass.csv", row.names = FALSE)
-drive_upload("Ram_mass.csv", path = "OWPC/Analyses/data/Ram_mass.csv", overwrite = T)
-
-
+  # Precision on correlation values
+  symnum(C)
+  
+  
