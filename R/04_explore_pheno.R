@@ -38,6 +38,7 @@ df$MassAutumn<-as.numeric(df$MassAutumn)
 df[c(2:15, 17:18)] <- scale(df[c(2:15, 17:18)])# CHANGE COLUMN NUMBER IF MODIFY DF!! 
 
 # run models
+repro$alive_t1<-as.factor(repro$alive_t1)
 colnames(df)
 
 ml=which(colnames(df) %in% 
