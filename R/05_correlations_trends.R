@@ -12,11 +12,11 @@ drive_download("OWPC/Analyses/data/Raw/Climat/season_climate_ram", type="csv", o
   clim<-read.csv("season_climate_ram.csv", header=T, sep=",")
 
 # Temperatures and precipitations
-  drive_download("OWPC/Analyses/data/Raw/Climat/monthlyRam", type="csv", overwrite=T)
+  drive_download("OWPC/Analyses/data/Raw/Climat/monthlyRam", type="csv", overwrite=TRUE)
     Temp<-read.csv("monthlyRam.csv", header = TRUE, sep=",")
       Temp<-Temp[, c("year", "month", "mean_temp", "total_precip")]
         names(Temp)<-c("yr", "month", "mean_temp", "total_precip")
-          Temp<-filter(Temp, yr>=2000)
+          Temp<-filter(Temp, yr>=1999)
             Temp<-filter(Temp, yr<=2016)
     
 
@@ -60,15 +60,72 @@ drive_download("OWPC/Analyses/data/Raw/Climat/season_climate_ram", type="csv", o
   T<-cbind(JAN,FEV,MAR,APR,MAI,JUN,JUL,AUG,SEP,OCT,NOV,DEC)
   # Toujours le 15e jour du mois
 
-
-# merge dataframes 
+  # T&P/season
+      # Moving december to y-1 for winter
+      D<-filter(Temp, month==12)
+        D$yr<-as.numeric(D$yr)
+          D$yr<-D$yr+1
+      
+      notd<-filter(Temp, month!=12)
+        Met<-bind_rows(notd, D)
+        Met<-filter(Met, yr>=2000)
+        Met<-filter(Met, yr<=2016)
+      
+        
+        # Winter : Dec - Mar
+        
+          Win<-Met[c(1:51,188:205),]
+            Win<-Win[order(Win$yr),]
+          
+          Mean.W<-aggregate(Win[,3:4], list(Win$yr),mean)
+          names(Mean.W)<-c("yr", "T.Win", "P.Win")
+          Win
+        # Spring : April - May
+          
+          Spring<-Met[c(52:85),]
+            Spring<-Spring[order(Spring$yr),]
+          
+            Mean.S<-aggregate(Spring[,3:4], list(Spring$yr),mean)
+            Mean.S<-Mean.S[, c("mean_temp", "total_precip")]
+            names(Mean.S)<-c("T.SPRING", "P.SPRING")
+            
+        # Summer : Jun - Sep
+            #Met # 86 153
+            Summer<-Met[c(86:153),]
+            Summer<-Summer[order(Summer$yr),]
+            
+            Mean.Sum<-aggregate(Summer[,3:4], list(Summer$yr),mean)
+            Mean.Sum<-Mean.Sum[, c("mean_temp", "total_precip")]
+            names(Mean.Sum)<-c("T.SUMMER", "P.SUMMER")
+            
+        # Autumn : Oct - Nov
+            Met # 86 153
+            Aut<-Met[c(154:187),]
+            Aut<-Aut[order(Aut$yr),]
+            
+            Mean.Aut<-aggregate(Aut[,3:4], list(Aut$yr),mean)
+            Mean.Aut<-Mean.Aut[, c("mean_temp", "total_precip")]
+            names(Mean.Aut)<-c("T.AUT", "P.AUT")
+            
+        # Merge
+            Met.tot<-cbind(Mean.W, Mean.S, Mean.Sum, Mean.Aut)
+            
+          
+  
+# merge dataframes for climat
 
 clim$yr<-as.factor(clim$yr)
   repro$yr<-as.factor(repro$yr)
     df= merge(unique(clim[, c("yr","PDO.winter", "PDO.spring", "PDO.summer", "PDO.fall","SOI.winter", "SOI.spring",
                           "SOI.summer","SOI.fall")]), repro, by.x = "yr", by.y =  "yr")
-    T$yr<-as.factor(T$yr)
-      df<-merge(df, T, by="yr", all.x=TRUE)
+   # T$yr<-as.factor(T$yr)
+    #  df<-merge(df, T, by="yr", all.x=TRUE) For monthly weather
+    Met.tot$yr<-as.factor(Met.tot$yr)
+    data.clim<-merge(clim, Met.tot, by="yr")
+    data.clim$PDO.SOI.WIN<-data.clim$PDO.winter+data.clim$SOI.winter
+    data.clim$PDO.SOI.SPRING<-data.clim$PDO.spring+data.clim$SOI.spring
+    data.clim$PDO.SOI.SUMMER<-data.clim$PDO.summer+data.clim$SOI.summer
+    data.clim$PDO.SOI.AUT<-data.clim$PDO.fall+data.clim$SOI.fall
 
 
 df$yr<-as.factor(df$yr)
@@ -102,15 +159,14 @@ dat<-df
 
   names(df)
   
-  
-#### Correlation tests ####
+
+#### Correlation tests for climat ####
   
     C<-cor(dat, method="pearson", use="complete.obs")
   write.table(C, file = "Correlations_Pheno.txt", sep = ",", quote = FALSE)
  
 # Draw correlation matrix
   library(corrplot)
-  corrplot(C)
   par(mfrow=c(1,1))
   x11()
   Colour <- colorRampPalette(c("blue", "white", "orangered"))(200)
@@ -119,6 +175,17 @@ dat<-df
 
   # Precision on correlation values
   symnum(C)
+  
+  # Climate with weather by seasons
+  
+  data.clim$yr<-NULL
+  C.season<-cor(data.clim, method="pearson", use="complete.obs")
+  par(mfrow=c(1,1))
+  x11()
+  Colour <- colorRampPalette(c("blue", "white", "orangered"))(200)
+  corrplot(C.season, insig="n", method="color", col=Colour, addgrid.col = "darkgray", cl.pos="r",
+           tl.col="black", tl.cex=1, cl.cex=1, type="full", tl.pos="tl", bg="white", diag=TRUE)
+  
   
 <<<<<<< HEAD
   # moyennes correlations : SOI winter + PDO (0.6-0.8); Mass et repro (0.6-0.8)
@@ -173,6 +240,26 @@ Clim
 #ggsave2("C:/Users/Proprietaire/Documents/uni poc/Phd/OWPC/Analyses/Temp/Seasonal_climate_trends.pdf",
 #        plot= Clim, device= cairo_pdf, scale = 0.8, width = 20, height = 30, units = "cm", dpi = 600)
 
+#### Correlations for pheno ####
 
+
+drive_download("OWPC/Analyses/data/Raw/pheno_surv2.csv", overwrite=TRUE)
+pheno<-read.csv("pheno_surv2.csv", header=TRUE, sep=",")
+
+
+
+pheno<-pheno[,c("SummerNDVI", "SummerEVI", "SummerLAI", "SummerGPP", "SummerSnow",
+                "SummerPSNNET", "SummerFPAR", "WinNDVI", "WinEVI", "WinLAI", "WinGPP",
+                "WinSnow", "WinPSNNET", "WinFPAR")]
+  Cpheno<-cor(pheno, method = "pearson", use="complete.obs")
+ 
+  par(mfrow=c(1,1))
+  x11()
+  Colour <- colorRampPalette(c("blue", "white", "orangered"))(200)
+  corrplot(Cpheno, insig="n", method="color", col=Colour, addgrid.col = "darkgray", cl.pos="r",
+           tl.col="black", tl.cex=1, cl.cex=1, type="full", tl.pos="tl", bg="white", diag=TRUE)
+  
+  
+  
 ##### 
 >>>>>>> fc0f155dd47abdd01e1d1ec9b00a923fab2eca98
