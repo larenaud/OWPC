@@ -3,13 +3,13 @@ rm(list = ls())
 library(googledrive)
 setwd("~/uSherbrooke/Hiver 2020/NDVI/OWPC")
 
-drive_download("OWPC/Analyses/data/repro_mass.csv")
-repro<-read.csv("repro_mass.csv", header=T, sep=",")
+drive_download("OWPC/Analyses/data/Raw/sheep_data", type="csv", overwrite=T)
+repro<-read.csv("sheep_data.csv", header=T, sep=",")
 
 
 #get climate date 
-drive_download("OWPC/Analyses/data/Climat/season_climate_ram")
-  clim<-read.csv("season_climate_ram", header=T, sep=",")
+drive_download("OWPC/Analyses/data/Raw/Climat/season_climate_ram", type="csv", overwrite = T)
+  clim<-read.csv("season_climate_ram.csv", header=T, sep=",")
 
 
 # merge dataframes 
