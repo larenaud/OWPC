@@ -11,6 +11,8 @@ library(mapview)
 library(mgcViz)
 library(DHARMa)
 
+
+
 ### old data
 #d<-read.csv("~/UdeS/Consultation/L-ARenaud/2018-10-31_daily_myenv.csv")
 #d<-read.csv("2018-10-31_daily_myenv.csv")
@@ -135,7 +137,7 @@ dates<-as.Date(paste(temp$year,temp$month,"15",sep="-")) # assigne mid dates for
 temp$date<-dates 
 precip$date<-dates
 
-### show monthly time-series with naïve trends
+### show monthly time-series with na?ve trends
 par(mfrow=c(2,1))
 plot(temp$date,temp$mean_temp,type="b",xaxt="n")
 m<-lm(mean_temp~date,data=temp)
@@ -149,8 +151,10 @@ axis.Date(1,at=seq(min(temp$date),max(temp$date),by="quarter"),las=2,format="%b-
 
 monthlyRam<-merge(temp,precip)
 
+getwd()
 write.csv(monthlyRam,"monthlyRam.csv",row.names=FALSE)
 
+drive_upload("monthlyRam.csv", path = "OWPC/Analyses/data/Raw/Climat/monthlyRam", type="xls", overwrite = T)
 
 
 
