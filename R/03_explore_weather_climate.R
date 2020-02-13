@@ -145,7 +145,13 @@ df_surv[c(4,5, 9:16)] <- scale(df_surv[c(4,5, 9:16)])# CHANGE COLUMN NUMBER IF M
 # run models
 df_surv$alive_t1<-as.factor(df_surv$alive_t1)
 colnames(df_surv)
+output <-list(
+  
+)
 
+
+for(j in 1:length(unique(df_surv$ageClass))){
+  tmp<-subset(df_surv$ageClass == unique(df_surv$ageClass[j]))
 ml=which(colnames(df_surv) %in% 
            c("PDO.summer_surv", "PDO.fall_surv","SOI.summer_surv", "SOI.fall_surv",
              "PDO.winter_surv","PDO.spring_surv", "SOI.winter_surv" ,"SOI.spring_surv"))
@@ -154,7 +160,7 @@ res2 <- ldply(ml,function(i){ # prepare dataframe of results
   
   # autumn mass and age are correlated 
   mod1 <- glmer(alive_t1 ~ df_surv[,i] + MassSpring + age + pred+ (1|ID) + (1|yr), # here write the model
-               data=df_surv, 
+               data=tmp, 
                family="binomial",
                control = glmerControl(optimizer="bobyqa", 
                                      optCtrl = list(maxfun = 100000))) 
@@ -173,6 +179,8 @@ res2 <- ldply(ml,function(i){ # prepare dataframe of results
   
   return(r1)
 })
+output[j]<- r1
+}
 
 # export a nice table
 results_surv <- xtable(res2)
