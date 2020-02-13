@@ -7,13 +7,10 @@ drive_download("OWPC/Analyses/data/Raw/sheep_data", type="csv", overwrite=T)
 repro<-read.csv("sheep_data.csv", header=T, sep=",")
 
 
-#get climate date 
-drive_download("OWPC/Analyses/data/Raw/Climat/season_climate_ram", type="csv", overwrite = T)
-  clim<-read.csv("season_climate_ram.csv", header=T, sep=",")
 
 # Temperatures and precipitations
   drive_download("OWPC/Analyses/data/Raw/Climat/monthlyRam", type="csv", overwrite=TRUE)
-    Temp<-read.csv("monthlyRam.csv", header = TRUE, sep=",")
+    Temp<-read.csv("monthlyRam", header = TRUE, sep=",")
       Temp<-Temp[, c("year", "month", "mean_temp", "total_precip")]
         names(Temp)<-c("yr", "month", "mean_temp", "total_precip")
           Temp<-filter(Temp, yr>=1999)
@@ -68,7 +65,7 @@ drive_download("OWPC/Analyses/data/Raw/Climat/season_climate_ram", type="csv", o
       
       notd<-filter(Temp, month!=12)
         Met<-bind_rows(notd, D)
-        Met<-filter(Met, yr>=2000)
+        Met<-filter(Met, yr>=1999)
         Met<-filter(Met, yr<=2016)
       
         
@@ -109,6 +106,9 @@ drive_download("OWPC/Analyses/data/Raw/Climat/season_climate_ram", type="csv", o
             
         # Merge
             Met.tot<-cbind(Mean.W, Mean.S, Mean.Sum, Mean.Aut)
+            
+            write.csv(Met.tot, "Localweather_seasons.csv", row.names=F)
+            drive_upload("Localweather_seasons.csv",path = "OWPC/Analyses/data/Raw/Climat",name = "Localweather_seasons", overwrite=T)
             
           
   
