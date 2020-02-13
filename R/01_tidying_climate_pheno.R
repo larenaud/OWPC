@@ -1,17 +1,24 @@
-<<<<<<< HEAD
-
-pheno<-drive_get("~/OWPC/Analyses/data/pheno_ram.csv")
-View(pheno)
-=======
 # Tidying data pheno #
 library(googledrive)
+library(plyr)
+library(dplyr)
+library(lme4)
+library(MuMIn)
+library(ggplot2)
+library(cowplot)
+library(googledrive)
+library(xtable)
+library(AICcmodavg)
+library(readxl)
+library(readxl)
 
+getwd()
+setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data") # where to download
+drive_download("OWPC/Analyses/data/Raw/pheno_ram.csv") # where to get file
 
-pheno <- drive_find("pheno_ram.csv")
-drive_reveal("pheno_ram","path")
-drive_download("OWPC/Analyses/data/pheno_ram.csv")
-pheno <- read.csv2("/Users/Sandrine/Documents/Sherbrooke/OWPC/Analyse/OWPC/data/pheno_ram.csv", sep = ",")
+View(pheno)
 
+pheno <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/pheno_ram.csv", sep = ",")
 
 head(pheno)
 
@@ -86,9 +93,7 @@ for (i in 1:16){
   
 }
 
-
 pheno<- merge(pheno, Winter, by.x = "year", by.y ="Year")
-
 
 
 #####Plot variation of indices WINTER#####
@@ -119,12 +124,124 @@ legend("topleft", legend = c("NDVI","EVI","LAI","GPP","Snow","PSNNET","FPAR"),
        horiz =TRUE,
        cex = 0.50)
 
+# survival pheno dataframe ------------------------------------------------------
+sheep_data <- read_excel("sheep_data.xlsx")
+pheno = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/pheno_surv2.csv",
+                  na.string = c("", "NA"),sep = ",")
+
+
+# first part to this df is not good anymore - select needed only
+colnames(pheno)
+pheno <- unique(pheno[, c("yr", "SummerNDVI","SummerEVI","SummerLAI",
+                          "SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR","WinNDVI",
+                          "WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET",
+                          "WinFPAR")])
+
+# survival - add time lag for winter 
+pheno$yr <- as.numeric(as.character(pheno$yr))
+colnames(pheno)
+
+colnames(pheno) # here only winter season is a problem - summer is on same year than surv
+tmp1 <- unique(pheno[, c("yr", "WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR")])
+tmp1$yr <- tmp1$yr - 1 # on leur met l'année de la survie 
+dim(tmp1)
+tmp1 <- tmp1 %>% 
+  rename(WinNDVI_surv = WinNDVI,
+         WinEVI_surv =WinEVI, 
+         WinLAI_surv =WinLAI,
+         WinGPP_surv =WinGPP,
+         WinSnow_surv =WinSnow,
+         WinPSNNET_surv =WinPSNNET,
+         WinFPAR_surv =WinFPAR)
+head(tmp1)
+
+colnames(pheno)
+pheno_surv <- merge(pheno[, c("yr","SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET", "SummerFPAR")],
+                    tmp1,
+                    by.x = c("yr"), 
+                    by.y = c("yr"), 
+                    all.x= T)
+# merge dataframes 
+colnames(pheno_surv)
+colnames(sheep_data)
+df_pheno_surv= merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
+                     pheno_surv,
+                     by.x = "yr", 
+                     by.y =  "yr", 
+                     all.x=T) # keep all years even if NA
+
+df_pheno_surv$yr<-as.factor(df_pheno_surv$yr)
+df_pheno_surv$MassSpring<-as.numeric(df_pheno_surv$MassSpring)
+df_pheno_surv$MassAutumn<-as.numeric(df_pheno_surv$MassAutumn)
+
+df_pheno_surv$alive_t1<-as.factor(df_pheno_surv$alive_t1)
+df_pheno_surv$pred<-as.factor(df_pheno_surv$pred)
+
+#write.csv(df_pheno_surv, "surv_pheno_data.csv", row.names = FALSE)
+#drive_upload("surv_pheno_data.csv", path = "OWPC/Analyses/data/surv_pheno_data.csv", overwrite = T)
+
+# here add pca source to R code
 
 
 
+# fecundity pheno dataframe -----------------------------------------------------
+sheep_data <- read_excel("sheep_data.xlsx")
+pheno = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/pheno_surv2.csv",
+                  na.string = c("", "NA"),sep = ",")
+
+# select needed only
+colnames(pheno)
+pheno <- unique(pheno[, c("yr", "SummerNDVI","SummerEVI","SummerLAI",
+                          "SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR","WinNDVI",
+                          "WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET",
+                          "WinFPAR")])
+pheno$yr <- as.numeric(as.character(pheno$yr))
+colnames(pheno)
+
+tmp1 <- unique(pheno[, c("yr", "SummerNDVI","SummerEVI","SummerLAI",
+                         "SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR")])
+
+# add time lag for summer lengths (real time lag t-1)
+tmp1$yr <- tmp1$yr + 1
+tmp1 <- tmp1 %>% 
+  rename(SummerNDVI_fec= SummerNDVI,
+         SummerEVI_fec=SummerEVI, 
+         SummerLAI_fec=SummerLAI,
+         SummerGPP_fec=SummerGPP,
+         SummerSnow_fec =SummerSnow,
+         SummerPSNNET_fec =SummerPSNNET,
+         SummerFPAR_fec =SummerFPAR)
+
+pheno_fec <- merge(unique(pheno[, c("yr","WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR")]), # no need for all duplicated data per ID
+                   tmp1,
+                   by.x = c("yr"), 
+                   by.y = c("yr"), 
+                   all.x = T)
+
+pheno_fec<- pheno_fec%>%
+  rename(WinNDVI_fec = WinNDVI,
+         WinEVI_fec =WinEVI ,
+         WinLAI_fec = WinLAI ,
+         WinGPP_fec = WinGPP,
+         WinSnow_fec = WinSnow,
+         WinPSNNET_fec = WinPSNNET,
+         WinFPAR_fec = WinFPAR)
+
+# merge dataframes 
+df= merge(sheep_data[c("yr","ID", "raw_repro", "true_repro", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
+          pheno_fec,
+          by.x = "yr", 
+          by.y =  "yr", 
+          all.x=T)
+#write.csv(df, "fecun_pheno_data.csv", row.names = FALSE)
+#drive_upload("fecun_pheno_data.csv", path = "OWPC/Analyses/data/fecun_pheno_data.csv", overwrite = T)
 
 
->>>>>>> 5855572c1b719f96e9bf0a7eac0ba8a4bb789b43
+# here add pca source to R code
+getwd()
+source("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/R/09_pca_pheno.R")
+
+
 
 ##### Calculating seasonal PDO and SOI values from monthly data ##########################
 
@@ -174,3 +291,159 @@ colnames(season_climate_ram)<-c("yr","PDO.winter","PDO.spring","PDO.summer","PDO
 # Save new dataframe in a csv file and upload it to google drive
 #write.csv(season_climat_ram,"season_climate_ram.csv",row.names=FALSE)
 #drive_upload("season_climate_ram.csv",path = "OWPC/Analyses/data/Climat",name = "season_climate_ram")
+
+
+# survival - climate dataframe ------------------------------------------------------
+
+#write.csv(season_climat_ram,"season_climate_ram.csv",row.names=FALSE)
+rm(list = ls())
+sheep_data <- read_excel("sheep_data.xlsx")
+
+drive_download("OWPC/Analyses/data/Raw/sheep_data.txt") # where to get file
+sheep_data <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/sheep_data.txt", sep = "")
+
+clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/season_climate_ram.csv",
+                 na.string = c("", "NA"),sep = ",")
+
+# add time lag # careful this is tricky
+clim$yr <- as.numeric(as.character(clim$yr))
+colnames(clim)
+
+# PDO/ENSO for survival to t1
+tmp <- clim[, c("yr","PDO.winter", "PDO.spring", "SOI.winter","SOI.spring")]
+
+tmp$yr <- tmp$yr - 1
+dim(tmp)
+tmp <- tmp %>% 
+  rename(PDO.winter_surv = PDO.winter,
+         PDO.spring_surv =PDO.spring, 
+         SOI.winter_surv =SOI.winter,
+         SOI.spring_surv =SOI.spring)
+head(tmp)
+
+colnames(clim)
+clim_surv <- merge(clim[, c("yr","PDO.summer", "PDO.fall", "SOI.summer","SOI.fall")],
+                   tmp,
+                   by.x = c("yr"), 
+                   by.y = c("yr"), 
+                   all.x=T)
+clim_surv <- clim_surv %>% 
+  rename(PDO.summer_surv = PDO.summer,
+         PDO.fall_surv=PDO.fall,
+         SOI.summer_surv = SOI.summer,
+         SOI.fall_surv = SOI.fall)
+getwd()
+
+# here add time lags for 1999 for survival models 
+tmp$yr <- tmp$yr - 1
+dim(tmp)
+tmp <- tmp %>% 
+  rename(PDO.winter_surv = PDO.winter,
+         PDO.spring_surv =PDO.spring, 
+         SOI.winter_surv =SOI.winter,
+         SOI.spring_surv =SOI.spring)
+head(tmp)
+
+# merge dataframes 
+colnames(clim_surv)
+colnames(sheep_data)
+df_surv= merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
+               clim_surv,
+               by.x = "yr", 
+               by.y =  "yr", 
+               all.x=T) # keep all years even if NA
+
+
+df_surv$yr<-as.factor(df_surv$yr)
+df_surv$alive_t1<-as.factor(df_surv$alive_t1)
+
+df_surv$MassSpring<-as.numeric(as.character(df_surv$MassSpring))
+df_surv$MassAutumn<-as.numeric(as.character(df_surv$MassAutumn))
+
+df_surv$PDO.winter_surv<-as.numeric(as.character(df_surv$PDO.winter_surv))
+df_surv$PDO.summer_surv<-as.numeric(as.character(df_surv$PDO.summer_surv))
+df_surv$PDO.spring_surv<-as.numeric(as.character(df_surv$PDO.spring_surv))
+df_surv$PDO.fall_surv<-as.numeric(as.character(df_surv$PDO.fall_surv))
+df_surv$SOI.winter_surv<-as.numeric(as.character(df_surv$SOI.winter_surv))
+df_surv$SOI.summer_surv<-as.numeric(as.character(df_surv$SOI.summer_surv))
+df_surv$SOI.spring_surv<-as.numeric(as.character(df_surv$SOI.spring_surv))
+df_surv$SOI.fall_surv<-as.numeric(as.character(df_surv$SOI.fall_surv))
+
+#write.csv(df_surv, "surv_climate_data.csv", row.names = FALSE)
+#drive_upload("surv_climate_data.csv", path = "OWPC/Analyses/data/surv_climate_data.csv", overwrite = T)
+
+# fecundity - climate dataframe  ---------------------------------------------------
+getwd()
+sheep_data <- read.csv2("sheep_data.txt", sep = "")
+clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/season_climate_ram.csv",
+                 na.string = c("", "NA"),sep = ",")
+
+# add time lag # careful this is tricky
+clim$yr <- as.numeric(as.character(clim$yr))
+
+# PDO/ENSO for for survival to t1
+colnames(clim)
+tmp <- clim[, c("yr", "PDO.summer", "PDO.fall", "SOI.summer" ,"SOI.fall")]
+
+#now add backward time lag for fall and summer seasons 
+tmp$yr <- tmp$yr+1
+dim(tmp)
+tmp <- tmp %>% 
+  rename(PDO.summer_fec= PDO.summer,
+         PDO.fall_fec=PDO.fall, 
+         SOI.summer_fec =SOI.summer,
+         SOI.fall_fec =SOI.fall)
+head(tmp)
+
+colnames(clim)
+clim_fec <- merge(clim,
+                  tmp,
+                  by.x = c("yr"), 
+                  by.y = c("yr"), 
+                  all.x=T)
+
+clim_fec <- clim_fec %>% 
+  rename(PDO.winter_fec = PDO.winter,
+         PDO.spring_fec =PDO.spring, 
+         SOI.winter_fec =SOI.winter,
+         SOI.spring_fec =SOI.spring)
+getwd()
+
+colnames(clim_fec)
+clim_fec <- clim_fec[, c("yr", "PDO.winter_fec", "PDO.spring_fec","PDO.summer_fec", "PDO.fall_fec",
+                         "SOI.winter_fec", "SOI.spring_fec", "SOI.summer_fec", "SOI.fall_fec")]
+# merge dataframes 
+colnames(clim_fec)
+colnames(sheep_data)
+df_fec= merge(sheep_data[c("yr","ID", "raw_repro", "true_repro", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
+              clim_fec,
+              by.x = "yr", 
+              by.y =  "yr", 
+              all.x=T) # keep all years even if NA
+
+# some values have been added manually 
+
+#write.csv(df_fec, "fecun_climate_data.csv", row.names = FALSE)
+#drive_upload("fecun_climate_data.csv", path = "OWPC/Analyses/data/fecun_climate_data.csv", overwrite = T)
+
+df_fec$yr<-as.factor(df_fec$yr)
+
+df_fec$raw_repro<-as.factor(df_fec$raw_repro)
+df_fec$true_repro<-as.factor(df_fec$true_repro)
+
+df_fec$MassSpring<-as.numeric(as.character(df_fec$MassSpring))
+df_fec$MassAutumn<-as.numeric(as.character(df_fec$MassAutumn))
+
+df_fec$PDO.winter_fec<-as.numeric(as.character(df_fec$PDO.winter_fec))
+df_fec$PDO.summer_fec<-as.numeric(as.character(df_fec$PDO.summer_fec))
+df_fec$PDO.spring_fec<-as.numeric(as.character(df_fec$PDO.spring_fec))
+df_fec$PDO.fall_fec<-as.numeric(as.character(df_fec$PDO.fall_fec))
+df_fec$SOI.winter_fec<-as.numeric(as.character(df_fec$SOI.winter_fec))
+df_fec$SOI.summer_fec<-as.numeric(as.character(df_fec$SOI.summer_fec))
+df_fec$SOI.spring_fec<-as.numeric(as.character(df_fec$SOI.spring_fec))
+df_fec$SOI.fall_fec<-as.numeric(as.character(df_fec$SOI.fall_fec))
+
+df_fec<- df_fec[!is.na(df_fec$PDO.winter_fec),]
+df_fec<- df_fec[!is.na(df_fec$MassSpring),]
+df_fec<- df_fec[!is.na(df_fec$MassAutumn),]
+
