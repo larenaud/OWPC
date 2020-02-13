@@ -21,6 +21,7 @@ clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/s
 clim$yr <- as.numeric(as.character(clim$yr))
 colnames(clim)
 
+# survival dataframe ------------------------------------------------------
 # PDO/ENSO for for survival to t1
 tmp <- clim[, c("yr","PDO.winter", "PDO.spring", "SOI.winter","SOI.spring")]
 
@@ -37,7 +38,8 @@ colnames(clim)
 clim_surv <- merge(clim[, c("yr","PDO.summer", "PDO.fall", "SOI.summer","SOI.fall")],
               tmp,
               by.x = c("yr"), 
-              by.y = c("yr"))
+              by.y = c("yr"), 
+              all.x=T)
 clim_surv <- clim_surv %>% 
   rename(PDO.summer_surv = PDO.summer,
          PDO.fall_surv=PDO.fall,
@@ -56,8 +58,7 @@ df_surv= merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutumn","ag
 #write.csv(df_surv, "surv_climate_data.csv", row.names = FALSE)
 #drive_upload("surv_climate_data.csv", path = "OWPC/Analyses/data/surv_climate_data.csv", overwrite = T)
 
-
-# create fecundity data ---------------------------------------------------
+# fecundity dataframe  ---------------------------------------------------
 sheep_data <- read_excel("sheep_data.xlsx")
 clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/season_climate_ram.csv",
                  na.string = c("", "NA"),sep = ",")
@@ -83,7 +84,8 @@ colnames(clim)
 clim_fec <- merge(clim,
                    tmp,
                    by.x = c("yr"), 
-                   by.y = c("yr"))
+                   by.y = c("yr"), 
+                  all.x=T)
 
 clim_fec <- clim_fec %>% 
   rename(PDO.winter_fec = PDO.winter,

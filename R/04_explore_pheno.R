@@ -9,7 +9,7 @@ library(xtable)
 library(AICcmodavg)
 
 setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data")
-
+rm(list = ls())
 # survival dataframe ------------------------------------------------------
 sheep_data <- read_excel("sheep_data.xlsx")
 pheno = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/pheno_surv2.csv",
@@ -45,7 +45,8 @@ colnames(pheno)
 pheno_surv <- merge(pheno[, c("yr","SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET", "SummerFPAR")],
                    tmp1,
                    by.x = c("yr"), 
-                   by.y = c("yr"))
+                   by.y = c("yr"), 
+                   all.x= T)
 # merge dataframes 
 colnames(pheno_surv)
 colnames(sheep_data)
@@ -54,7 +55,6 @@ df_pheno_surv= merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutum
                by.x = "yr", 
                by.y =  "yr", 
                all.x=T) # keep all years even if NA
-
 #write.csv(df_pheno_surv, "surv_pheno_data.csv", row.names = FALSE)
 #drive_upload("surv_pheno_data.csv", path = "OWPC/Analyses/data/surv_pheno_data.csv", overwrite = T)
 
@@ -77,7 +77,6 @@ tmp1 <- unique(pheno[, c("yr", "SummerNDVI","SummerEVI","SummerLAI",
 
 # add time lag for summer lengths (real time lag t-1)
 tmp1$yr <- tmp1$yr + 1
-dim(tmp)
 tmp1 <- tmp1 %>% 
   rename(SummerNDVI_fec= SummerNDVI,
          SummerEVI_fec=SummerEVI, 
@@ -86,13 +85,12 @@ tmp1 <- tmp1 %>%
          SummerSnow_fec =SummerSnow,
          SummerPSNNET_fec =SummerPSNNET,
          SummerFPAR_fec =SummerFPAR)
-head(tmp)
 
 pheno_fec <- merge(unique(pheno[, c("yr","WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR")]), # no need for all duplicated data per ID
                tmp1,
                by.x = c("yr"), 
                by.y = c("yr"), 
-               all.x =)
+               all.x = T)
 
 pheno_fec<- pheno_fec%>%
   rename(WinNDVI_fec = WinNDVI,
@@ -119,7 +117,7 @@ setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/graph")
 
 # try individual model
 rm(list = ls())
-df_pheno_surv = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/surv_pheno_data",
+df_pheno_surv = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/surv_pheno_data.csv",
                   na.string = c("", "NA"),sep = ",")
 
 df_pheno_surv$yr<-as.factor(df_pheno_surv$yr)
