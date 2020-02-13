@@ -1,5 +1,5 @@
-#library(MCMCglmm)
-#detach("package:MCMCglmm", unload=TRUE)
+library(MCMCglmm)
+detach("package:MCMCglmm", unload=TRUE)
 
 library(lme4)
 library(plyr)
@@ -307,8 +307,35 @@ mod.l$springPDO<- glmer(raw_repro ~ -1 + ageClass/PDO.spring_fec +  MassAutumn_t
 mod.l$spring_int <- glmer(raw_repro ~ -1 +  ageClass/PDOSOI_spring +  MassAutumn_tm1 +  (1|ID) + (1|yr), # here write the model
                           data=df_fec, 
                           family="binomial",
-                          control = glmerControl(optimizer="bobyqa", 
+                          control = glmerControl(optimizer=list("bobyqa"),
                                                  optCtrl = list(maxfun = 1000000))) 
+
+prior1 <- list(R = list(V = 1,fix= 1),
+               G = list(G1 = list(V = 1,nu = 1, alpha.mu = 0, alpha.V = 1000),
+                        G2 = list(V = 1,nu = 1, alpha.mu = 0, alpha.V = 1000)))
+spring_int <- MCMCglmm(as.factor(raw_repro)~ -1 + ageClass/PDOSOI_spring +  MassAutumn_tm1 + as.factor(pred_tm1) + 
+                         as.factor(true_repro_tm1), 
+                       random = ~ID+yr,  
+                       family="categorical", 
+                       prior = prior1,
+                       nitt=2500000, thin=2500,burnin=100000, verbose=T,
+                       data = na.omit(df_fec))
+plot(spring_int$Sol)
+
+# trying all Fit
+mod.l$spring_int <- glmer(raw_repro ~ -1 +  ageClass/PDOSOI_spring +  MassAutumn_tm1 +  (1|ID) + (1|yr), # here write the model
+                          data=df_fec, 
+                          family="binomial",
+                          control = glmerControl(optimizer= "bobyqa",
+                                                 optCtrl = list(maxfun = 2000000)))
+
+
+source(system.file("utils", "allFit.R", package = "lme4"))
+#install.packages("dfoptim")
+spring_int_all<- allFit(mod.l$spring_int)
+ss <- summary(spring_int_all)
+ss$fixef
+ss$which.OK
 
 # run true reproduction models  --------------------------------------
 mod.l <- list()
