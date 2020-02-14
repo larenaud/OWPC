@@ -415,7 +415,7 @@ inv.logit(coef(summary(mod.l$P.T.WIN.m1)))
 results.T.Win <- data.frame(coef(summary(mod.l$T.Win)))
 results.T.Win[, 1:4] <- round(results.T.Win[, 1:4], digits = 3)
 
-round(MuMIn::r.squaredGLMM(mod.l$P.T.Win.m1), digits = 3) #
+round(MuMIn::r.squaredGLMM(mod.l$P.T.WIN.m1), digits = 3) #
 #R2m   R2c
 #theoretical 0.257 0.301
 #delta       0.222 0.260
@@ -544,7 +544,8 @@ inv.logit(coef(summary(mod.l$P.T.WIN.m1)))
 results.T.Win <- data.frame(coef(summary(mod.l$T.Win)))
 results.T.Win[, 1:4] <- round(results.T.Win[, 1:4], digits = 3)
 
-round(MuMIn::r.squaredGLMM(mod.l$P.T.Win.m1), digits = 3) #
-#R2m   R2c
-#theoretical 0.257 0.301
-#delta       0.222 0.260
+round(MuMIn::r.squaredGLMM(mod.l$P.T.WIN.m1), digits = 3) #
+# R2m   R2c
+# theoretical 0.327 0.777
+# delta       0.280 0.664
+
