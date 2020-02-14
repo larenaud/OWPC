@@ -4,6 +4,7 @@
 .Ruserdata
 data
 cache
+old
 *.RData
 *.rds
 .Rproj
