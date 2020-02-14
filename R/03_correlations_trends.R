@@ -14,7 +14,7 @@ repro<-read.csv("sheep_data.csv", header=T, sep=",")
       Temp<-Temp[, c("year", "month", "mean_temp", "total_precip")]
         names(Temp)<-c("yr", "month", "mean_temp", "total_precip")
           Temp<-filter(Temp, yr>=1999)
-            Temp<-filter(Temp, yr<=2016)
+            Temp<-filter(Temp, yr<=2017)
     
 
   JAN<-filter(Temp, month==1)
@@ -65,13 +65,12 @@ repro<-read.csv("sheep_data.csv", header=T, sep=",")
       
       notd<-filter(Temp, month!=12)
         Met<-bind_rows(notd, D)
-        Met<-filter(Met, yr>=1999)
-        Met<-filter(Met, yr<=2016)
+
       
         
         # Winter : Dec - Mar
-        
-          Win<-Met[c(1:51,188:205),]
+        Met
+          Win<-Met[c(1:57,191:210),]
             Win<-Win[order(Win$yr),]
           
           Mean.W<-aggregate(Win[,3:4], list(Win$yr),mean)
@@ -79,7 +78,7 @@ repro<-read.csv("sheep_data.csv", header=T, sep=",")
           Win
         # Spring : April - May
           
-          Spring<-Met[c(52:85),]
+          Spring<-Met[c(58:95),]
             Spring<-Spring[order(Spring$yr),]
           
             Mean.S<-aggregate(Spring[,3:4], list(Spring$yr),mean)
@@ -88,7 +87,7 @@ repro<-read.csv("sheep_data.csv", header=T, sep=",")
             
         # Summer : Jun - Sep
             #Met # 86 153
-            Summer<-Met[c(86:153),]
+            Summer<-Met[c(96:171),]
             Summer<-Summer[order(Summer$yr),]
             
             Mean.Sum<-aggregate(Summer[,3:4], list(Summer$yr),mean)
@@ -97,7 +96,7 @@ repro<-read.csv("sheep_data.csv", header=T, sep=",")
             
         # Autumn : Oct - Nov
             Met # 86 153
-            Aut<-Met[c(154:187),]
+            Aut<-Met[c(172:190),]
             Aut<-Aut[order(Aut$yr),]
             
             Mean.Aut<-aggregate(Aut[,3:4], list(Aut$yr),mean)
@@ -111,7 +110,7 @@ repro<-read.csv("sheep_data.csv", header=T, sep=",")
             drive_upload("Localweather_seasons.csv",path = "OWPC/Analyses/data/Raw/Climat",name = "Localweather_seasons", overwrite=T)
             
           
-  
+
 # merge dataframes for climat
 
 clim$yr<-as.factor(clim$yr)
