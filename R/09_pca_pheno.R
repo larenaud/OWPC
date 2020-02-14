@@ -76,7 +76,7 @@ df_surv<- df_surv[!is.na(df_surv$WinNDVI), ] # now has equal number of lines
 # need exact number of lines in two df 
 df_surv<-cbind(df_surv, year[, 1:2])
 getwd()
-#write.csv(df_surv, "data/df_surv_pca.csv")
+#write.csv(df_surv, "df_surv_pca.csv", row.names = F)
 
 # pca fecundity ------------------------------------------------------------
 df_fec <- read.csv("~/Documents/PhD/Analyses/OWPC/OWPC/data/fecun_pheno_data.csv", sep=",")
@@ -144,8 +144,8 @@ df_fec<- df_fec[!is.na(df_fec$WinNDVI), ] # now has equal number of lines
 # need exact number of lines in two df 
 df_fec<-cbind(df_fec, year[, 1:2])
 getwd()
-#write.csv(df_fec, "data/df_fec_pca.csv")
+#write.csv(df_fec, "data/df_fec_pca.csv", row.names = F)
 
 # save as R object 
 getwd()
-save(acp_fec, acp_surv, df_fec, df_surv, file = "graph/acp_data.RData")
+save(acp_fec, acp_surv, df_fec, df_surv, file = "cache/acp_data.RData")

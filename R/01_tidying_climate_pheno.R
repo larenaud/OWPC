@@ -124,26 +124,30 @@ legend("topleft", legend = c("NDVI","EVI","LAI","GPP","Snow","PSNNET","FPAR"),
        horiz =TRUE,
        cex = 0.50)
 
+getwd()
+#write.csv(pheno, "data/pheno_by_yr.csv", row.names = FALSE)
+#drive_upload("data/pheno_by_yr.csv", path = "OWPC/Analyses/data/Raw/pheno_by_yr.csv", overwrite = T)
+
 # survival pheno dataframe ------------------------------------------------------
-sheep_data <- read_excel("sheep_data.xlsx")
-pheno = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/pheno_surv2.csv",
+sheep_data <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/sheep_data.txt", sep = "")
+pheno = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/pheno_by_yr.csv",
                   na.string = c("", "NA"),sep = ",")
 
 
 # first part to this df is not good anymore - select needed only
 colnames(pheno)
-pheno <- unique(pheno[, c("yr", "SummerNDVI","SummerEVI","SummerLAI",
+pheno <- unique(pheno[, c("year", "SummerNDVI","SummerEVI","SummerLAI",
                           "SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR","WinNDVI",
                           "WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET",
                           "WinFPAR")])
 
 # survival - add time lag for winter 
-pheno$yr <- as.numeric(as.character(pheno$yr))
+pheno$year <- as.numeric(as.character(pheno$year))
 colnames(pheno)
 
 colnames(pheno) # here only winter season is a problem - summer is on same year than surv
-tmp1 <- unique(pheno[, c("yr", "WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR")])
-tmp1$yr <- tmp1$yr - 1 # on leur met l'année de la survie 
+tmp1 <- unique(pheno[, c("year", "WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR")])
+tmp1$year <- tmp1$year - 1 # on leur met l'année de la survie 
 dim(tmp1)
 tmp1 <- tmp1 %>% 
   rename(WinNDVI_surv = WinNDVI,
@@ -156,10 +160,10 @@ tmp1 <- tmp1 %>%
 head(tmp1)
 
 colnames(pheno)
-pheno_surv <- merge(pheno[, c("yr","SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET", "SummerFPAR")],
+pheno_surv <- merge(pheno[, c("year","SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET", "SummerFPAR")],
                     tmp1,
-                    by.x = c("yr"), 
-                    by.y = c("yr"), 
+                    by.x = c("year"), 
+                    by.y = c("year"), 
                     all.x= T)
 # merge dataframes 
 colnames(pheno_surv)
@@ -167,42 +171,56 @@ colnames(sheep_data)
 df_pheno_surv= merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
                      pheno_surv,
                      by.x = "yr", 
-                     by.y =  "yr", 
+                     by.y =  "year", 
                      all.x=T) # keep all years even if NA
 
 df_pheno_surv$yr<-as.factor(df_pheno_surv$yr)
-df_pheno_surv$MassSpring<-as.numeric(df_pheno_surv$MassSpring)
-df_pheno_surv$MassAutumn<-as.numeric(df_pheno_surv$MassAutumn)
+df_pheno_surv$MassSpring<-as.numeric(as.character(df_pheno_surv$MassSpring))
+df_pheno_surv$MassAutumn<-as.numeric(as.character(df_pheno_surv$MassAutumn))
 
 df_pheno_surv$alive_t1<-as.factor(df_pheno_surv$alive_t1)
 df_pheno_surv$pred<-as.factor(df_pheno_surv$pred)
 
+getwd()
 #write.csv(df_pheno_surv, "surv_pheno_data.csv", row.names = FALSE)
-#drive_upload("surv_pheno_data.csv", path = "OWPC/Analyses/data/surv_pheno_data.csv", overwrite = T)
+#drive_upload("data/surv_pheno_data.csv", path = "OWPC/Analyses/data/surv_pheno_data.csv", overwrite = T)
 
 # here add pca source to R code
+(09_pca_pheno.R)
 
+rm(list = ls())
+df_surv_pca = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/df_surv_pca.csv",
+                  na.string = c("", "NA"),sep = ",")
+
+df_surv_pca$yr<-as.factor(df_surv_pca$yr)
+df_surv_pca$MassSpring<-as.numeric(as.character(df_surv_pca$MassSpring))
+df_surv_pca$MassAutumn<-as.numeric(as.character(df_surv_pca$MassAutumn))
+
+df_surv_pca$alive_t1<-as.factor(df_surv_pca$alive_t1)
+df_surv_pca$pred<-as.factor(df_surv_pca$pred)
+#write.csv(df_surv_pca, "df_surv_pca.csv", row.names = FALSE)
+#drive_upload("data/df_surv_pca.csv", path = "OWPC/Analyses/data/df_surv_pca.csv", overwrite = T)
 
 
 # fecundity pheno dataframe -----------------------------------------------------
-sheep_data <- read_excel("sheep_data.xlsx")
-pheno = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/pheno_surv2.csv",
+sheep_data <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/sheep_data.txt", sep = "")
+pheno = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/pheno_by_yr.csv",
                   na.string = c("", "NA"),sep = ",")
 
 # select needed only
 colnames(pheno)
-pheno <- unique(pheno[, c("yr", "SummerNDVI","SummerEVI","SummerLAI",
+pheno <- unique(pheno[, c("year", "SummerNDVI","SummerEVI","SummerLAI",
                           "SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR","WinNDVI",
                           "WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET",
                           "WinFPAR")])
-pheno$yr <- as.numeric(as.character(pheno$yr))
+pheno$year <- as.numeric(as.character(pheno$year))
 colnames(pheno)
 
-tmp1 <- unique(pheno[, c("yr", "SummerNDVI","SummerEVI","SummerLAI",
+tmp1 <- unique(pheno[, c("year", "SummerNDVI","SummerEVI","SummerLAI",
                          "SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR")])
 
 # add time lag for summer lengths (real time lag t-1)
-tmp1$yr <- tmp1$yr + 1
+tmp1$year <- tmp1$year + 1
 tmp1 <- tmp1 %>% 
   rename(SummerNDVI_fec= SummerNDVI,
          SummerEVI_fec=SummerEVI, 
@@ -212,10 +230,10 @@ tmp1 <- tmp1 %>%
          SummerPSNNET_fec =SummerPSNNET,
          SummerFPAR_fec =SummerFPAR)
 
-pheno_fec <- merge(unique(pheno[, c("yr","WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR")]), # no need for all duplicated data per ID
+pheno_fec <- merge(unique(pheno[, c("year","WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR")]), # no need for all duplicated data per ID
                    tmp1,
-                   by.x = c("yr"), 
-                   by.y = c("yr"), 
+                   by.x = c("year"), 
+                   by.y = c("year"), 
                    all.x = T)
 
 pheno_fec<- pheno_fec%>%
@@ -231,17 +249,57 @@ pheno_fec<- pheno_fec%>%
 df= merge(sheep_data[c("yr","ID", "raw_repro", "true_repro", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
           pheno_fec,
           by.x = "yr", 
-          by.y =  "yr", 
+          by.y =  "year", 
           all.x=T)
-#write.csv(df, "fecun_pheno_data.csv", row.names = FALSE)
-#drive_upload("fecun_pheno_data.csv", path = "OWPC/Analyses/data/fecun_pheno_data.csv", overwrite = T)
 
+df$yr<-as.factor(df$yr)
+df$raw_repro<-as.factor(df$raw_repro)
+df$true_repro<-as.factor(df$true_repro)
+df$pred<-as.factor(df$pred)
 
-# here add pca source to R code
-getwd()
-source("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/R/09_pca_pheno.R")
+df$MassSpring<-as.numeric(as.character(df$MassSpring))
+df$MassAutumn<-as.numeric(as.character(df$MassAutumn))
 
+#write.csv(df, "data/fecun_pheno_data.csv", row.names = FALSE)
+#drive_upload("data/fecun_pheno_data.csv", path = "OWPC/Analyses/data/fecun_pheno_data.csv", overwrite = T)
 
+# go get pca data
+
+df_fec_pca <- read.csv("~/Documents/PhD/Analyses/OWPC/OWPC/data/df_fec_pca.csv")
+df_fec_pca$PC1<-as.numeric(as.character(df_fec_pca$PC1))
+df_fec_pca$PC2<-as.numeric(as.character(df_fec_pca$PC2))
+
+df_fec_pca$yr<-as.factor(df_fec_pca$yr)
+df_fec_pca$raw_repro<-as.factor(df_fec_pca$raw_repro)
+df_fec_pca$true_repro<-as.factor(df_fec_pca$true_repro)
+df_fec_pca$pred<-as.factor(df_fec_pca$pred)
+
+df_fec_pca$MassSpring<-as.numeric(as.character(df_fec_pca$MassSpring))
+df_fec_pca$MassAutumn<-as.numeric(as.character(df_fec_pca$MassAutumn))
+
+# add time lags for control variables 
+colnames(df_fec_pca)
+tmp <- df_fec_pca[, c("yr", "ID", "MassAutumn", "pred", "true_repro")]
+tmp$yr <-as.numeric(as.character(tmp$yr))
+
+tmp$yr <- tmp$yr + 1
+
+tmp <- tmp %>% 
+  rename(MassAutumn_tm1= MassAutumn, 
+         pred_tm1= pred, 
+         true_repro_tm1 = true_repro)
+
+df_fec_pca<- merge(tmp, 
+                   df_fec_pca, 
+               by.x= c("yr", "ID"), 
+               by.y=c('yr', "ID"), 
+               all.y = T)
+
+str(df_fec_pca)
+df_fec_pca$yr <- as.factor(df_fec_pca$yr)
+
+#write.csv(df_fec_pca, "data/df_fec_pca.csv", row.names = F)
+#drive_upload("data/df_fec_pca.csv", path = "OWPC/Analyses/data/df_fec_pca.csv", overwrite = T)
 
 ##### Calculating seasonal PDO and SOI values from monthly data ##########################
 
@@ -252,20 +310,46 @@ source("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/R/09_pca_pheno.R
 #setwd("C:/Users/Proprietaire/Documents/uni poc/Phd/OWPC/Analyses")
 
 library(googledrive)
-
+getwd()
+#setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data")
 # Download database from google drive and save it in previously set working directory
-drive_download("OWPC/Analyses/data/Climat/monthly_climate_ram",type = "csv",overwrite = T)
+drive_download("OWPC/Analyses/data/Raw/Climat/monthly_climate_ram",type = "csv",overwrite = T)
+
+# get SOI and PDO raw for all years and combine into new montly climate
+SOI <- read.delim("~/Documents/PhD/Analyses/OWPC/OWPC/data/SOI.txt")
+PDO <- read.delim("~/Documents/PhD/Analyses/OWPC/OWPC/data/PDO_raw.txt", sep = "")
+colnames(SOI) <- c("yr" , "SOI.JAN" ,"SOI.FEB", "SOI.MAR", "SOI.APR" ,"SOI.MAI", "SOI.JUN", "SOI.JUL" ,"SOI.AUG" ,"SOI.SEP", "SOI.OCT" ,"SOI.NOV" ,"SOI.DEC")
+colnames(PDO) <- c("YEAR" , "PDO.JAN" ,"PDO.FEB", "PDO.MAR", "PDO.APR" ,"PDO.MAI", "PDO.JUN", "PDO.JUL" ,"PDO.AUG" ,"PDO.SEP", "PDO.OCT" ,"PDO.NOV" ,"PDO.DEC")
+
+PDO = PDO[PDO$YEAR>1990 & PDO$YEAR < 2018, ]
+SOI = SOI[SOI$yr>1990 & SOI$yr < 2018, ]
+
+montly_climate = cbind(PDO, SOI)
+montly_climate = montly_climate[, -14]
+
+#write.csv(montly_climate, "montly_climate_ram.csv", row.names = FALSE)
+
 # Load database in R environment
-data<-read.csv("monthly_climate_ram.csv")
+data<-read.csv("~/Documents/PhD/Analyses/OWPC/OWPC/data/montly_climate_ram.csv")
 
 # See values for December PDOs
 data$PDO.DEC
-# Create column with PDO values in december of the previous year
-data$PDO.DEC.PREV.YR<-c(-1.63, 0.52, -0.93, 2.10, 0.33, -0.17, 0.20, 0.14, -0.58, -0.87, 0.08, -1.21, -1.79,-0.48, -0.41, 2.51, 1.01)
+
+# Create column with PDO values in december of the previous year # STARTING YR 1999 # ADDED ONE YR
+tmp = subset(data, YEAR %in%c(1998:2017)) # to find previous values 
+tmp$PDO.DEC
+#[1] -0.44 -1.63  0.52 -0.93  2.10  0.33 -0.17  0.20  0.14 -0.58 -0.87  0.08 -1.21 -1.79 -0.48 -0.41  2.51  1.01  1.17 0.50
+tmp$SOI.DEC
+#[1]  1.32  1.37  0.77 -1.06 -1.30  0.92 -0.94  0.01 -0.39  1.49  1.43 -0.95  2.90  2.45 -0.77 -0.05 -0.66 -1.00  0.19 -0.27
+
+data = subset(data, YEAR %in%c(1999:2017)) # to bind from previous years
+
+data$PDO.DEC.PREV.YR<-c(-0.44, -1.63, 0.52, -0.93, 2.10, 0.33, -0.17, 0.20, 0.14, -0.58, -0.87, 0.08, -1.21, -1.79,-0.48, -0.41, 2.51, 1.01, 1.17)
+
 # Calculate mean PDO in winter
 data$PDO.winter<-(data$PDO.DEC.PREV.YR+data$PDO.JAN+data$PDO.FEB+data$PDO.MAR)/4
 # Calculate mean PDO in spring
-data$PDO.spring<-(data$PDO.APR+data$PDO.MAY)/2
+data$PDO.spring<-(data$PDO.APR+data$PDO.MAI)/2
 # Calculate mean PDO in summer
 data$PDO.summer<-(data$PDO.JUN+data$PDO.JUL+data$PDO.AUG+data$PDO.SEP)/4
 # Calculate mean PDO in fall
@@ -274,35 +358,31 @@ data$PDO.fall<-(data$PDO.OCT+data$PDO.NOV)/2
 # See values for December SOIs
 data$SOI.DEC
 # Create column with SOI values in december of the previous year
-data$SOI.DEC.PREV.YR<-c(0.79,0.77,-1.06,-1.30,0.92,-0.94,0.01,-0.39,1.49,1.43,-0.95,2.90,2.45,-0.77,-0.05,-0.66,-1.00)
+#tmp$SOI.DEC
+#[1]  1.32  1.37  0.77 -1.06 -1.30  0.92 -0.94  0.01 -0.39  1.49  1.43 -0.95  2.90  2.45 -0.77 -0.05 -0.66 -1.00  0.19 -0.27
+data$SOI.DEC.PREV.YR<-c(1.32,1.37, 0.77,-1.06,-1.30,0.92,-0.94,0.01,-0.39,1.49,1.43,-0.95,2.90,2.45,-0.77,-0.05,-0.66,-1.00, 0.19)
 # Calculate mean SOI in winter
 data$SOI.winter<-(data$SOI.DEC.PREV.YR+data$SOI.JAN+data$SOI.FEB+data$SOI.MAR)/4
 # Calculate mean SOI in spring
-data$SOI.spring<-(data$SOI.APR+data$SOI.MAY)/2
+data$SOI.spring<-(data$SOI.APR+data$SOI.MAI)/2
 # Calculate mean SOI in summer
 data$SOI.summer<-(data$SOI.JUN+data$SOI.JUL+data$SOI.AUG+data$SOI.SEP)/4
 # Calculate mean SOI in fall
 data$SOI.fall<-(data$SOI.OCT+data$SOI.NOV)/2
 
 # Create new dataframe with seasonal values of PDO and SOI
-season_climate_ram<-data.frame(data$yr,data$PDO.winter,data$PDO.spring,data$PDO.summer,data$PDO.fall,data$SOI.winter,data$SOI.spring,data$SOI.summer,data$SOI.fall)
+season_climate_ram<-data.frame(data$YEAR,data$PDO.winter,data$PDO.spring,data$PDO.summer,data$PDO.fall,data$SOI.winter,data$SOI.spring,data$SOI.summer,data$SOI.fall)
 colnames(season_climate_ram)<-c("yr","PDO.winter","PDO.spring","PDO.summer","PDO.fall","SOI.winter","SOI.spring","SOI.summer","SOI.fall")
 
 # Save new dataframe in a csv file and upload it to google drive
-#write.csv(season_climat_ram,"season_climate_ram.csv",row.names=FALSE)
-#drive_upload("season_climate_ram.csv",path = "OWPC/Analyses/data/Climat",name = "season_climate_ram")
-
+getwd()
+#write.csv(season_climate_ram,"season_climate_ram.csv",row.names=FALSE)
+#drive_upload("season_climate_ram.csv",path = "OWPC/Analyses/data/Raw/Climat",name = "season_climate_ram_1999")
 
 # survival - climate dataframe ------------------------------------------------------
-
 #write.csv(season_climat_ram,"season_climate_ram.csv",row.names=FALSE)
-rm(list = ls())
-sheep_data <- read_excel("sheep_data.xlsx")
-
-drive_download("OWPC/Analyses/data/Raw/sheep_data.txt") # where to get file
 sheep_data <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/sheep_data.txt", sep = "")
-
-clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/season_climate_ram.csv",
+clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/season_climate_ram.csv",
                  na.string = c("", "NA"),sep = ",")
 
 # add time lag # careful this is tricky
@@ -322,27 +402,22 @@ tmp <- tmp %>%
 head(tmp)
 
 colnames(clim)
-clim_surv <- merge(clim[, c("yr","PDO.summer", "PDO.fall", "SOI.summer","SOI.fall")],
+clim_surv <- merge(clim[, c("yr","PDO.summer", "PDO.fall", "SOI.summer","SOI.fall", "PDO.winter", "SOI.winter")], # keep previous winter for survival analsyes
                    tmp,
                    by.x = c("yr"), 
                    by.y = c("yr"), 
                    all.x=T)
+
 clim_surv <- clim_surv %>% 
   rename(PDO.summer_surv = PDO.summer,
          PDO.fall_surv=PDO.fall,
          SOI.summer_surv = SOI.summer,
          SOI.fall_surv = SOI.fall)
-getwd()
 
-# here add time lags for 1999 for survival models 
-tmp$yr <- tmp$yr - 1
-dim(tmp)
-tmp <- tmp %>% 
-  rename(PDO.winter_surv = PDO.winter,
-         PDO.spring_surv =PDO.spring, 
-         SOI.winter_surv =SOI.winter,
-         SOI.spring_surv =SOI.spring)
-head(tmp)
+clim_surv <- clim_surv %>% 
+  rename(PDO.winter_tm1 = PDO.winter,
+         SOI.winter_tm1 =SOI.winter)
+head(clim)
 
 # merge dataframes 
 colnames(clim_surv)
@@ -368,14 +443,17 @@ df_surv$SOI.winter_surv<-as.numeric(as.character(df_surv$SOI.winter_surv))
 df_surv$SOI.summer_surv<-as.numeric(as.character(df_surv$SOI.summer_surv))
 df_surv$SOI.spring_surv<-as.numeric(as.character(df_surv$SOI.spring_surv))
 df_surv$SOI.fall_surv<-as.numeric(as.character(df_surv$SOI.fall_surv))
+df_surv$PDO.winter_tm1<-as.numeric(as.character(df_surv$PDO.winter_tm1))
+df_surv$SOI.winter_tm1<-as.numeric(as.character(df_surv$SOI.winter_tm1))
 
+# CAREFUL DIFFERENT VALUES FROM CALCULATED BY HAND
 #write.csv(df_surv, "surv_climate_data.csv", row.names = FALSE)
 #drive_upload("surv_climate_data.csv", path = "OWPC/Analyses/data/surv_climate_data.csv", overwrite = T)
 
 # fecundity - climate dataframe  ---------------------------------------------------
 getwd()
 sheep_data <- read.csv2("sheep_data.txt", sep = "")
-clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/season_climate_ram.csv",
+clim = read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/season_climate_ram.csv",
                  na.string = c("", "NA"),sep = ",")
 
 # add time lag # careful this is tricky
@@ -421,10 +499,7 @@ df_fec= merge(sheep_data[c("yr","ID", "raw_repro", "true_repro", "MassSpring","M
               by.y =  "yr", 
               all.x=T) # keep all years even if NA
 
-# some values have been added manually 
-
-#write.csv(df_fec, "fecun_climate_data.csv", row.names = FALSE)
-#drive_upload("fecun_climate_data.csv", path = "OWPC/Analyses/data/fecun_climate_data.csv", overwrite = T)
+# some values have been added manually # to double check
 
 df_fec$yr<-as.factor(df_fec$yr)
 
@@ -447,3 +522,41 @@ df_fec<- df_fec[!is.na(df_fec$PDO.winter_fec),]
 df_fec<- df_fec[!is.na(df_fec$MassSpring),]
 df_fec<- df_fec[!is.na(df_fec$MassAutumn),]
 
+# add time lags for control variables 
+colnames(df_fec)
+tmp <- df_fec[, c("yr", "ID", "MassAutumn", "pred", "true_repro")]
+tmp$yr <-as.numeric(as.character(tmp$yr))
+
+tmp$yr <- tmp$yr + 1
+
+tmp <- tmp %>% 
+  rename(MassAutumn_tm1= MassAutumn, 
+         pred_tm1= pred, 
+         true_repro_tm1 = true_repro)
+
+df_fec<- merge(tmp, 
+               df_fec, 
+               by.x= c("yr", "ID"), 
+               by.y=c('yr', "ID"), 
+               all.y = T)
+
+str(df_fec)
+df_fec$yr <- as.factor(df_fec$yr)
+
+#write.csv(df_fec, "fecun_climate_data.csv", row.names = FALSE)
+#drive_upload("fecun_climate_data.csv", path = "OWPC/Analyses/data/fecun_climate_data.csv", overwrite = T)
+
+# HERE CHANGE COMPOSITE INDEX
+
+
+# create R objects --------------------------------------------------------
+# create R object for surv 
+getwd()
+surv_climate_data <- read.csv("~/Documents/PhD/Analyses/OWPC/OWPC/data/surv_climate_data.csv")
+df_surv_pca <- read.csv("~/Documents/PhD/Analyses/OWPC/OWPC/data/df_surv_pca.csv")
+#save(surv_climate_data,df_surv_pca, file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/surv_data.RData")
+
+
+df_fec_pca <- read.csv("~/Documents/PhD/Analyses/OWPC/OWPC/data/df_fec_pca.csv")
+fecun_climate_data <- read.csv("~/Documents/PhD/Analyses/OWPC/OWPC/data/fecun_climate_data.csv")
+#save(df_fec_pca,fecun_climate_data, file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/repro_data.RData")
