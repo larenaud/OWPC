@@ -10,7 +10,7 @@ library(xtable)
 library(googledrive)
 
 # Set working directory DIFFERENT FOR EACH PERSON
-#setwd("")
+setwd("")
 #Ex: setwd("C:/Users/Proprietaire/Documents/uni poc/Phd/OWPC/Analyses")
 
 # Accessing google drive
