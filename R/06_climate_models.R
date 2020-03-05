@@ -1,29 +1,24 @@
-# script for survival models
+# script for model selection of climate models
+
+# Cleaning R environment
+rm(list = ls())
 
 # Loading required libraries
 library(lme4)
-library(plyr)
-library(dplyr)
 library(AICcmodavg)
 library(xtable)
 library(googledrive)
-library(car)
 
 # Set working directory DIFFERENT FOR EACH PERSON
 setwd("")
 #Ex: setwd("C:/Users/Proprietaire/Documents/uni poc/Phd/OWPC/Analyses")
 
-##### Survival ~ Climate ############################################################
-# Setting up R environment ----
-# Cleaning R environment
-rm(list = ls())
+# Accessing google drive
+drive_find(n_max = 10)
+# Select a pre-authorised account by entering the corresponding number in the console or enter '0' to obtain a new token.
 
-# Download data from drive
-drive_download("OWPC/Analyses/data/surv_climate_data.csv",overwrite=T)
-# Import in R environment
-df_surv<-read.csv("surv_climate_data.csv",sep = ",")
-
-# Prepare data for models----
+# Data tyding (script qui doit être déplacé) ---------------------------------------------------------------------------
+# Prepare data for survival models
 
 # Remove lines for translocated individuals in their 1st year on Ram (year of translocation)
 df_surv<-subset(df_surv,!(first_yr_trans==1))
@@ -69,102 +64,112 @@ df_surv[c("MassSpring","MassAutumn","PDO.summer_surv", "PDO.fall_surv","SOI.summ
                   "SOI.fall_surv","PDO.winter_surv", "PDO.spring_surv", "SOI.winter_surv", "SOI.spring_surv",
                   "PDO.winter_tm1", "SOI.winter_tm1", "PDOSOI_winter_tm1")]) 
 
-# Run models ----
+
+##### Survival ~ Climate ###############################################################################################
+# Setting up and importing data  ----
+
+# Download data from drive
+drive_download("OWPC/Analyses/data/surv_climate_data.csv",overwrite=T)#Path à modifier une fois base de données finale complétée
+# Import in R environment
+df_surv<-read.csv("surv_climate_data.csv",sep = ",")#Path à modifier une fois base de données finale complétée
+
+# Run models -----------------------------------------------------------------------------------------------------------
 #colnames(df_surv)
 # List of candidate models
-mod.l <- list()
-mod.l$base <- glm(alive_t1 ~ -1 + ageClass + pred, data=df_surv, family="binomial")
+mod.surv <- list()
 
-mod.l$summerPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.summer_surv + pred, 
+mod.surv$base <- glm(alive_t1 ~ -1 + ageClass + pred, data=df_surv, family="binomial")
+
+mod.surv$summerPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.summer_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.l$summerSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.summer_surv + pred, 
+mod.surv$summerSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.summer_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.l$summer_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_summer + pred, 
+mod.surv$summer_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_summer + pred, 
                         data=df_surv, family="binomial")
 
-mod.l$fallPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.fall_surv + pred, 
+mod.surv$fallPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.fall_surv + pred, 
                      data=df_surv, family="binomial")
 
-mod.l$fallSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.fall_surv + pred, 
+mod.surv$fallSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.fall_surv + pred, 
                      data=df_surv, family="binomial")
 
-mod.l$fallPDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.fall_surv+ageClass/SOI.fall_surv + pred, 
+mod.surv$fallPDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.fall_surv+ageClass/SOI.fall_surv + pred, 
                         data=df_surv, family="binomial") 
 
-mod.l$fall_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_fall + pred, 
+mod.surv$fall_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_fall + pred, 
                       data=df_surv, family="binomial")
 
-mod.l$winterPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_surv + pred, 
+mod.surv$winterPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.l$winterSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.winter_surv + pred, 
+mod.surv$winterSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.winter_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.l$winterPDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_surv+ageClass/SOI.winter_surv + pred, 
+mod.surv$winterPDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_surv+ageClass/SOI.winter_surv + pred, 
                           data=df_surv, family="binomial") 
 
-mod.l$winter_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_winter + pred, 
+mod.surv$winter_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_winter + pred, 
                         data=df_surv, family="binomial")
 
-mod.l$springPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.spring_surv + pred, 
+mod.surv$springPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.spring_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.l$springSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.spring_surv + pred, 
+mod.surv$springSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.spring_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.l$springPDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.spring_surv+ageClass/SOI.spring_surv + pred, 
+mod.surv$springPDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.spring_surv+ageClass/SOI.spring_surv + pred, 
                           data=df_surv, family="binomial") 
 
-mod.l$spring_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_spring + pred, 
+mod.surv$spring_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_spring + pred, 
                         data=df_surv, family="binomial")
 
-mod.l$winter.tm1.PDO <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_tm1 + pred, 
+mod.surv$winter.tm1.PDO <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_tm1 + pred, 
                             data=df_surv, family="binomial")
 
-mod.l$winter.tm1.SOI <- glm(alive_t1 ~ -1 + ageClass/SOI.winter_tm1 + pred, 
+mod.surv$winter.tm1.SOI <- glm(alive_t1 ~ -1 + ageClass/SOI.winter_tm1 + pred, 
                             data=df_surv, family="binomial")
 
-mod.l$winter.tm1.PDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_tm1+ageClass/SOI.winter_tm1 + pred, 
+mod.surv$winter.tm1.PDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_tm1+ageClass/SOI.winter_tm1 + pred, 
                                data=df_surv, family="binomial") 
 
-mod.l$winter.tm1.int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_winter_tm1 + pred, 
+mod.surv$winter.tm1.int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_winter_tm1 + pred, 
                             data=df_surv, family="binomial")
 
 # female density and mass not included as control variables because correlated with age classes 
 
 # Create AIC table
-x <- aictab(mod.l)
+x.surv <- aictab(mod.surv)
 # Exporting AIC table
-aictable <- xtable(x, caption = NULL, label = NULL, align = NULL,
+aictable.surv <- xtable(x.surv, caption = NULL, label = NULL, align = NULL,
                    digits = NULL, display = NULL, nice.names = TRUE,
                    include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
 
 # Options to save AIC table
-#print.xtable(aictable, type="html", file="surv_climate_aic_table.html")
-#write.table(aictable, file="surv_climate_aic_table.csv")
+#print.xtable(aictable.surv, type="html", file="surv_climate_aic_table.html")
+#write.table(aictable.surv, file="surv_climate_aic_table.csv")
 
 # Option to create and save RData file with dataframe, AIC table and canidate models list
-# save(df_surv,aictable,mod.l,file = "surv_clim.Rdata")
+# save(df_surv,aictable.surv,mod.surv,file = "surv_clim.Rdata")
 
 # Results ---- 
 
 # Best model
-summary(mod.l$base)
+summary(mod.surv$base)
 # Calculate R squared
-round(MuMIn::r.squaredGLMM(mod.l$base), digits = 3)
+round(MuMIn::r.squaredGLMM(mod.surv$base), digits = 3)
 # Save results
-# results.base <- data.frame(coef(summary(mod.l$base)))
+# results.base <- data.frame(coef(summary(mod.surv$base)))
 # results.base[, 1:4] <- round(results.base[, 1:4], digits = 3)
 # write.csv(results.base, file = "results_BestMod_climat_surv.csv", row.names = T)
 
 # Second best model 
-summary(mod.l$winterSOI)
+summary(mod.surv$winterSOI)
 # Calculate R squared
-round(MuMIn::r.squaredGLMM(mod.l$winterSOI), digits = 3) #
+round(MuMIn::r.squaredGLMM(mod.surv$winterSOI), digits = 3) #
 # Save results
-#results.winterSOI <- data.frame(coef(summary(mod.l$winterSOI)))
+#results.winterSOI <- data.frame(coef(summary(mod.surv$winterSOI)))
 #results.winterSOI[, 1:4] <- round(results.winterSOI[, 1:4], digits = 3)
 #write.csv(results.winter_int, file = "results_SecBestMod_climat_surv.csv", row.names = T)
 

@@ -65,9 +65,9 @@ df_fec <- df_fec[!is.na(df_fec$MassAutumn_tm1),] # n = 263
 # Setting up and importing data ----
 
 # Download data from drive
-drive_download("OWPC/Analyses/data/df_surv_pca.csv",overwrite=T)#Path à modifier une fois base de données finale complété
+drive_download("OWPC/Analyses/data/df_surv_pca.csv",overwrite=T)#Path à modifier une fois base de données finale complétée
 # Import dataframe in R environment
-df_surv <- read.csv2("df_surv_pca.csv", sep=",")#Path à modifier une fois base de données finale complété
+df_surv <- read.csv2("df_surv_pca.csv", sep=",")#Path à modifier une fois base de données finale complétée
 
 # Model selection ----------------------------------------------------------
 colnames(df_surv)
@@ -124,11 +124,11 @@ mod.surv$WinPSNET_tm1 <- glm(alive_t1 ~ -1 + ageClass/WinPSNNET_tm1 + pred, data
 
 mod.surv$WinFPAR_tm1 <- glm(alive_t1 ~ -1 + ageClass/WinFPAR_tm1 + pred, data=df_surv, family="binomial")
 
+# Creating a list to store the results
+results.surv<-list()
 
-#aic table
-x.surv <- aictab(mod.surv)
-## exporting AIC table
-aictable.surv <- xtable(x.surv, caption = NULL, label = NULL, align = NULL,
+## Creating and exporting AIC table to results list
+results.surv$aictable.surv <- xtable(aictab(mod.surv), caption = NULL, label = NULL, align = NULL,
                    digits = NULL, display = NULL, nice.names = TRUE,
                    include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
 #print.xtable(aictable.surv, type="html", 
@@ -138,20 +138,18 @@ aictable.surv <- xtable(x.surv, caption = NULL, label = NULL, align = NULL,
 #getwd()
 
 # Results from best models ---------------------------------------------
-summary(mod.surv$pc2)
-#results.pc2 <- data.frame(coef(summary(mod.surv$pc2 )))
-#results.pc2[, 1:4] <- round(results.pc2[, 1:4], digits = 3)
 
-round(MuMIn::r.squaredGLMM(mod.surv$pc2 ), digits = 3)
-# R2m   R2c
-# theoretical 0.174 0.309
-# delta       0.112 0.198
+results.surv$coefs.surv.best <- data.frame(coef(summary(mod.surv[[aictable[1,1]]])))
+results.surv$coefs.surv.best[, 1:4] <- round(results.surv[["coefs.surv.best"]][, 1:4], digits = 3)
+results.surv$r2.surv.best<-datat.frame(round(MuMIn::r.squaredGLMM(mod.surv[[aictable[1,1]]]), digits = 3))
 
-#getwd()
-#results_pheno_surv<- write.csv(results.pc2, file = "graph/results_pheno_surv.csv", row.names = FALSE)
+results.surv$coefs.surv.2ndbest <- data.frame(coef(summary(mod.surv[[aictable[2,1]]])))
+results.surv$coefs.surv.2ndbest[, 1:4] <- round(results.surv[["coefs.surv.2ndbest"]][, 1:4], digits = 3)
+results.surv$r2.surv.2ndbest<-datat.frame(round(MuMIn::r.squaredGLMM(mod.surv[[aictable[2,1]]]), digits = 3))
 
-summary(mod.surv$base)
-round(MuMIn::r.squaredGLMM(mod.surv$base ), digits = 3)
+results.surv$coefs.surv.3rdbest <- data.frame(coef(summary(mod.surv[[aictable[3,1]]])))
+results.surv$coefs.surv.3rdbest[, 1:4] <- round(results.surv[["coefs.surv.2ndbest"]][, 1:4], digits = 3)
+results.surv$r2.surv.3rdbest<-datat.frame(round(MuMIn::r.squaredGLMM(mod.surv[[aictable[3,1]]]), digits = 3))
 
 ##### Reproduction ~ Phenology #########################################################################################
 # Setting up and importing data ----
