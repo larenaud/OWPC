@@ -17,6 +17,7 @@ setwd("")
 drive_find(n_max = 10)
 # Select a pre-authorised account by entering the corresponding number in the console or enter '0' to obtain a new token.
 
+#########################################################################################################################
 # Data tyding (script qui doit être déplacé) --------------------
 load("~/Documents/PhD/Analyses/OWPC/OWPC/cache/surv_data.RData")
 load("~/Documents/PhD/Analyses/OWPC/OWPC/cache/repro_data.RData")
@@ -60,6 +61,8 @@ df_fec[c(3,13:28)] <- scale(df_fec[c(3,13:28)])# CHANGE COLUMN NUMBER IF MODIFY 
 
 df_fec <- df_fec[!is.na(df_fec$MassAutumn_tm1),] # n = 263
 
+
+#########################################################################################################################
 
 ##### Survival ~ Phenology #############################################################################################
 # Setting up and importing data ----
@@ -274,41 +277,6 @@ results.raw.repro$r2.raw.repro.2ndbest<-data.frame(round(MuMIn::r.squaredGLMM(mo
 results.raw.repro$coefs.raw.repro.3rdbest <- data.frame(coef(summary(mod.raw.repro[[aictable.raw.repro[3,1]]])))
 results.raw.repro$coefs.raw.repro.3rdbest[, 1:4] <- round(results.raw.repro[["coefs.raw.repro.2ndbest"]][, 1:4], digits = 3)
 results.raw.repro$r2.raw.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.raw.repro[[aictable.raw.repro[3,1]]]), digits = 3))
-
-
-
-summary(mod.raw.repro$base)
-#resultsraw_fec <- data.frame(coef(summary(mod.raw.repro$base)))
-#resultsraw_fec[, 1:4] <- round(resultsraw_fec[, 1:4], digits = 3)
-
-round(MuMIn::r.squaredGLMM(mod.raw.repro$base), digits = 3) #
-# R2m   R2c
-# theoretical 0.523 0.855
-# delta       0.458 0.749
-#getwd()
-#results_pheno_fec<- write.csv(resultsraw_fec, file = "raw_results_pheno_fec.csv", row.names = FALSE)
-
-summary(mod.raw.repro$SummerPSNNET_fec)
-
-resultsraw_fec <- data.frame(coef(summary(mod.raw.repro$SummerPSNNET_fec)))
-resultsraw_fec[, 1:4] <- round(resultsraw_fec[, 1:4], digits = 3)
-
-round(MuMIn::r.squaredGLMM(mod.raw.repro$SummerPSNNET_fec), digits = 3) #
-# R2m   R2c
-# theoretical 0.542 0.881
-# delta       0.486 0.790
-#getwd()
-#results_pheno_fec<- write.csv(resultsraw_fec, file = "raw_results_pheno_fec.csv", row.names = FALSE)
-
-summary(mod.raw.repro$SummerGPP_fec)
-
-round(MuMIn::r.squaredGLMM(mod.raw.repro$SummerGPP_fec), digits = 3) #
-# R2m   R2c
-# theoretical 0.543 0.869
-# delta       0.481 0.771
-getwd()
-#results_pheno_fec<- write.csv(resultsraw_fec, file = "raw_results_pheno_fec.csv", row.names = FALSE)
-
 
 # True repro model selection -------------------------------------------------------
 mod.true.repro <- list()
