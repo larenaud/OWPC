@@ -1,4 +1,19 @@
-# Tidying data pheno #
+# this script creates dataframes for model selection on SURVIVAL 
+# modified 24 march 2020 by L. Renaud
+
+# results are 5 scripts : 
+#sheep_data : yr, id and mass data of individual sheep
+#pheno_surv : season lengths from 2000-2016 including PCA (2001-2015)
+#clim_surv : seaonal PDO and SOI based on monthly data
+#weather : seasonal Temp and Prec based on monthly data by F.Rousseu
+#dataSurvUnscld : the whole dataframe, unscaled
+# dataSurvScld : the whole dataframe scaled 
+
+# these are left with NAs
+
+
+
+# load libraries - a ton... 
 library(googledrive)
 library(plyr)
 library(dplyr)
@@ -20,15 +35,15 @@ rm(list = ls())
 getwd()
 setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data") # where to download
 
-View(pheno)
 
 # 1- Add pheno season lengths ------------------------------------------------------
 
 # skip and go to step 2  
-drive_download("OWPC/Analyses/data/Raw/pheno_ram.csv", overwrite = T) # where to get file
-pheno <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/pheno_ram.csv", sep = ",")
+# drive_download("OWPC/Analyses/data/Raw/pheno_ram.csv", overwrite = T) # where to get file
+# pheno <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/pheno_ram.csv", sep = ",")
 
 head(pheno)
+
 
 #Keep only julian dates 
 pheno <- pheno[ ,c(1,16:29)]
@@ -135,8 +150,12 @@ legend("topleft", legend = c("NDVI","EVI","LAI","GPP","Snow","PSNNET","FPAR"),
 getwd()
 
 
+
+
+
+
 # 2 - survival & pheno dataframe ------------------------------------------------------
-sheep_data <- read.csv2("repro_mass.csv", sep = ",")
+
 pheno = read.csv2("pheno_by_yr.csv",
                   na.string = c("", "NA"),sep = ",")
 
@@ -171,12 +190,14 @@ pheno_surv <- merge(pheno[, c("year","SummerNDVI","SummerEVI","SummerLAI","Summe
                     by.x = c("year"), 
                     by.y = c("year"), 
                     all.x= T)
-# make pca  ---------------------------------------------------------------
+
+# 3 - make pheno pca with appropriate time lags ---------------------------------------------------------------
+
 # scale
 colnames(pheno_surv)
 lengths <- pheno_surv[c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR","WinNDVI_surv" ,
                    "WinEVI_surv","WinLAI_surv","WinGPP_surv","WinSnow_surv","WinPSNNET_surv", "WinFPAR_surv")] 
-hist(unlist(lengths))# 
+hist(unlist(lengths))# need multinormal distn
 
 # Standardisation
 lengths <-scale(lengths)
@@ -186,77 +207,55 @@ lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
 acp_surv <- rda(lengths) # Option par défaut : scale=FALSE
 
 #these are the loadings (correlations of each variable with each pca xis)
-print(kable(round(scores(acp_surv, choices = 1:4, display = "species", scaling = 0), 3)))
+test = round(scores(acp_surv, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
 
-### Extraire les résultats
-summary(acp_surv)
+summary(acp_surv) # by default scaling 2 is used in summary 
 summary(acp_surv, scaling = 1)
-#quartz()
+
+eigenvals(acp_surv)
+year <- summary(acp_surv)$sites # this is the new scores for year
+var <- summary(acp_surv)$species # this is the contribution of variables to each pc
+summary(acp_surv)$sp
+
+
+library(kableExtra)
+kable(test) %>%
+  kable_styling(font_size = 10) %>%
+  row_spec(c(0,1, 14)) %>%
+kable_styling("bordered") %>%
+save_kable(file = "table1.html", self_contained = T) 
+
+# show results 
 biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
 biplot(acp_surv, scaling=1)
 
 biplot(acp_surv, scaling=2) # relationships between variables 
 biplot(acp_surv, scaling="species")
 
-eigenvals(acp_surv)
-year <- summary(acp_surv, scaling = 1)$sites # this is the new scores for year year
-var <- summary(acp_surv, scaling = 1)$species # this is the contribution of variables to each pc
-summary(acp_surv)$sp
-
-# #pdf("graph/biplot_pheno_scaling1.pdf")
-# plot(acp_surv, scaling=1, main="Triplot RDA - scaling 1", type="none", xlab=c("RDA1"), ylab=c("RDA2"), xlim=c(-1,1), ylim=c(-1,1))
-# points(scores(acp_surv, display="sites", choices=c(1,2), scaling=1), pch=19, col=blues9, cex=1.2)
-# arrows(0,0,
-#        scores(acp_surv, display="species", choices=c(1), scaling=1)*0.1,
-#        scores(acp_surv, display="species", choices=c(2), scaling=1)*0.1,
-#        col="grey",length=0.2,angle=15)
-# dim(var)
-# var <- summary(acp_surv, scaling = 1)$species
-# 
-# rownames(var)<- c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR",    
-#                   "WinNDVI_surv","WinEVI_surv","WinLAI_surv","WinGPP_surv","WinSnow_surv","WinPSNNET_surv" ,"WinFPAR_surv")
-# 
-# text(scores(acp_surv, display="species", choices=c(1), scaling=1)*0.34,
-#      scores(acp_surv, display="species", choices=c(2), scaling=1)*0.32,
-#      labels=rownames(var),
-#      col="blue", cex=1)
-# dev.off()
+# need exact number of lines in two df 
 
 pheno_surv<- pheno_surv[!is.na(pheno_surv$SummerGPP), ] # missing data 
 pheno_surv<- pheno_surv[!is.na(pheno_surv$WinNDVI_surv), ] # missing data 
 
-# need exact number of lines in two df 
 pheno_surv<-cbind(pheno_surv, year[, 1:2])
-getwd()
 
-# merge dataframes 
-colnames(pheno_surv)
-colnames(sheep_data)
-df_pheno_surv= merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
-                     pheno_surv,
-                     by.x = "yr", 
-                     by.y =  "year", 
-                     all.x=T) # keep all years even if NA
 
-df_pheno_surv$yr<-as.factor(df_pheno_surv$yr)
-df_pheno_surv$MassSpring<-as.numeric(as.character(df_pheno_surv$MassSpring))
-df_pheno_surv$MassAutumn<-as.numeric(as.character(df_pheno_surv$MassAutumn))
+# add timing here ----------------------------------------------------------
 
-df_pheno_surv$alive_t1<-as.factor(df_pheno_surv$alive_t1)
-df_pheno_surv$pred<-as.factor(df_pheno_surv$pred)
+# clean up 
+rm(tmp1, var, year, pheno, lengths, acp_surv, test)
 
-rm(tmp1, var, year, pheno, lengths, acp_surv)
 
-# 3 - create surv climate data ------------------------------------------------
 
-# calculating seasonal PDO and SOI values from monthly data 
 
-# Cleaning R
-#rm(list=ls(all=TRUE))
+# 4 - create climate data ------------------------------------------------
 
-# Set working directory
+# THIS IS FOR RAW DATA - SKIP AND GO TO STEP 5
+
+
 # Download database from google drive and save it in previously set working directory
-drive_download("OWPC/Analyses/data/Raw/Climat/monthly_climate_ram",type = "csv",overwrite = T)
+#drive_download("OWPC/Analyses/data/Raw/Climat/monthly_climate_ram",type = "csv",overwrite = T)
+
 
 # get SOI and PDO raw for all years and combine into new montly climate
 SOI <- read.delim("SOI.txt")
@@ -322,6 +321,8 @@ getwd()
 
 
 # HERE ADDED YEAR 1999 - MAKE SURE TO UPLOAD GOOD ONE 
+
+
 #write.csv(season_climate_ram,"season_climate_ram.csv",row.names=FALSE)
 #drive_upload("season_climate_ram.csv",path = "OWPC/Analyses/data/Raw/Climat",name = "season_climate_ram_1999")
 
@@ -329,8 +330,10 @@ getwd()
 # clean
 rm(SOI, tmp, sheep_data, PDO, monthly_climate, data)
 
-# merge with repro_mass
-sheep_data <- read.csv2("repro_mass.csv", sep = ",")
+
+
+# 5 - add time lags climate   ----------------------------------------------
+
 clim = read.csv2("season_climate_ram.csv",
                  na.string = c("", "NA"),sep = ",")
 
@@ -351,7 +354,7 @@ tmp <- tmp %>%
 head(tmp)
 
 colnames(clim)
-clim_surv <- merge(clim[, c("yr","PDO.summer", "PDO.fall", "SOI.summer","SOI.fall", "PDO.winter", "SOI.winter")], # keep previous winter for survival analsyes
+clim_surv <- merge(clim[, c("yr","PDO.summer", "PDO.fall", "SOI.summer","SOI.fall", "PDO.winter", "SOI.winter")], # keep previous winter for survival analyses
                    tmp,
                    by.x = c("yr"), 
                    by.y = c("yr"), 
@@ -368,145 +371,174 @@ clim_surv <- clim_surv %>%
          SOI.winter_tm1 =SOI.winter)
 head(clim)
 
-# merge dataframes 
-colnames(clim_surv)
-colnames(sheep_data)
-clim_surv= merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutumn","age","pred", "first_yr_trans")],
-               clim_surv,
-               by.x = "yr", 
-               by.y =  "yr", 
-               all.x=T) # keep all years even if NA
+# 6 - tidy weather data   ---------------------------------------------------
 
+# get data from françois
 
-clim_surv$yr<-as.factor(clim_surv$yr)
-clim_surv$alive_t1<-as.factor(clim_surv$alive_t1)
+#drive_download("OWPC/Analyses/data/Raw/Climat/monthlyRam", type="xls", overwrite = T)
+weather<-read.delim("monthlyRam", header=T, sep=",") # this is from François 
 
-clim_surv$MassSpring<-as.numeric(as.character(clim_surv$MassSpring))
-clim_surv$MassAutumn<-as.numeric(as.character(clim_surv$MassAutumn))
+# create seasons
 
-clim_surv$PDO.winter_surv<-as.numeric(as.character(clim_surv$PDO.winter_surv))
-clim_surv$PDO.summer_surv<-as.numeric(as.character(clim_surv$PDO.summer_surv))
-clim_surv$PDO.spring_surv<-as.numeric(as.character(clim_surv$PDO.spring_surv))
-clim_surv$PDO.fall_surv<-as.numeric(as.character(clim_surv$PDO.fall_surv))
-clim_surv$SOI.winter_surv<-as.numeric(as.character(clim_surv$SOI.winter_surv))
-clim_surv$SOI.summer_surv<-as.numeric(as.character(clim_surv$SOI.summer_surv))
-clim_surv$SOI.spring_surv<-as.numeric(as.character(clim_surv$SOI.spring_surv))
-clim_surv$SOI.fall_surv<-as.numeric(as.character(clim_surv$SOI.fall_surv))
-clim_surv$PDO.winter_tm1<-as.numeric(as.character(clim_surv$PDO.winter_tm1))
-clim_surv$SOI.winter_tm1<-as.numeric(as.character(clim_surv$SOI.winter_tm1))
-
-
-# include weather data to surv data  ---------------------------------------------------
+# ??? cannot find that code 
 
 
 
 
 
-rm(list = ls())
 
-setwd("C:/Users/Yanny/Documents/uSherbrooke/Hiver 2020/NDVI/OWPC/OWPC")
 
-drive_download("OWPC/Analyses/data/Raw/sheep_data", type="csv", overwrite=T)
-sheep<-read.csv("sheep_data.csv", header=T, sep=",")
-names(sheep)
 
-drive_download("OWPC/Analyses/data/Raw/Climat/Localweather_seasons",type="csv", overwrite=T)
-weather<-read.csv("Localweather_seasons.csv", header=T, sep=",")
+# 7 - add time lags to weather  -------------------------------------------
 
-# add time lags
+# originally by Y. Ritchot - modified by LR march 24 2020
 
-# No time lag for survival
-# Add Summer(t-1) and Fall(t-1) for fecundity
+#drive_download("OWPC/Analyses/data/Raw/Climat/Localweather_seasons",type="csv", overwrite=T)
+
+weather<-read.delim("Localweather_seasons", header=T, sep=",")
+
+# Surv (win + spring t+1)
 weather$yr <- as.numeric(as.character(weather$yr))
-names(weather)<-c("yr", "T.WIN.m1", "P.WIN.m1", "T.SPRING.m1", "P.SPRING.m1", "T.SUMMER", "P.SUMMER", "T.FALL", "P.FALL")
+names(weather)<-c("yr", "T.WINsurv", "P.WINsurv", "T.SPRINGsurv", "P.SPRINGsurv", "T.SUMMER", "P.SUMMER", "T.FALL", "P.FALL")
 
 colnames(weather)
 
-# Surv (win + spring t+1)
-tmp <- weather[, c("yr","T.WIN.m1", "P.WIN.m1", "T.SPRING.m1","P.SPRING.m1")]
+
+tmp <- weather[, c("yr","T.WINsurv", "P.WINsurv", "T.SPRINGsurv","P.SPRINGsurv")]
 
 tmp$yr <- tmp$yr-1
-names(tmp)<-c("yr", "T.WIN", "P.WIN", "T.SPRING", "P.SPRING")
-head(tmp)
+#names(tmp)<-c("yr", "T.WIN", "P.WIN", "T.SPRING", "P.SPRING") # kept surv names instead
+# head(tmp)
 
-#weather_surv<-weather[, c("yr","T.Win","P.Win","T.SPRING","P.SPRING")]
-head(weather_surv)
-weather_surv <- merge(weather,
+head(weather)
+weather <- merge(weather[, c("yr", "T.SUMMER", "P.SUMMER", "T.FALL", "P.FALL")], # only kept original variables here
                       tmp,
                       by.x = c("yr"), 
                       by.y = c("yr"))
-weather_surv<-filter(weather_surv, yr>=2000)
+
+# weather<-filter(weather, yr>=2000)
 
 
 
+# merge into one dataframe  -----------------------------------------------
 
+sheep_data <- read.csv2("repro_mass.csv", sep = ",")
 
-#New column ageClass (0,1,2,37,8)
+# add age class 
 
-weather_surv$ageClass <- ifelse(weather_surv$age >= 8, 8, weather_surv$age)
+sheep_data$ageClass <- ifelse(sheep_data$age >= 8, 8, sheep_data$age)
 c37 <- c(3:7)
-weather_surv$ageClass <- ifelse(weather_surv$age %in% c37 , 37, weather_surv$ageClass)
+sheep_data$ageClass <- ifelse(sheep_data$age %in% c37 , 37, sheep_data$ageClass)
+
+sheep_data$ageClass <- as.factor(sheep_data$ageClass)
+
+#  merge # 1
+
+tmp1 <-  merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutumn","age","pred", "first_yr_trans", "ageClass")],
+            pheno_surv,
+            by.x = "yr", 
+            by.y =  "year", 
+            all.x=T) # keep all years even if NA
 
 
-# prepare surv data for models --------------------------------------------
-weather_surv$yr<-as.factor(weather_surv$yr)
-weather_surv$pred<-as.factor(weather_surv$pred)
-weather_surv$alive_t1<-as.factor(weather_surv$alive_t1)
+#  merge # 2 
+colnames(clim_surv)
+colnames(tmp1)
 
-weather_surv$MassSpring<-as.numeric(as.character(weather_surv$MassSpring))
-weather_surv$MassAutumn<-as.numeric(as.character(weather_surv$MassAutumn))
-
-str(weather_surv)
-names(weather_surv)
-colnames(weather_surv)
-
-weather_surv[c("MassSpring","MassAutumn","T.WIN.m1","P.WIN.m1","T.SPRING.m1" ,"P.SPRING.m1","T.WIN","P.WIN","T.SPRING" ,"P.SPRING", "T.SUMMER","P.SUMMER",
-          "T.FALL","P.FALL")] <- 
-  scale(weather_surv[c("MassSpring","MassAutumn","T.WIN.m1","P.WIN.m1","T.SPRING.m1" ,"P.SPRING.m1","T.WIN","P.WIN","T.SPRING" ,"P.SPRING", "T.SUMMER","P.SUMMER",
-                  "T.FALL","P.FALL")]) 
-names(weather_surv)
-#weather_surv<-na.omit(weather_surv)
-# 
-head(weather_surv)
+tmp2 <- merge(tmp1,
+             clim_surv,
+             by.x = "yr", 
+             by.y =  "yr")
 
 
+# merge # 3 
+
+colnames(weather )
+
+tmp3<-merge(tmp2, 
+            weather,
+            by.x = "yr", 
+            by.y =  "yr", 
+            all.x=T) 
+
+dataSurv <- tmp3
+
+# tidy up rest as factor, numeric
+
+dataSurv$yr<-as.factor(dataSurv$yr)
+dataSurv$alive_t1<-as.factor(dataSurv$alive_t1)
+dataSurv$pred<-as.factor(dataSurv$pred)
+dataSurv$first_yr_trans<-as.factor(dataSurv$first_yr_trans)
+
+dataSurv$MassSpring<-as.numeric(as.character(dataSurv$MassSpring))
+dataSurv$MassAutumn<-as.numeric(as.character(dataSurv$MassAutumn))
 
 
+dataSurv$PC1<-as.numeric(as.character(dataSurv$PC1))
+dataSurv$PC2<-as.numeric(as.character(dataSurv$PC2))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# scale all data frames and leave unscaled dataframe ??  
-
-# save as objects 
+dataSurv$PDO.winter_surv<-as.numeric(as.character(dataSurv$PDO.winter_surv))
+dataSurv$PDO.summer_surv<-as.numeric(as.character(dataSurv$PDO.summer_surv))
+dataSurv$PDO.spring_surv<-as.numeric(as.character(dataSurv$PDO.spring_surv))
+dataSurv$PDO.fall_surv<-as.numeric(as.character(dataSurv$PDO.fall_surv))
+dataSurv$SOI.winter_surv<-as.numeric(as.character(dataSurv$SOI.winter_surv))
+dataSurv$SOI.summer_surv<-as.numeric(as.character(dataSurv$SOI.summer_surv))
+dataSurv$SOI.spring_surv<-as.numeric(as.character(dataSurv$SOI.spring_surv))
+dataSurv$SOI.fall_surv<-as.numeric(as.character(dataSurv$SOI.fall_surv))
+dataSurv$PDO.winter_tm1<-as.numeric(as.character(dataSurv$PDO.winter_tm1))
+dataSurv$SOI.winter_tm1<-as.numeric(as.character(dataSurv$SOI.winter_tm1))
 
 
 
-# CAREFUL DIFFERENT VALUES FROM CALCULATED BY HAND
-#write.csv(df_surv, "surv_climate_data.csv", row.names = FALSE)
-#drive_upload("surv_climate_data.csv", path = "OWPC/Analyses/data/surv_climate_data.csv", overwrite = T)
+
+
+# select translocation = 0 and filter 
+dataSurv<-filter(dataSurv, first_yr_trans==0)
+
+
+#dataFec<-filter(dataFec, yr>=2000) # removes yr 1999 full of NA
+
+dataSurv<- dataFec[!is.na(dataSurv$MassSpring),]
+dataSurv<- dataFec[!is.na(dataSurv$MassAutumn),]
+
+
+# save unscaled 
+dataSurvUnscld = dataSurv
+str(dataSurvUnscld)
+
+
+# reorder things 
+dataSurv <- dataSurv[, c("yr","ID","alive_t1","age" , "pred","first_yr_trans" , "ageClass",
+                         "MassSpring","MassAutumn", 
+                         "SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR","WinNDVI_surv","WinEVI_surv", 
+                         "WinLAI_surv","WinGPP_surv","WinSnow_surv","WinPSNNET_surv","WinFPAR_surv","PC1","PC2",
+                         "PDO.summer_surv", "PDO.fall_surv",   "SOI.summer_surv", "SOI.fall_surv","PDO.winter_tm1","SOI.winter_tm1", 
+                         "PDO.winter_surv", "PDO.spring_surv", "SOI.winter_surv", "SOI.spring_surv",
+                         "T.SUMMER","P.SUMMER","T.FALL","P.FALL","T.WINsurv","P.WINsurv","T.SPRINGsurv","P.SPRINGsurv")]
+
+colnames(dataSurv)
+
+dataSurv[, c(8:43)] <- scale(dataSurv[, c(8:43)])
+dataSurvScld = dataSurv
 
 
 
-#write.csv(df_pheno_surv, "data_pheno_surv.csv", row.names = FALSE)
+# cleaning 
+
+rm(tmp,tmp1, tmp2, tmp3)
+
+
+# remove NAs here ?  no might be not because drops from 705 to 454 observations 
+
+#dataSurvScld_NoNA<-na.omit(dataSurvScld)
+
+
+# save only necessary data as R objects ---------------------------------------------------------
+getwd()
+save(sheep_data, pheno_surv, clim_surv, weather, dataSurvUnscld, dataSurvScld,
+     file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData")
+
 #drive_upload("data/df_pheno_surv.csv", path = "OWPC/Analyses/data/df_surv_pca.csv", overwrite = T)
 
 
