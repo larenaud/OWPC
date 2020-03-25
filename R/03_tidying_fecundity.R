@@ -231,7 +231,7 @@ weather<-read.delim("monthlyRam", header=T, sep=",") # this is from François
 
 #drive_download("OWPC/Analyses/data/Raw/Climat/Localweather_seasons",type="csv", overwrite=T)
 
-weather<-read.delim("Localweather_seasons", header=T, sep=",")
+weather<-read.delim("data/Localweather_seasons", header=T, sep=",")
 
 
 # Add Summer(t-1) and Fall(t-1) for fecundity

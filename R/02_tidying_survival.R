@@ -457,7 +457,7 @@ tmp2 <- merge(tmp1,
 colnames(weather )
 
 tmp3<-merge(tmp2, 
-            weather,
+            weather_surv,
             by.x = "yr", 
             by.y =  "yr", 
             all.x=T) 
@@ -492,8 +492,6 @@ dataSurv$SOI.winter_tm1<-as.numeric(as.character(dataSurv$SOI.winter_tm1))
 
 
 
-
-
 # select translocation = 0 and filter 
 dataSurv<-filter(dataSurv, first_yr_trans==0)
 
@@ -510,17 +508,20 @@ str(dataSurvUnscld)
 
 
 # reorder things 
+colnames(dataSurv)
+
+
 dataSurv <- dataSurv[, c("yr","ID","alive_t1","age" , "pred","first_yr_trans" , "ageClass",
                          "MassSpring","MassAutumn", 
                          "SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR","WinNDVI_surv","WinEVI_surv", 
                          "WinLAI_surv","WinGPP_surv","WinSnow_surv","WinPSNNET_surv","WinFPAR_surv","PC1","PC2",
                          "PDO.summer_surv", "PDO.fall_surv",   "SOI.summer_surv", "SOI.fall_surv","PDO.winter_tm1","SOI.winter_tm1", 
                          "PDO.winter_surv", "PDO.spring_surv", "SOI.winter_surv", "SOI.spring_surv",
-                         "T.SUMMER","P.SUMMER","T.FALL","P.FALL","T.WINsurv","P.WINsurv","T.SPRINGsurv","P.SPRINGsurv")]
+                         "T.WIN.m1","P.WIN.m1","T.SPRING.m1","P.SPRING.m1","T.SUMMER","P.SUMMER","T.FALL","P.FALL","T.WIN","P.WIN",
+                          "T.SPRING","P.SPRING")]
 
-colnames(dataSurv)
 
-dataSurv[, c(8:43)] <- scale(dataSurv[, c(8:43)])
+dataSurv[, c(8:47)] <- scale(dataSurv[, c(8:47)])
 dataSurvScld = dataSurv
 
 
@@ -537,7 +538,7 @@ rm(tmp,tmp1, tmp2, tmp3)
 
 # save only necessary data as R objects ---------------------------------------------------------
 getwd()
-save(sheep_data, pheno_surv, clim_surv, weather, dataSurvUnscld, dataSurvScld,
+save(sheep_data, pheno_surv, clim_surv, weather_surv, dataSurvUnscld, dataSurvScld,
      file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData")
 
 #drive_upload("data/df_pheno_surv.csv", path = "OWPC/Analyses/data/df_surv_pca.csv", overwrite = T)

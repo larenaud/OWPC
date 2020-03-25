@@ -4,8 +4,7 @@
 # Updated March 5 2020. 
 
 # Set working directory
-setwd("~/uSherbrooke/Hiver 2020/NDVI/OWPC")
-setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data") # to CHANGE
+setwd("") # to CHANGE
 
 
 
