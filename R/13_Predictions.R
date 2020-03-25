@@ -78,3 +78,12 @@ for(i in 2:31){
 #write.csv(rangeVari, file = "/Users/Sandrine/Documents/Sherbrooke/OWPC/Analyse/OWPC/data/range_all_variables.csv")
 
 
+surv_tmp <- ggplot(test, aes(T.WIN.m1, y=lambda, group = 1)) + 
+  geom_line(linetype = "solid") + # only have one age class
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3, fill = 'navyblue') +  
+  #geom_point(data = df_surv, aes(x = T.WIN.m1, y = as.numeric(alive_t1)-1)) + # pour mettre la distribution des points brutes 
+  labs(x=expression('Winter temperature (std)' [t-1]), 
+       y="Population growth rate based on true reproduction") +
+  theme_pander() 
+surv_tmp
+
