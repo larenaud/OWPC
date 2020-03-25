@@ -20,7 +20,7 @@ library(DHARMa)
 ### all nordegg stations
 s<-stations_search("nordegg", interval = "day")
 s
-
+z
 s<-as.data.frame(s)
 coordinates(s)<-~lon+lat
 proj4string(s)<-"+init=epsg:4326"

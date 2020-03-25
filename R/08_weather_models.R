@@ -20,50 +20,25 @@ names(sheep)
 drive_download("OWPC/Analyses/data/Raw/Climat/Localweather_seasons",type="csv", overwrite=T)
 weather<-read.csv("Localweather_seasons.csv", header=T, sep=",")
 
-# add time lags
-
-  # No time lag for survival
-  # Add Summer(t-1) and Fall(t-1) for fecundity
-weather$yr <- as.numeric(as.character(weather$yr))
-names(weather)<-c("yr", "T.WIN.m1", "P.WIN.m1", "T.SPRING.m1", "P.SPRING.m1", "T.SUMMER", "P.SUMMER", "T.FALL", "P.FALL")
-
-colnames(weather)
-
- # Surv (win + spring t+1)
-tmp <- weather[, c("yr","T.WIN.m1", "P.WIN.m1", "T.SPRING.m1","P.SPRING.m1")]
-
-tmp$yr <- tmp$yr-1
-names(tmp)<-c("yr", "T.WIN", "P.WIN", "T.SPRING", "P.SPRING")
-head(tmp)
-
-#weather_surv<-weather[, c("yr","T.Win","P.Win","T.SPRING","P.SPRING")]
-head(weather_surv)
-weather_surv <- merge(weather,
-                     tmp,
-                     by.x = c("yr"), 
-                     by.y = c("yr"))
-weather_surv<-filter(weather_surv, yr>=2000)
+# variable explanations 
 
 
-df_surv<-merge(sheep,
-               weather_surv,
-               by.x = "yr", 
-               by.y =  "yr", 
-               all.x=T) # keep all years even if NA
+# these have no time lags (are original data )
+
+#T.WIN.m1
+# P.WIN.m1
+# T.SPRING.m1
+# P.SPRING.m1
+# T.SUMMER
+# P.SUMMER
+# T.FALL
+# P.FALL
 
 
-#New column ageClass (0,1,2,37,8)
+# these are time lags t+1
 
-df_surv$ageClass <- ifelse(df_surv$age >= 8, 8, df_surv$age)
-c37 <- c(3:7)
-df_surv$ageClass <- ifelse(df_surv$age %in% c37 , 37, df_surv$ageClass)
+# "T.WIN", "P.WIN", "T.SPRING", "P.SPRING"
 
-df_fec$ageClass <- ifelse(df_fec$age >= 8, 8, df_fec$age)
-c37 <- c(3:7)
-df_fec$ageClass <- ifelse(df_fec$age %in% c37 , 37, df_fec$ageClass)
-
-df_fec$ageClass <- as.factor(df_fec$ageClass)
-df_surv$ageClass <- as.factor(df_surv$ageClass)
 
 # prepare surv data for models --------------------------------------------
 df_surv$yr<-as.factor(df_surv$yr)
@@ -202,7 +177,8 @@ mod.l$T.Fall <- glm(alive_t1 ~ -1 + ageClass/T.FALL +  pred,
 mod.l$P.Fall <- glm(alive_t1 ~ -1 + ageClass/P.FALL +  pred, 
                     data=df_surv, 
                     family="binomial")
-
+get
+save(df_surv, df_fec, file="C:/Users/Yanny/Documents/uSherbrooke/Hiver 2020/NDVI/OWPC/OWPC/cache/df_weather.Rdata")
 
 ## exporting AIC table
 x <- aictab(mod.l)
@@ -212,6 +188,7 @@ aictable <- xtable(x, caption = NULL, label = NULL, align = NULL,
 print.xtable(aictable, type="html", 
              file="C:/Users/Yanny/Documents/uSherbrooke/Hiver 2020/NDVI/OWPC/OWPC/weather_surv_AIC.html") # open directly with Word
 getwd()
+
 # results 
 summary(mod.l$T.Fall)
 results.T.Win <- data.frame(coef(summary(mod.l$T.Win)))
@@ -266,10 +243,16 @@ df_fec= merge(tmp,
 sheep_fec<-sheep[, c("age", "alive_t1", "raw_repro", "true_repro", "pred", "first_yr_trans")]
 df_fec=cbind(df_fec, sheep_fec)
 head(df_fec)
-
+df_fec$ageClass<-NULL
 str(df_fec)
+# classes d'age 3,4-8,9
+df_fec$ageClass <- ifelse(df_fec$age == 3, 3, df_fec$age)
+df_fec$ageClass <- ifelse(df_fec$age >= 9, 9, df_fec$age)
+c48 <- c(4:8)
+df_fec$ageClass <- ifelse(df_fec$age %in% c48 , 48, df_fec$ageClass)
 
-df_fec$ageClass <- df_surv$ageClass
+df_fec$ageClass <- as.factor(df_fec$ageClass)
+
 df_fec<-filter(df_fec, yr<=2016)
 df_fec$yr <- as.factor(df_fec$yr)
 df_fec$ID <- as.factor(df_fec$ID)
@@ -278,11 +261,11 @@ df_fec$raw_repro <- as.factor(df_fec$raw_repro)
 df_fec$true_repro <- as.factor(df_fec$true_repro)
 
 df_fec<-filter(df_fec, first_yr_trans==0)
-
+df_fec<-filter(df_fec, age>=3)
 # remove age classes 0-1-2 
-df_fec <- subset(df_fec, ageClass %in% c(37,8))
-df_fec$ageClass <- droplevels(df_fec$ageClass)
-df_fec$pred_tm1 <- as.factor(df_fec$pred_tm1)
+#df_fec <- subset(df_fec, ageClass %in% c(3,48,9))
+#df_fec$ageClass <- droplevels(df_fec$ageClass)
+#df_fec$pred_tm1 <- as.factor(df_fec$pred_tm1)
 
 # Scale variables
 names(df_fec)
@@ -291,7 +274,9 @@ df_fec[c("MassAutumn_tm1","T.WIN.m1","P.WIN.m1","T.SPRING.m1" ,"P.SPRING.m1", "T
   scale(df_fec[c("MassAutumn_tm1","T.WIN.m1","P.WIN.m1","T.SPRING.m1" ,"P.SPRING.m1", "T.SUMMER.m1","P.SUMMER.m1",
                   "T.FALL.m1","P.FALL.m1")]) 
 
-test<-na.omit(df_fec)
+df_fec<-na.omit(df_fec)
+
+#save(df_fec, df_surv, file="dfweather.Rdata")
 #### RUN RAW REPRO MODELS  ####---------------------
 
 mod.l <- list()
@@ -303,11 +288,16 @@ mod.l$base <- glmer(raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID), # here 
 
 
 # Winter yr-1
+
+
+
 mod.l$P.T.WIN.m1 <-glmer(raw_repro ~ -1 + ageClass/P.WIN.m1 +ageClass/T.WIN.m1 +  MassAutumn_tm1 + (1|ID), # here write the model
                             data=df_fec, 
                             family="binomial",
-                            control = glmerControl(optimizer="bobyqa", 
+                            control = glmerControl(optimizer="nmkbw", 
                                                    optCtrl = list(maxfun = 2000000))) 
+
+
 mod.l$TxP.WIN.m1 <- glmer(raw_repro ~ -1 + ageClass/(T.WIN.m1*P.WIN.m1) +  MassAutumn_tm1 + (1|ID), # here write the model
                          data=df_fec, 
                          family="binomial",

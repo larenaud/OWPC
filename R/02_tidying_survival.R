@@ -39,6 +39,8 @@ setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data") # where to
 # 1- Add pheno season lengths ------------------------------------------------------
 
 # skip and go to step 2  
+
+
 # drive_download("OWPC/Analyses/data/Raw/pheno_ram.csv", overwrite = T) # where to get file
 # pheno <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/pheno_ram.csv", sep = ",")
 
@@ -397,28 +399,27 @@ weather<-read.delim("monthlyRam", header=T, sep=",") # this is from François
 
 weather<-read.delim("Localweather_seasons", header=T, sep=",")
 
-# Surv (win + spring t+1)
+# No time lag for survival
+# Add Summer(t-1) and Fall(t-1) for fecundity
 weather$yr <- as.numeric(as.character(weather$yr))
-names(weather)<-c("yr", "T.WINsurv", "P.WINsurv", "T.SPRINGsurv", "P.SPRINGsurv", "T.SUMMER", "P.SUMMER", "T.FALL", "P.FALL")
+names(weather)<-c("yr", "T.WIN.m1", "P.WIN.m1", "T.SPRING.m1", "P.SPRING.m1", "T.SUMMER", "P.SUMMER", "T.FALL", "P.FALL")
 
 colnames(weather)
 
-
-tmp <- weather[, c("yr","T.WINsurv", "P.WINsurv", "T.SPRINGsurv","P.SPRINGsurv")]
+# Surv (win + spring t+1)
+tmp <- weather[, c("yr","T.WIN.m1", "P.WIN.m1", "T.SPRING.m1","P.SPRING.m1")]
 
 tmp$yr <- tmp$yr-1
-#names(tmp)<-c("yr", "T.WIN", "P.WIN", "T.SPRING", "P.SPRING") # kept surv names instead
-# head(tmp)
+names(tmp)<-c("yr", "T.WIN", "P.WIN", "T.SPRING", "P.SPRING") # these have the time lag 
+head(tmp)
 
-head(weather)
-weather <- merge(weather[, c("yr", "T.SUMMER", "P.SUMMER", "T.FALL", "P.FALL")], # only kept original variables here
+#weather_surv<-weather[, c("yr","T.Win","P.Win","T.SPRING","P.SPRING")]
+weather_surv <- merge(weather,
                       tmp,
                       by.x = c("yr"), 
                       by.y = c("yr"))
 
-# weather<-filter(weather, yr>=2000)
-
-
+head(weather_surv, 10)
 
 # merge into one dataframe  -----------------------------------------------
 
@@ -499,8 +500,8 @@ dataSurv<-filter(dataSurv, first_yr_trans==0)
 
 #dataFec<-filter(dataFec, yr>=2000) # removes yr 1999 full of NA
 
-dataSurv<- dataFec[!is.na(dataSurv$MassSpring),]
-dataSurv<- dataFec[!is.na(dataSurv$MassAutumn),]
+dataSurv<- dataSurv[!is.na(dataSurv$MassSpring),]
+dataSurv<- dataSurv[!is.na(dataSurv$MassAutumn),]
 
 
 # save unscaled 
