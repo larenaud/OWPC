@@ -160,11 +160,11 @@ mod.l$mod7 <- glmer(raw_repro ~ -1 + ageClass_r/PDO.winter_fec + ageClass_r/SOI.
                                            optCtrl = list(maxfun = 100000)))
 
 #mod.l$mod8 <- glmer(raw_repro ~ -1 + ageClass_r/PDO.spring_fec + ageClass_r/SOI.spring_fec + (1|ID), family="binomial", data=df_fec,
- #                   control = glmerControl(optimizer="bobyqa", 
-  #                                         optCtrl = list(maxfun = 200000)))
+ #                  control = glmerControl(optimizer="bobyqa", 
+  #                                       optCtrl = list(maxfun = 200000)))
 
 # vif(mod.l$mod8)
-# mod.l$mod8 <- glm(raw_repro ~ -1 + ageClass_r/PDOSOI_summer + MassAutumn_tm1, family="binomial", data=df_fec)
+ # mod.l$mod8 <- glm(raw_repro ~ -1 + ageClass_r/PDOSOI_summer + MassAutumn_tm1, family="binomial", data=df_fec)
 
 
 mod.l$mod8 <- glmer(raw_repro ~ -1 + ageClass_r/PDOSOI_summer + MassAutumn_tm1+ (1|ID), family="binomial", data=df_fec,
@@ -227,7 +227,6 @@ mod.l$mod3 <- glmer(true_repro ~ -1 + ageClass_r/PDO.winter_fec + MassAutumn_tm1
 mod.l$mod4 <- glmer(true_repro ~ -1 + ageClass_r/PDO.spring_fec + MassAutumn_tm1+ (1|ID), family="binomial", data=df_fec,
                     control = glmerControl(optimizer="bobyqa", 
                                            optCtrl = list(maxfun = 100000)))
-
 
 mod.l$mod5 <- glmer(true_repro ~ -1 + ageClass_r/PDO.summer_fec + ageClass_r/SOI.summer_fec + MassAutumn_tm1+ (1|ID), family="binomial", data=df_fec,
                     control = glmerControl(optimizer="bobyqa", 
