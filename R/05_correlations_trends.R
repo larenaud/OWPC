@@ -15,8 +15,8 @@ repro<-read.csv("sheep_data.csv", header=T, sep=",")
         names(Temp)<-c("yr", "month", "mean_temp", "total_precip")
           Temp<-filter(Temp, yr>=1999)
             Temp<-filter(Temp, yr<=2017)
-    
-
+   Temp<-filter(Temp, yr==2016) 
+mean(MAR$mean_temp)
   JAN<-filter(Temp, month==1)
     JAN<-JAN[, c("yr", "mean_temp", "total_precip")]
     names(JAN)<-c("yr", "mean_temp.JAN", "total_precip.JAN")
@@ -185,12 +185,11 @@ dat<-df
   corrplot(C.season, insig="n", method="color", col=Colour, addgrid.col = "darkgray", cl.pos="r",
            tl.col="black", tl.cex=1, cl.cex=1, type="full", tl.pos="tl", bg="white", diag=TRUE)
   
-  
-<<<<<<< HEAD
+
   # moyennes correlations : SOI winter + PDO (0.6-0.8); Mass et repro (0.6-0.8)
   # Forte correlation : MS & MA (0.95)
   
-=======
+
 ##### Seasonal climate trends ####################################################
 library(googledrive)
 
@@ -261,4 +260,4 @@ pheno<-pheno[,c("SummerNDVI", "SummerEVI", "SummerLAI", "SummerGPP", "SummerSnow
   
   
 ##### 
->>>>>>> fc0f155dd47abdd01e1d1ec9b00a923fab2eca98
+
