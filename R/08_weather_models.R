@@ -1,41 +1,37 @@
-library(plyr)
-library(dplyr)
-library(lme4)
-library(MuMIn)
-library(ggplot2)
-library(cowplot)
-library(googledrive)
-library(xtable)
-library(AICcmodavg)
-library(readxl)
+# script for model selection of weather models
 
+# Cleaning R environment
 rm(list = ls())
 
-setwd("") # where to download
+# Loading required libraries
+library(lme4)
+library(AICcmodavg)
+library(xtable)
+library(googledrive)
 
+# Set working directory DIFFERENT FOR EACH PERSON
+setwd("")
+#Ex: setwd("C:/Users/Proprietaire/Documents/uni poc/Phd/OWPC/Analyses")
+
+# Accessing google drive
 drive_find(n_max = 10)
+# Select a pre-authorised account by entering the corresponding number in the console or enter '0' to obtain a new token.
 
-drive_download(
-  "dataSurvivalModels.RData", # specify path and change to TRUE if desired
-  overwrite = FALSE
-)
+##### Survival ~ Weather #############################################################################################
+# Setting up and importing data ----
 
-drive_download(
- "dataFecundityModels.RData",
-  overwrite = FALSE
-)
+# Download RData from drive
+drive_download("OWPC/Analyses/cache/dataSurvivalModels.RData",overwrite=T)
+# Import in R environment
+load("dataSurvivalModels.RData")
+# Rename scaled data frame and remove years with missing data for climate
+df_surv<-droplevels(subset(dataSurvScld,!(yr %in% c("1999","2000","2016"))))
+# Remove unnecessary objects for the environment
+rm(clim_surv,pheno_surv,weather_surv,sheep_data,dataSurvUnscld,dataSurvScld)
 
-# after moving in appropriate file try to import r objects
-
-load("cache/dataSurvivalModels.RData") # get dataSurvScld
-load("cache/dataFecundityModels.RData")
-
-
-
-# variable explanations ---------------------------------------------------
+# variable explanations
 
 # these have no time lags (are original data )
-
 #T.WIN.m1
 # P.WIN.m1
 # T.SPRING.m1
@@ -45,183 +41,171 @@ load("cache/dataFecundityModels.RData")
 # T.FALL
 # P.FALL
 
-
 # these are time lags t+1
-
 # "T.WIN", "P.WIN", "T.SPRING", "P.SPRING"
 
+# Survival model selection -----------------------------------------------------
 
-# replaced df_surv by dataSurvScld
-
-
-
-# run survival models -----------------------------------------------------
-
-colnames(dataSurvScld)
-
-
-
-mod.l <- list()
+#colnames(df_surv)
+mod.surv <- list()
 
 # base
-mod.l$base <- glm(alive_t1 ~ -1 + ageClass +  pred, 
-                      data=dataSurvScld, 
+mod.surv$base <- glm(alive_t1 ~ -1 + ageClass +  pred, 
+                      data=df_surv, 
                       family="binomial") 
 
 
 
 # Winter (yr-1)
-mod.l$P.T.Win.m1 <- glm(alive_t1 ~ -1 + ageClass/P.WIN.m1+ageClass/T.WIN.m1 +  pred, 
-                     data=dataSurvScld, 
+mod.surv$P.T.Win.m1 <- glm(alive_t1 ~ -1 + ageClass/P.WIN.m1+ageClass/T.WIN.m1 +  pred, 
+                     data=df_surv, 
                      family="binomial")
 
 
-mod.l$PxT.Win.m1 <- glm(alive_t1 ~ -1 + ageClass/(P.WIN.m1*T.WIN.m1) +  pred, 
-                     data=dataSurvScld, 
+mod.surv$PxT.Win.m1 <- glm(alive_t1 ~ -1 + ageClass/(P.WIN.m1*T.WIN.m1) +  pred, 
+                     data=df_surv, 
                      family="binomial")
 
-mod.l$T.Win.m1 <- glm(alive_t1 ~ -1 + ageClass/T.WIN.m1 +  pred, 
-                   data=dataSurvScld, 
+mod.surv$T.Win.m1 <- glm(alive_t1 ~ -1 + ageClass/T.WIN.m1 +  pred, 
+                   data=df_surv, 
                    family="binomial")
 
-mod.l$P.Win.m1 <- glm(alive_t1 ~ -1 + ageClass/P.WIN.m1 +  pred, 
-                   data=dataSurvScld, 
+mod.surv$P.Win.m1 <- glm(alive_t1 ~ -1 + ageClass/P.WIN.m1 +  pred, 
+                   data=df_surv, 
                    family="binomial")
 
 # Spring (yr-1)
 
-mod.l$P.T.Spring.m1 <- glm(alive_t1 ~ -1 + ageClass/P.SPRING.m1+ageClass/T.SPRING.m1 +  pred, 
-                        data=dataSurvScld, 
+mod.surv$P.T.Spring.m1 <- glm(alive_t1 ~ -1 + ageClass/P.SPRING.m1+ageClass/T.SPRING.m1 +  pred, 
+                        data=df_surv, 
                         family="binomial")
 
-mod.l$PxT.Spring.m1 <- glm(alive_t1 ~ -1 + ageClass/(P.SPRING.m1*T.SPRING.m1) +  pred, 
-                        data=dataSurvScld, 
+mod.surv$PxT.Spring.m1 <- glm(alive_t1 ~ -1 + ageClass/(P.SPRING.m1*T.SPRING.m1) +  pred, 
+                        data=df_surv, 
                         family="binomial")
 
-mod.l$T.Spring.m1 <- glm(alive_t1 ~ -1 + ageClass/T.SPRING.m1 +  pred, 
-                      data=dataSurvScld, 
+mod.surv$T.Spring.m1 <- glm(alive_t1 ~ -1 + ageClass/T.SPRING.m1 +  pred, 
+                      data=df_surv, 
                       family="binomial")
 
-mod.l$P.Spring.m1 <- glm(alive_t1 ~ -1 + ageClass/P.SPRING.m1 +  pred, 
-                      data=dataSurvScld, 
+mod.surv$P.Spring.m1 <- glm(alive_t1 ~ -1 + ageClass/P.SPRING.m1 +  pred, 
+                      data=df_surv, 
                       family="binomial")
 
 # Winter
-mod.l$P.T.Win <- glm(alive_t1 ~ -1 + ageClass/P.WIN+ageClass/T.WIN +  pred, 
-                     data=dataSurvScld, 
+mod.surv$P.T.Win <- glm(alive_t1 ~ -1 + ageClass/P.WIN+ageClass/T.WIN +  pred, 
+                     data=df_surv, 
                      family="binomial")
 
 
-mod.l$PxT.Win <- glm(alive_t1 ~ -1 + ageClass/(P.WIN*T.WIN) +  pred, 
-                     data=dataSurvScld, 
+mod.surv$PxT.Win <- glm(alive_t1 ~ -1 + ageClass/(P.WIN*T.WIN) +  pred, 
+                     data=df_surv, 
                      family="binomial")
 
-mod.l$T.Win <- glm(alive_t1 ~ -1 + ageClass/T.WIN +  pred, 
-                   data=dataSurvScld, 
+mod.surv$T.Win <- glm(alive_t1 ~ -1 + ageClass/T.WIN +  pred, 
+                   data=df_surv, 
                    family="binomial")
 
-mod.l$P.Win <- glm(alive_t1 ~ -1 + ageClass/P.WIN +  pred, 
-                   data=dataSurvScld, 
+mod.surv$P.Win <- glm(alive_t1 ~ -1 + ageClass/P.WIN +  pred, 
+                   data=df_surv, 
                    family="binomial")
 
 # Spring
 
-mod.l$P.T.Spring <- glm(alive_t1 ~ -1 + ageClass/P.SPRING+ageClass/T.SPRING +  pred, 
-                        data=dataSurvScld, 
+mod.surv$P.T.Spring <- glm(alive_t1 ~ -1 + ageClass/P.SPRING+ageClass/T.SPRING +  pred, 
+                        data=df_surv, 
                         family="binomial")
 
-mod.l$PxT.Spring <- glm(alive_t1 ~ -1 + ageClass/(P.SPRING*T.SPRING) +  pred, 
-                        data=dataSurvScld, 
+mod.surv$PxT.Spring <- glm(alive_t1 ~ -1 + ageClass/(P.SPRING*T.SPRING) +  pred, 
+                        data=df_surv, 
                         family="binomial")
 
-mod.l$T.Spring <- glm(alive_t1 ~ -1 + ageClass/T.SPRING +  pred, 
-                      data=dataSurvScld, 
+mod.surv$T.Spring <- glm(alive_t1 ~ -1 + ageClass/T.SPRING +  pred, 
+                      data=df_surv, 
                       family="binomial")
 
-mod.l$P.Spring <- glm(alive_t1 ~ -1 + ageClass/P.SPRING +  pred, 
-                      data=dataSurvScld, 
+mod.surv$P.Spring <- glm(alive_t1 ~ -1 + ageClass/P.SPRING +  pred, 
+                      data=df_surv, 
                       family="binomial")
 
 # Summer
-mod.l$P.T.Summer <- glm(alive_t1 ~ -1 + ageClass/P.SUMMER+ageClass/T.SUMMER +  pred, 
-                        data=dataSurvScld, 
+mod.surv$P.T.Summer <- glm(alive_t1 ~ -1 + ageClass/P.SUMMER+ageClass/T.SUMMER +  pred, 
+                        data=df_surv, 
                         family="binomial")
 
-mod.l$PxT.Summer <- glm(alive_t1 ~ -1 + ageClass/(P.SUMMER*T.SUMMER) +  pred, 
-                        data=dataSurvScld, 
+mod.surv$PxT.Summer <- glm(alive_t1 ~ -1 + ageClass/(P.SUMMER*T.SUMMER) +  pred, 
+                        data=df_surv, 
                         family="binomial")
 
-mod.l$T.Summer <- glm(alive_t1 ~ -1 + ageClass/T.SUMMER +  pred, 
-                      data=dataSurvScld, 
+mod.surv$T.Summer <- glm(alive_t1 ~ -1 + ageClass/T.SUMMER +  pred, 
+                      data=df_surv, 
                       family="binomial")
 # Fall
 
-mod.l$P.Fall <- glm(alive_t1 ~ -1 + ageClass/P.FALL +  pred, 
-                    data=dataSurvScld, 
+mod.surv$P.Fall <- glm(alive_t1 ~ -1 + ageClass/P.FALL +  pred, 
+                    data=df_surv, 
                     family="binomial")
 
-mod.l$P.T.Fall <- glm(alive_t1 ~ -1 + ageClass/P.FALL+ageClass/T.FALL +  pred, 
-                      data=dataSurvScld, 
+mod.surv$P.T.Fall <- glm(alive_t1 ~ -1 + ageClass/P.FALL+ageClass/T.FALL +  pred, 
+                      data=df_surv, 
                       family="binomial")
 
-mod.l$PxT.Fall <- glm(alive_t1 ~ -1 + ageClass/(P.FALL*T.FALL) +  pred, 
-                      data=dataSurvScld, 
+mod.surv$PxT.Fall <- glm(alive_t1 ~ -1 + ageClass/(P.FALL*T.FALL) +  pred, 
+                      data=df_surv, 
                       family="binomial")
 
-mod.l$T.Fall <- glm(alive_t1 ~ -1 + ageClass/T.FALL +  pred, 
-                    data=dataSurvScld, 
+mod.surv$T.Fall <- glm(alive_t1 ~ -1 + ageClass/T.FALL +  pred, 
+                    data=df_surv, 
                     family="binomial")
 
-mod.l$P.Fall <- glm(alive_t1 ~ -1 + ageClass/P.FALL +  pred, 
-                    data=dataSurvScld, 
+mod.surv$P.Fall <- glm(alive_t1 ~ -1 + ageClass/P.FALL +  pred, 
+                    data=df_surv, 
                     family="binomial")
 
+# Creating a list to store the results
+results.surv<-list()
 
-## exporting AIC table
-x <- aictab(mod.l)
-aictable <- xtable(x, caption = NULL, label = NULL, align = NULL,
-                   digits = NULL, display = NULL, nice.names = TRUE,
-                   include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
+## Creating and exporting AIC table to results list
+results.surv$aictable.surv <- xtable(aictab(mod.surv), caption = NULL, label = NULL, align = NULL,
+                                     digits = NULL, display = NULL, nice.names = TRUE,
+                                     include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
 
+results.surv$aictable.surv[,3:6] <-round(results.surv[["aictable.surv"]][,3:6],digits=3)
 
-print.xtable(aictable, type="html", 
-             file="graph/weather_surv_AIC.html") # open directly with Word
+# Options to save AIC table
+#print.xtable(results.surv[["aictable.surv"]], type="html", file="surv_climate_aic_table.html")
+#write.table(results.surv[["aictable.surv"]], file="surv_climate_aic_table.csv")
 
+# Survival results from best models -------------------------------------------------------------------------------------- 
 
+results.surv$coefs.surv.best <- data.frame(coef(summary(mod.surv[[as.character(results.surv[["aictable.surv"]][1,1])]])))
+results.surv$coefs.surv.best[, 1:4] <- round(results.surv[["coefs.surv.best"]][, 1:4], digits = 3)
+results.surv$r2.surv.best<-data.frame(round(MuMIn::r.squaredGLMM(mod.surv[[as.character(results.surv[["aictable.surv"]][1,1])]]), digits = 3))
 
+results.surv$coefs.surv.2ndbest <- data.frame(coef(summary(mod.surv[[as.character(results.surv[["aictable.surv"]][2,1])]])))
+results.surv$coefs.surv.2ndbest[, 1:4] <- round(results.surv[["coefs.surv.2ndbest"]][, 1:4], digits = 3)
+results.surv$r2.surv.2ndbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.surv[[as.character(results.surv[["aictable.surv"]][2,1])]]), digits = 3))
 
-# MIGHT NOT BE GOOD ANYMORE
+results.surv$coefs.surv.3rdbest <- data.frame(coef(summary(mod.surv[[as.character(results.surv[["aictable.surv"]][3,1])]])))
+results.surv$coefs.surv.3rdbest[, 1:4] <- round(results.surv[["coefs.surv.3rdbest"]][, 1:4], digits = 3)
+results.surv$r2.surv.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.surv[[as.character(results.surv[["aictable.surv"]][3,1])]]), digits = 3))
 
+# Option to create and save RData file with data, candidate models and results
+# save(df_surv,mod.surv,results.surv,file = "surv_clim.Rdata")
 
+##### Reproduction ~ Weather #########################################################################################
+# Setting up and importing data ----------------------------------------------------------------------------------------
 
-
-# results 
-summary(mod.l$T.Fall)
-results.T.Win <- data.frame(coef(summary(mod.l$T.Win)))
-results.T.Win[, 1:4] <- round(results.T.Win[, 1:4], digits = 3)
-
-round(MuMIn::r.squaredGLMM(mod.l$T.Win), digits = 3) #
-#R2m   R2c
-#theoretical 0.257 0.301
-#delta       0.222 0.260
-getwd()
-
-
-
-results_weather_surv<- write.csv(results.T.Win, file = "C:/Users/Yanny/Documents/uSherbrooke/Hiver 2020/NDVI/OWPC/OWPC/results_weather_surv.xls", row.names = TRUE)
-
-
-
-# run RAW reproduction models ------------------------------------------------------
-
-
-
-dataFecScld<-filter(dataFecScld, yr>=2000)
-
+# Download RData from drive
+drive_download("OWPC/Analyses/cache/dataFecundityModels.RData",overwrite=T)
+# Import in R environment
+load("dataFecundityModels.RData")
+# Rename scaled data frame and remove years with missing data for climate
+df_fec<-droplevels(subset(dataFecScld,!(yr %in% c("1999","2000","2001"))))
+# Remove unnecessary objects for the environment
+rm(clim_fec,pheno_fec,weather_fec,sheep_data,dataFecUnscld,dataFecScld)
 
 # variable explanations 
-
-
 
 # these contain a time lag for fecundity 
 # "TSummerFec", "PSummerFec", "TAutFec","PAutFec"
@@ -229,11 +213,11 @@ dataFecScld<-filter(dataFecScld, yr>=2000)
 # these do not contain time lags 
 # "TWin","PWin","TSpring","PSpring",
 
+# Raw repro model selection ------------------------------------------------------
+mod.raw.repro <- list()
 
-
-mod.l <- list()
-mod.l$base <- glmer(raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID), # here write the model
-                    data=dataFecScld, 
+mod.raw.repro$base <- glmer(raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID), # here write the model
+                    data=df_fec, 
                     family="binomial",
                     control = glmerControl(optimizer="bobyqa", 
                                            optCtrl = list(maxfun = 2000000))) 
@@ -242,274 +226,270 @@ mod.l$base <- glmer(raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID), # here 
 # Winter yr-1
 
 
-mod.l$PTWin <-glmer(raw_repro ~ -1 + ageClass/PWin +ageClass/TWin+  MassAutumn_tm1 + (1|ID), # here write the model
-                            data=dataFecScld, 
+mod.raw.repro$PTWin <-glmer(raw_repro ~ -1 + ageClass/PWin +ageClass/TWin+  MassAutumn_tm1 + (1|ID), # here write the model
+                            data=df_fec, 
                             family="binomial",
                             control = glmerControl(optimizer="bobyqa", # nmkbw
                                                    optCtrl = list(maxfun = 2000000))) 
 
 
-mod.l$TxPWin <- glmer(raw_repro ~ -1 + ageClass/(TWin*PWin) +  MassAutumn_tm1 + (1|ID), # here write the model
-                         data=dataFecScld, 
+mod.raw.repro$TxPWin <- glmer(raw_repro ~ -1 + ageClass/(TWin*PWin) +  MassAutumn_tm1 + (1|ID), # here write the model
+                         data=df_fec, 
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
                                                 optCtrl = list(maxfun = 2000000))) 
 
 
-mod.l$TWin <- glmer(raw_repro ~ -1 + ageClass/TWin +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=dataFecScld, 
+mod.raw.repro$TWin <- glmer(raw_repro ~ -1 + ageClass/TWin +  MassAutumn_tm1 + (1|ID), # here write the model
+                          data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 2000000))) 
 
-mod.l$PWin <- glmer(raw_repro ~ -1 + ageClass/PWin +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=dataFecScld, 
+mod.raw.repro$PWin <- glmer(raw_repro ~ -1 + ageClass/PWin +  MassAutumn_tm1 + (1|ID), # here write the model
+                          data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 2000000))) 
 
 # Spring yr-1
 
-mod.l$PTSpring <-glmer(raw_repro ~ -1 + ageClass/PSpring +ageClass/TSpring +  MassAutumn_tm1 + (1|ID), # here write the model
-                         data=dataFecScld, 
+mod.raw.repro$PTSpring <-glmer(raw_repro ~ -1 + ageClass/PSpring +ageClass/TSpring +  MassAutumn_tm1 + (1|ID), # here write the model
+                         data=df_fec, 
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
                                                 optCtrl = list(maxfun = 2000000))) 
-mod.l$TxPSpring <- glmer(raw_repro ~ -1 + ageClass/(TSpring*PSpring) +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=dataFecScld, 
+mod.raw.repro$TxPSpring <- glmer(raw_repro ~ -1 + ageClass/(TSpring*PSpring) +  MassAutumn_tm1 + (1|ID), # here write the model
+                          data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 2000000))) 
 
-mod.l$TSpring <- glmer(raw_repro ~ -1 + ageClass/TSpring +  MassAutumn_tm1 + (1|ID), # here write the model
-                        data=dataFecScld, 
+mod.raw.repro$TSpring <- glmer(raw_repro ~ -1 + ageClass/TSpring +  MassAutumn_tm1 + (1|ID), # here write the model
+                        data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 1000000))) 
 
-mod.l$PSpring <- glmer(raw_repro ~ -1 + ageClass/PSpring +  MassAutumn_tm1 + (1|ID), # here write the model
-                        data=dataFecScld, 
+mod.raw.repro$PSpring <- glmer(raw_repro ~ -1 + ageClass/PSpring +  MassAutumn_tm1 + (1|ID), # here write the model
+                        data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 1000000))) 
 
 # Summer yr-1
-mod.l$PTSummerFec <-glmer(raw_repro ~ -1 + ageClass/PSummerFec +ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                         data=dataFecScld, 
+mod.raw.repro$PTSummerFec <-glmer(raw_repro ~ -1 + ageClass/PSummerFec +ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                         data=df_fec, 
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
                                                 optCtrl = list(maxfun = 2000000))) 
-mod.l$TxPSummerFec <- glmer(raw_repro ~ -1 + ageClass/(TSummerFec*PSummerFec) +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=dataFecScld, 
+mod.raw.repro$TxPSummerFec <- glmer(raw_repro ~ -1 + ageClass/(TSummerFec*PSummerFec) +  MassAutumn_tm1 + (1|ID), # here write the model
+                          data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 2000000))) 
 
-mod.l$TSummerFec <- glmer(raw_repro ~ -1 + ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                        data=dataFecScld, 
+mod.raw.repro$TSummerFec <- glmer(raw_repro ~ -1 + ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                        data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 1000000))) 
 
-mod.l$PSummerFec <- glmer(raw_repro ~ -1 + ageClass/PSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                        data=dataFecScld, 
+mod.raw.repro$PSummerFec <- glmer(raw_repro ~ -1 + ageClass/PSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                        data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 1000000))) 
 
 # Fall yr-1
-mod.l$P.TAutFec <-glmer(raw_repro ~ -1 + ageClass/PAutFec +ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                         data=dataFecScld, 
+mod.raw.repro$P.TAutFec <-glmer(raw_repro ~ -1 + ageClass/PAutFec +ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                         data=df_fec, 
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
                                                 optCtrl = list(maxfun = 2000000))) 
-mod.l$TxPAutFec <- glmer(raw_repro ~ -1 + ageClass/(TAutFec*PAutFec) +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=dataFecScld, 
+mod.raw.repro$TxPAutFec <- glmer(raw_repro ~ -1 + ageClass/(TAutFec*PAutFec) +  MassAutumn_tm1 + (1|ID), # here write the model
+                          data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 2000000))) 
 
-mod.l$TAutFec <- glmer(raw_repro ~ -1 + ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                        data=dataFecScld, 
+mod.raw.repro$TAutFec <- glmer(raw_repro ~ -1 + ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                        data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 1000000))) 
 
-mod.l$PAutFec <- glmer(raw_repro ~ -1 + ageClass/PAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                        data=dataFecScld, 
+mod.raw.repro$PAutFec <- glmer(raw_repro ~ -1 + ageClass/PAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                        data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 1000000))) 
 
-## exporting AIC table
-x <- aictab(mod.l)
-aictable <- xtable(x, caption = NULL, label = NULL, align = NULL,
-                   digits = NULL, display = NULL, nice.names = TRUE,
-                   include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
+# Creating a list to store the results
+results.raw.repro<-list()
 
-print.xtable(aictable, type="html", 
-             file="C:/Users/Yanny/Documents/uSherbrooke/Hiver 2020/NDVI/OWPC/OWPC/weather_rawrepro_AIC.html") # open directly with Word
-getwd()
+## Creating and exporting AIC table to results list
+results.raw.repro$aictable.raw.repro <- xtable(aictab(mod.raw.repro), caption = NULL, label = NULL, align = NULL,
+                                               digits = NULL, display = NULL, nice.names = TRUE,
+                                               include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
 
+results.raw.repro$aictable.raw.repro[,3:6] <-round(results.raw.repro[["aictable.raw.repro"]][,3:6],digits=3)
 
+# Raw repro results from best models --------------------------------------------------------------------------------------------- 
 
-# THESE MIGHT NOT BE GOOD ANYMORE (LR)
+results.raw.repro$coefs.raw.repro.best <- data.frame(coef(summary(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][1,1])]])))
+results.raw.repro$coefs.raw.repro.best[, 1:4] <- round(results.raw.repro[["coefs.raw.repro.best"]][, 1:4], digits = 3)
+results.raw.repro$r2.raw.repro.best<-data.frame(round(MuMIn::r.squaredGLMM(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][1,1])]]), digits = 3))
 
-# results 
-summary(mod.l$P.T.WIN.m1)
-library(boot)
-inv.logit(coef(summary(mod.l$P.T.WIN.m1)))
-results.T.Win <- data.frame(coef(summary(mod.l$T.Win)))
-results.T.Win[, 1:4] <- round(results.T.Win[, 1:4], digits = 3)
+results.raw.repro$coefs.raw.repro.2ndbest <- data.frame(coef(summary(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][2,1])]])))
+results.raw.repro$coefs.raw.repro.2ndbest[, 1:4] <- round(results.raw.repro[["coefs.raw.repro.2ndbest"]][, 1:4], digits = 3)
+results.raw.repro$r2.raw.repro.2ndbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][2,1])]]), digits = 3))
 
-round(MuMIn::r.squaredGLMM(mod.l$P.T.WIN.m1), digits = 3) #
-#R2m   R2c
-#theoretical 0.257 0.301
-#delta       0.222 0.260
+results.raw.repro$coefs.raw.repro.3rdbest <- data.frame(coef(summary(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][3,1])]])))
+results.raw.repro$coefs.raw.repro.3rdbest[, 1:4] <- round(results.raw.repro[["coefs.raw.repro.3rdbest"]][, 1:4], digits = 3)
+results.raw.repro$r2.raw.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][3,1])]]), digits = 3))
 
-
-
-# Run TRUE reproduction models --------------------------------------------
+# Option to create and save RData file with data, candidate models and results
+# save(df_raw.repro,mod.raw.repro,results.raw.repro,file = "raw.repro_clim.Rdata")
 
 
-mod.l <- list()
-mod.l$base <- glmer(true_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID), # here write the model
-                    data=dataFecScld, 
+
+# True repro model selection --------------------------------------------
+mod.true.repro <- list()
+
+mod.true.repro$base <- glmer(true_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID), # here write the model
+                    data=df_fec, 
                     family="binomial",
                     control = glmerControl(optimizer="bobyqa", 
-                                           optCtrl = list(maxfun = 2000000))) 
+                                        
+                                              optCtrl = list(maxfun = 2000000))) 
 
 
 # Winter yr-1
 
 
-mod.l$PTWin <-glmer(true_repro ~ -1 + ageClass/PWin +ageClass/TWin+  MassAutumn_tm1 + (1|ID), # here write the model
-                    data=dataFecScld, 
+mod.true.repro$PTWin <-glmer(true_repro ~ -1 + ageClass/PWin +ageClass/TWin+  MassAutumn_tm1 + (1|ID), # here write the model
+                    data=df_fec, 
                     family="binomial",
                     control = glmerControl(optimizer="bobyqa", # nmkbw
                                            optCtrl = list(maxfun = 2000000))) 
 
 
-mod.l$TxPWin <- glmer(true_repro ~ -1 + ageClass/(TWin*PWin) +  MassAutumn_tm1 + (1|ID), # here write the model
-                      data=dataFecScld, 
+mod.true.repro$TxPWin <- glmer(true_repro ~ -1 + ageClass/(TWin*PWin) +  MassAutumn_tm1 + (1|ID), # here write the model
+                      data=df_fec, 
                       family="binomial",
                       control = glmerControl(optimizer="bobyqa", 
                                              optCtrl = list(maxfun = 2000000))) 
 
 
-mod.l$TWin <- glmer(true_repro ~ -1 + ageClass/TWin +  MassAutumn_tm1 + (1|ID), # here write the model
-                    data=dataFecScld, 
+mod.true.repro$TWin <- glmer(true_repro ~ -1 + ageClass/TWin +  MassAutumn_tm1 + (1|ID), # here write the model
+                    data=df_fec, 
                     family="binomial",
                     control = glmerControl(optimizer="bobyqa", 
                                            optCtrl = list(maxfun = 2000000))) 
 
-mod.l$PWin <- glmer(true_repro ~ -1 + ageClass/PWin +  MassAutumn_tm1 + (1|ID), # here write the model
-                    data=dataFecScld, 
+mod.true.repro$PWin <- glmer(true_repro ~ -1 + ageClass/PWin +  MassAutumn_tm1 + (1|ID), # here write the model
+                    data=df_fec, 
                     family="binomial",
                     control = glmerControl(optimizer="bobyqa", 
                                            optCtrl = list(maxfun = 2000000))) 
 
 # Spring yr-1
 
-mod.l$PTSpring <-glmer(true_repro ~ -1 + ageClass/PSpring +ageClass/TSpring +  MassAutumn_tm1 + (1|ID), # here write the model
-                       data=dataFecScld, 
+mod.true.repro$PTSpring <-glmer(true_repro ~ -1 + ageClass/PSpring +ageClass/TSpring +  MassAutumn_tm1 + (1|ID), # here write the model
+                       data=df_fec, 
                        family="binomial",
                        control = glmerControl(optimizer="bobyqa", 
                                               optCtrl = list(maxfun = 2000000))) 
-mod.l$TxPSpring <- glmer(true_repro ~ -1 + ageClass/(TSpring*PSpring) +  MassAutumn_tm1 + (1|ID), # here write the model
-                         data=dataFecScld, 
+mod.true.repro$TxPSpring <- glmer(true_repro ~ -1 + ageClass/(TSpring*PSpring) +  MassAutumn_tm1 + (1|ID), # here write the model
+                         data=df_fec, 
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
                                                 optCtrl = list(maxfun = 2000000))) 
 
-mod.l$TSpring <- glmer(true_repro ~ -1 + ageClass/TSpring +  MassAutumn_tm1 + (1|ID), # here write the model
-                       data=dataFecScld, 
+mod.true.repro$TSpring <- glmer(true_repro ~ -1 + ageClass/TSpring +  MassAutumn_tm1 + (1|ID), # here write the model
+                       data=df_fec, 
                        family="binomial",
                        control = glmerControl(optimizer="bobyqa", 
                                               optCtrl = list(maxfun = 1000000))) 
 
-mod.l$PSpring <- glmer(true_repro ~ -1 + ageClass/PSpring +  MassAutumn_tm1 + (1|ID), # here write the model
-                       data=dataFecScld, 
+mod.true.repro$PSpring <- glmer(true_repro ~ -1 + ageClass/PSpring +  MassAutumn_tm1 + (1|ID), # here write the model
+                       data=df_fec, 
                        family="binomial",
                        control = glmerControl(optimizer="bobyqa", 
                                               optCtrl = list(maxfun = 1000000))) 
 
 # Summer yr-1
-mod.l$PTSummerFec <-glmer(true_repro ~ -1 + ageClass/PSummerFec +ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=dataFecScld, 
+mod.true.repro$PTSummerFec <-glmer(true_repro ~ -1 + ageClass/PSummerFec +ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                          data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 2000000))) 
-mod.l$TxPSummerFec <- glmer(true_repro ~ -1 + ageClass/(TSummerFec*PSummerFec) +  MassAutumn_tm1 + (1|ID), # here write the model
-                            data=dataFecScld, 
+mod.true.repro$TxPSummerFec <- glmer(true_repro ~ -1 + ageClass/(TSummerFec*PSummerFec) +  MassAutumn_tm1 + (1|ID), # here write the model
+                            data=df_fec, 
                             family="binomial",
                             control = glmerControl(optimizer="bobyqa", 
                                                    optCtrl = list(maxfun = 2000000))) 
 
-mod.l$TSummerFec <- glmer(true_repro ~ -1 + ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=dataFecScld, 
+mod.true.repro$TSummerFec <- glmer(true_repro ~ -1 + ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                          data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 1000000))) 
 
-mod.l$PSummerFec <- glmer(true_repro ~ -1 + ageClass/PSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=dataFecScld, 
+mod.true.repro$PSummerFec <- glmer(true_repro ~ -1 + ageClass/PSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                          data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 1000000))) 
 
 # Fall yr-1
-mod.l$P.TAutFec <-glmer(true_repro ~ -1 + ageClass/PAutFec +ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                        data=dataFecScld, 
+mod.true.repro$P.TAutFec <-glmer(true_repro ~ -1 + ageClass/PAutFec +ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                        data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 2000000))) 
-mod.l$TxPAutFec <- glmer(true_repro ~ -1 + ageClass/(TAutFec*PAutFec) +  MassAutumn_tm1 + (1|ID), # here write the model
-                         data=dataFecScld, 
+mod.true.repro$TxPAutFec <- glmer(true_repro ~ -1 + ageClass/(TAutFec*PAutFec) +  MassAutumn_tm1 + (1|ID), # here write the model
+                         data=df_fec, 
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
                                                 optCtrl = list(maxfun = 2000000))) 
 
-mod.l$TAutFec <- glmer(true_repro ~ -1 + ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                       data=dataFecScld, 
+mod.true.repro$TAutFec <- glmer(true_repro ~ -1 + ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                       data=df_fec, 
                        family="binomial",
                        control = glmerControl(optimizer="bobyqa", 
                                               optCtrl = list(maxfun = 1000000))) 
 
-mod.l$PAutFec <- glmer(true_repro ~ -1 + ageClass/PAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
-                       data=dataFecScld, 
+mod.true.repro$PAutFec <- glmer(true_repro ~ -1 + ageClass/PAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
+                       data=df_fec, 
                        family="binomial",
                        control = glmerControl(optimizer="bobyqa", 
                                               optCtrl = list(maxfun = 1000000))) 
 
+# Creating a list to store the results
+results.true.repro<-list()
 
+## Creating and exporting AIC table to results list
+results.true.repro$aictable.true.repro <- xtable(aictab(mod.true.repro), caption = NULL, label = NULL, align = NULL,
+                                                 digits = NULL, display = NULL, nice.names = TRUE,
+                                                 include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
 
-## exporting AIC table
-x <- aictab(mod.l)
-aictable <- xtable(x, caption = NULL, label = NULL, align = NULL,
-                   digits = NULL, display = NULL, nice.names = TRUE,
-                   include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
+results.true.repro$aictable.true.repro[,3:6] <-round(results.true.repro[["aictable.true.repro"]][,3:6],digits=3)
 
+# True repro results from best models --------------------------------------------------------------------------------------------- 
 
-print.xtable(aictable, type="html", 
-             file="weather_truerepro_AIC.html") # Change path if nec. 
-getwd()
+results.true.repro$coefs.true.repro.best <- data.frame(coef(summary(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][1,1])]])))
+results.true.repro$coefs.true.repro.best[, 1:4] <- round(results.true.repro[["coefs.true.repro.best"]][, 1:4], digits = 3)
+results.true.repro$r2.true.repro.best<-data.frame(round(MuMIn::r.squaredGLMM(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][1,1])]]), digits = 3))
 
+results.true.repro$coefs.true.repro.2ndbest <- data.frame(coef(summary(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][2,1])]])))
+results.true.repro$coefs.true.repro.2ndbest[, 1:4] <- round(results.true.repro[["coefs.true.repro.2ndbest"]][, 1:4], digits = 3)
+results.true.repro$r2.true.repro.2ndbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][2,1])]]), digits = 3))
 
+results.true.repro$coefs.true.repro.3rdbest <- data.frame(coef(summary(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][3,1])]])))
+results.true.repro$coefs.true.repro.3rdbest[, 1:4] <- round(results.true.repro[["coefs.true.repro.3rdbest"]][, 1:4], digits = 3)
+results.true.repro$r2.true.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][3,1])]]), digits = 3))
 
-# MIGHT NOT BE GOOD ANYMORE (LR)
-
-
-
-# results 
-summary(mod.l$P.T.WIN.m1)
-library(boot)
-inv.logit(coef(summary(mod.l$P.T.WIN.m1)))
-results.T.Win <- data.frame(coef(summary(mod.l$T.Win)))
-results.T.Win[, 1:4] <- round(results.T.Win[, 1:4], digits = 3)
-
-round(MuMIn::r.squaredGLMM(mod.l$P.T.WIN.m1), digits = 3) #
-# R2m   R2c
-# theoretical 0.327 0.777
-# delta       0.280 0.664
-
+# Option to create and save RData file with data, candidate models and results
+# save(df_true.repro,mod.true.repro,results.true.repro,file = "true.repro_clim.Rdata")
