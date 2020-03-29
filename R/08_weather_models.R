@@ -223,17 +223,17 @@ mod.raw.repro$base <- glmer(raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID),
                                            optCtrl = list(maxfun = 2000000))) 
 
 
-# Winter yr-1
+# Winter
 
 
-mod.raw.repro$PTWin <-glmer(raw_repro ~ -1 + ageClass/PWin +ageClass/TWin+  MassAutumn_tm1 + (1|ID), # here write the model
+mod.raw.repro$PTWin <-glmer(raw_repro ~ -1 + ageClass/PWin +ageClass/TWin +  MassAutumn_tm1 + (1|ID), # here write the model
                             data=df_fec, 
                             family="binomial",
                             control = glmerControl(optimizer="bobyqa", # nmkbw
                                                    optCtrl = list(maxfun = 2000000))) 
 
 
-mod.raw.repro$TxPWin <- glmer(raw_repro ~ -1 + ageClass/(TWin*PWin) +  MassAutumn_tm1 + (1|ID), # here write the model
+mod.raw.repro$TxPWin <- glmer(raw_repro ~ -1 + ageClass/(TWin*PWin) + MassAutumn_tm1 + (1|ID), # here write the model
                          data=df_fec, 
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
@@ -252,7 +252,7 @@ mod.raw.repro$PWin <- glmer(raw_repro ~ -1 + ageClass/PWin +  MassAutumn_tm1 + (
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 2000000))) 
 
-# Spring yr-1
+# Spring
 
 mod.raw.repro$PTSpring <-glmer(raw_repro ~ -1 + ageClass/PSpring +ageClass/TSpring +  MassAutumn_tm1 + (1|ID), # here write the model
                          data=df_fec, 
@@ -278,48 +278,49 @@ mod.raw.repro$PSpring <- glmer(raw_repro ~ -1 + ageClass/PSpring +  MassAutumn_t
                                                optCtrl = list(maxfun = 1000000))) 
 
 # Summer yr-1
-mod.raw.repro$PTSummerFec <-glmer(raw_repro ~ -1 + ageClass/PSummerFec +ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
+mod.raw.repro$PTSummer<-glmer(raw_repro ~ -1 + ageClass/PSummerFec +ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
                          data=df_fec, 
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
                                                 optCtrl = list(maxfun = 2000000))) 
-mod.raw.repro$TxPSummerFec <- glmer(raw_repro ~ -1 + ageClass/(TSummerFec*PSummerFec) +  MassAutumn_tm1 + (1|ID), # here write the model
+mod.raw.repro$TxPSummer <- glmer(raw_repro ~ -1 + ageClass/(TSummerFec*PSummerFec) +  MassAutumn_tm1 + (1|ID), # here write the model
                           data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 2000000))) 
 
-mod.raw.repro$TSummerFec <- glmer(raw_repro ~ -1 + ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
+mod.raw.repro$TSummer <- glmer(raw_repro ~ -1 + ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
                         data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 1000000))) 
 
-mod.raw.repro$PSummerFec <- glmer(raw_repro ~ -1 + ageClass/PSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
+mod.raw.repro$PSummer <- glmer(raw_repro ~ -1 + ageClass/PSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
                         data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 1000000))) 
 
 # Fall yr-1
-mod.raw.repro$P.TAutFec <-glmer(raw_repro ~ -1 + ageClass/PAutFec +ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
+mod.raw.repro$P.TFall <-glmer(raw_repro ~ -1 + ageClass/PAutFec + ageClass/TAutFec + MassAutumn_tm1 + (1|ID), # here write the model
                          data=df_fec, 
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
                                                 optCtrl = list(maxfun = 2000000))) 
-mod.raw.repro$TxPAutFec <- glmer(raw_repro ~ -1 + ageClass/(TAutFec*PAutFec) +  MassAutumn_tm1 + (1|ID), # here write the model
+
+mod.raw.repro$TxFall <- glmer(raw_repro ~ -1 + ageClass/(TAutFec*PAutFec) +  MassAutumn_tm1 + (1|ID), # here write the model
                           data=df_fec, 
                           family="binomial",
                           control = glmerControl(optimizer="bobyqa", 
                                                  optCtrl = list(maxfun = 2000000))) 
 
-mod.raw.repro$TAutFec <- glmer(raw_repro ~ -1 + ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
+mod.raw.repro$TFall <- glmer(raw_repro ~ -1 + ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
                         data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
                                                optCtrl = list(maxfun = 1000000))) 
 
-mod.raw.repro$PAutFec <- glmer(raw_repro ~ -1 + ageClass/PAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
+mod.raw.repro$PFall <- glmer(raw_repro ~ -1 + ageClass/PAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
                         data=df_fec, 
                         family="binomial",
                         control = glmerControl(optimizer="bobyqa", 
