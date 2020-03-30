@@ -3,19 +3,20 @@
 # translocated added manually by PO Cusson
 # Updated March 5 2020. 
 
-# Set working directory
-setwd("") # to CHANGE
-
-
-
-# clean 
-rm(list = ls())
-
 
 #=======
 library(googledrive)
 library(plyr)
 library(dplyr)
+
+
+
+# Set working directory
+setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data") # to CHANGE
+getwd()
+
+# clean 
+rm(list = ls())
 
 
 # definition code.sr ------------------------------------------------------
@@ -61,6 +62,75 @@ survF<-survF[survF$yr>=1999,] # n = 641
 survF$code.sr[survF$code.sr == '0œ'] <- "0"
 
 
+# add missing or manual data  ---------------------------------------------
+
+# get first year trans from old data 
+
+trans <- read.delim("old/sheep_data.txt", sep = "")
+# add status for 2015 - 2016 from old sheep data # unite two columns each having birthdates 
+
+library(tidyr)
+names(survF)
+names(trans)
+str(survF)
+str(trans)
+
+tmpTrans <-trans %>%
+  filter(yr >=2015)
+tmpSurv <-survF %>%
+  filter(yr >=2015)
+
+tmpSurv$ID <- droplevels(tmpSurv$ID)
+tmpTrans$ID <- droplevels(tmpTrans$ID)
+which(!tmpSurv$yr==tmpTrans$yr)
+
+tmpTrans<- tmpTrans[-c(45, 46, 92:94),]
+trans$ID <- droplevels(trans$ID)
+tmpSurv<- tmpSurv[-35,]
+tmpSurv$ID <- droplevels(tmpSurv$ID)
+
+
+which(!tmpSurv$yr==tmpTrans$yr)
+
+tmpTrans <- tmpTrans %>% 
+  arrange(yr,ID)
+
+tmpSurv <- tmpSurv %>% 
+  arrange(yr, ID)
+
+which(!tmpSurv$yr==tmpTrans$yr)
+
+tmpSurv$alive_t1_2 <- coalesce(tmpSurv$alive_t1, tmpTrans$alive_t1)
+tmpTrans$alive_t1_2 <- coalesce(tmpSurv$alive_t1, tmpTrans$alive_t1)
+which(!tmpTrans$alive_t1==tmpTrans$alive_t1_2)
+
+colnames(tmpSurv)
+survF<-merge(survF, 
+             tmpSurv[, c("yr", "ID", "alive_t1_2")], 
+             by.x = c("yr", "ID"), 
+             by.y= c("yr", "ID"),
+             all.x =T)
+
+survF$ID <- droplevels(survF$ID)
+survF$alive_t1 <- coalesce(survF$alive_t1, survF$alive_t1_2)
+which(!survF$alive_t1==survF$alive_t1_2)
+
+survF = survF[, -10]
+
+View(tmp)
+
+survF<-merge(survF, 
+             trans[, c("yr", "ID", "first_yr_trans")], 
+             by.x = c("yr", "ID"), 
+             by.y= c("yr", "ID"),
+             all.x =T)
+
+survF$first_yr_trans <- ifelse(is.na(survF$first_yr_trans),0,survF$first_yr_trans)
+
+table(survF$yr, survF$first_yr_trans)# added missing u females
+table(trans$yr, trans$first_yr_trans)
+
+
 # add reproduction  -------------------------------------------------------
 
 # RAW reproduction 
@@ -103,7 +173,7 @@ survF  <- survF %>%
 ) %>% 
   mutate(neonatal= as.factor(neonatal),
          yr = as.factor(yr), 
-         alive_t1 = as.factor(yr), 
+         alive_t1 = as.factor(alive_t1), 
          raw_repro = as.factor(raw_repro),
          true_repro = as.factor(true_repro),
          pred = as.factor(pred))
@@ -116,11 +186,11 @@ survF$ID<-droplevels(survF$ID)
 summary(survF$code.sr)
 
 #   0    1    2    3    4    5    8    9  NA's 
-#  126   64   46   86    1  112   10    2  188 
+#  132   64   46   86    1  112   10    2  188 
 
 
 colnames(survF)
-survF<- survF[, c("yr","age","ID","alive_t1","raw_repro","true_repro", "pred", "neonatal")]
+survF<- survF[, c("yr","age","ID","alive_t1","raw_repro","true_repro", "pred", "neonatal", "first_yr_trans")]
 
 
 #verif
@@ -138,22 +208,25 @@ ghost <- ghost[ghost$neonatal == "0",] # le statut de leur mère
 ghost$age = 0 # these are lambs 
 ghost$ID = paste(ghost$yr, ghost$ID, sep = "-")
 
+
 #"alive_t1"   "raw_repro"  "true_repro" "pred" 
 ghost$alive_t1 = "FALSE"
 ghost$raw_repro = 0
 ghost$true_repro = 0
 ghost$neonatal= NA
-
+ghost$first_yr_trans= 0
 
 ghost$raw_repro = as.factor(ghost$raw_repro )
 ghost$true_repro = as.factor(ghost$true_repro )
 ghost$pred = as.factor(ghost$pred)
 ghost$alive_t1 = as.factor(ghost$alive_t1)
+ghost$first_yr_trans = as.factor(ghost$first_yr_trans)
+
 ghost$ID = as.factor(ghost$ID)
 colnames(ghost)
 str(ghost)
 
-ghost <- ghost[, c("yr","age","ID","alive_t1","raw_repro","true_repro","pred", "neonatal")]
+ghost <- ghost[, c("yr","age","ID","alive_t1","raw_repro","true_repro","pred", "neonatal", 'first_yr_trans')]
 ghost = as.data.frame(ghost)
 ghost$yr = as.integer(as.character(ghost$yr))
 str(ghost)
@@ -162,22 +235,18 @@ ghost<-ghost %>%
   filter(yr > 1998) # keep as many years as possible 
 ghost = as.data.frame(ghost)
 
-colnames(survF)
-colnames(ghost)
+randomGhost <- ghost[sample(nrow(ghost), length(ghost$ID)/2), ]
 
-str(survF)
+survF <- rbind(survF,randomGhost)
 
-survF$yr = as.factor(survF$yr)
-survF <- as.data.frame(survF)
 
-# add lamb ghosts to current females 
-survF<-rbind(survF, ghost) # 639  # REVISED : 699 INCLUDING NAS
-str(survF)
 survF$yr = as.factor(survF$yr)
 
 survF <- survF %>% 
   group_by(yr, ID) %>% 
-  droplevels()
+  droplevels() # n = 673
+survF <- as.data.frame(survF)
+
 
 
 # add sheep mass ----------------------------------------------------------
@@ -220,24 +289,8 @@ survF$yr <- as.factor(survF$yr)
 rm(ghost, df1, mass, mjune, msep, surv)
 
 
-# add missing or manual data  ---------------------------------------------
 
-# get first year trans from old data 
-trans <- read.delim("old/sheep_data.txt", sep = "")
-survF<-merge(survF, 
-                  trans[, c("yr", "ID", "first_yr_trans")], 
-                  by.x = c("yr", "ID"), 
-                  by.y= c("yr", "ID"),
-                  all.x =T)
-
-survF$first_yr_trans <- ifelse(is.na(survF$first_yr_trans),0,survF$first_yr_trans)
-table(survF$yr, survF$first_yr_trans)# added missing u females
-table(trans$yr, trans$first_yr_trans)
-
-
-
-
-
+# verification with database ----------------------------------------------
 
 
 # compare with ram mtn pop
@@ -267,10 +320,5 @@ tmp1 = RamMtnpop %>%
 # overwrite  --------------------------------------------------------------
 
 
-
-# MAKE SURE YOU WANT TO OVERWRITE? 
-
-
-
-#write.csv(survF, "repro_mass.csv", row.names = FALSE)
-#drive_upload("repro_mass.csv", path = "OWPC/Analyses/data/repro_mass.csv", overwrite = T)
+# write.csv(survF, "repro_mass.csv", row.names = FALSE)
+# drive_upload("repro_mass.csv", path = "OWPC/Analyses/data/repro_mass.csv", overwrite = T)
