@@ -11,10 +11,6 @@
 
 
 
-# these are left with NAs
-
-
-
 # load libraries - a ton... 
 library(googledrive)
 library(plyr)
@@ -269,10 +265,7 @@ save_kable(file = "table1.html", self_contained = T)
 
 # show results 
 biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
-biplot(acp_surv, scaling=1)
-
 biplot(acp_surv, scaling=2) # relationships between variables 
-biplot(acp_surv, scaling="species")
 
 #  make pca on timing  ------------------------------------------------------
 
@@ -294,7 +287,9 @@ summary(acpTiming) # by default scaling 2 is used in summary
 summary(acpTiming, scaling = 1)
 
 eigenvals(acpTiming)
-yearTiming <- summary(acpTiming)$sites # this is the new scores for year
+yearTiming <- data.frame(summary(acpTiming)$sites)
+names(yearTiming)[1:2] <- c("PC1Tim", "PC2Tim")
+
 varTiming <- summary(acpTiming)$species # this is the contribution of variables to each pc
 
 # save table 
@@ -322,6 +317,12 @@ pheno_surv<-cbind(pheno_surv, yearTiming[, 1:2])
 # clean up 
 
 rm(tmp1, tmp2, var, year, pheno, lengths, acp_surv, test)
+
+
+colnames(pheno_surv)
+
+pheno_surv<- pheno_surv[, c("year","SummerNDVI","WinNDVIsurvT1",   
+                            "NDVIsurvT1","NDVIsurvT","PC1" ,"PC2"  ,"PC1Tim","PC2Tim" )]
 
 # 4 - create climate data ------------------------------------------------
 
@@ -507,7 +508,6 @@ sheep_data$ageClass <- as.factor(sheep_data$ageClass)
 
 #  merge # 1
 colnames(sheep_data)
-colnames(pheno_surv)
 
 tmp1 <-  merge(sheep_data[c("yr","ID", "alive_t1", "MassSpring","MassAutumn","age","pred", "first_yr_trans", "ageClass")],
             pheno_surv,
@@ -552,8 +552,8 @@ dataSurv$MassAutumn<-as.numeric(as.character(dataSurv$MassAutumn))
 
 dataSurv$PC1<-as.numeric(as.character(dataSurv$PC1))
 dataSurv$PC2<-as.numeric(as.character(dataSurv$PC2))
-dataSurv$PC1.1<-as.numeric(as.character(dataSurv$PC1.1))
-dataSurv$PC2.1<-as.numeric(as.character(dataSurv$PC2.1))
+dataSurv$PC1Tim-as.numeric(as.character(dataSurv$PC1Tim))
+dataSurv$PC2Tim<-as.numeric(as.character(dataSurv$PC2Tim))
 
 dataSurv$PDO.winter_surv<-as.numeric(as.character(dataSurv$PDO.winter_surv))
 dataSurv$PDO.summer_surv<-as.numeric(as.character(dataSurv$PDO.summer_surv))
@@ -597,7 +597,7 @@ colnames(dataSurv)
 dataSurv <- dataSurv[, c("yr","ID","alive_t1","age" , "pred","first_yr_trans" , "ageClass",
                          "MassSpring","MassAutumn", 
                          "SummerNDVI","WinNDVIsurvT1","NDVIsurvT","NDVIsurvT1",
-                          "PC1","PC2","PC1.1","PC2.1",
+                          "PC1","PC2","PC1Tim","PC2Tim",
                          "PDO.summer_surv", "PDO.fall_surv",   "SOI.summer_surv", "SOI.fall_surv","PDO.winter_tm1","SOI.winter_tm1", 
                          "PDO.winter_surv", "PDO.spring_surv", "SOI.winter_surv", "SOI.spring_surv",
                          "T.WIN.m1","P.WIN.m1","T.SPRING.m1","P.SPRING.m1","T.SUMMER","P.SUMMER","T.FALL","P.FALL","T.WIN","P.WIN",
@@ -618,11 +618,10 @@ rm(tmp,tmp1, tmp2, tmp3)
 getwd()
 
 #
-save(sheep_data, pheno_surv, clim_surv, weather_surv, dataSurvUnscld, dataSurvScld,
-     file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData")
-
-drive_upload("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData",
-             path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
+# save(sheep_data, pheno_surv, clim_surv, weather_surv, dataSurvUnscld, dataSurvScld,
+#      file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData")
+# drive_upload("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData",
+#              path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
 
 
 
