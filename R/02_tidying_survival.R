@@ -171,36 +171,49 @@ pheno <- unique(pheno)
 pheno$year <- as.numeric(as.character(pheno$year))
 colnames(pheno)
 
+
+# WIN : spans across 2 years : thus it is classified as year of december despite spanning jan t+1
+
+
 colnames(pheno) # here only winter season is a problem - summer is on same year than surv
-tmp1 <- unique(pheno[, c("year", "WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR")])
-tmp1$year <- tmp1$year - 1 # on leur met l'année de la survie 
-dim(tmp1)
+tmp1 <- unique(pheno[, c("year", "WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR", 
+                         "ndvi_log_up_jul","evi_log_up_jul","lai_log_up_jul",
+                         "gpp_log_up_jul","snow_log_up_jul","psnnet_log_up_jul", "fpar_log_up_jul")])
+tmp1$year <- tmp1$year - 1 # on leur met l'année de la survie t+1
+colnames(tmp1)
 tmp1 <- tmp1 %>% 
-  rename(WinNDVI_surv = WinNDVI,
-         WinEVI_surv =WinEVI, 
-         WinLAI_surv =WinLAI,
-         WinGPP_surv =WinGPP,
-         WinSnow_surv =WinSnow,
-         WinPSNNET_surv =WinPSNNET,
-         WinFPAR_surv =WinFPAR)
+  rename(WinNDVIsurvT1  = WinNDVI,
+         WinEVIsurvT1  =WinEVI, 
+         WinLAIsurvT1  =WinLAI,
+         WinGPPsurvT1  =WinGPP,
+         WinSnowsurvT1  =WinSnow,
+         WinPSNNETsurvT1  =WinPSNNET,
+         WinFPARsurvT1  =WinFPAR, 
+         NDVIsurvT1 = ndvi_log_up_jul,
+         EVIsurvT1 =evi_log_up_jul, 
+         LAIsurvT1 =lai_log_up_jul,
+         GPPsurvT1 =gpp_log_up_jul,
+         SNOWsurvT1 =snow_log_up_jul,
+         PSNNETsurvT1 =psnnet_log_up_jul,
+         FPARsurvT1 =fpar_log_up_jul
+         )
 head(tmp1)
 
-# survival - NO time lag for spring timing  
+# survival - NO time lag for current spring timing affecting survival to next year 
 tmp2 <- unique(pheno[, c("year", "ndvi_log_up_jul","evi_log_up_jul","lai_log_up_jul",
                          "gpp_log_up_jul","snow_log_up_jul","psnnet_log_up_jul",
                          "fpar_log_up_jul")])
 
 dim(tmp2)
 tmp2 <- tmp2 %>% 
-  rename(NDVIsurv = ndvi_log_up_jul,
-         EVIsurv =evi_log_up_jul, 
-         LAIsurv =lai_log_up_jul,
-         GPPsurv =gpp_log_up_jul,
-         SNOWsurv =snow_log_up_jul,
-         PSNNETsurv =psnnet_log_up_jul,
-         FPARsurv =fpar_log_up_jul)
+  rename(NDVIsurvT = ndvi_log_up_jul,
+         EVIsurvT =evi_log_up_jul, 
+         LAIsurvT =lai_log_up_jul,
+         GPPsurvT =gpp_log_up_jul,
+         SNOWsurvT =snow_log_up_jul,
+         PSNNETsurvT =psnnet_log_up_jul,
+         FPARsurvT =fpar_log_up_jul)
 head(tmp2)
-
 
 pheno_surv <- merge(pheno[, c("year","SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET", "SummerFPAR")],
                     tmp1,
@@ -208,25 +221,24 @@ pheno_surv <- merge(pheno[, c("year","SummerNDVI","SummerEVI","SummerLAI","Summe
                     by.y = c("year"), 
                     all.x= T)
 
-colnames(pheno_surv)
-
-pheno_surv <- merge(pheno_surv[, c("year","SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET", "SummerFPAR", 
-                              "WinNDVI_surv","WinEVI_surv","WinLAI_surv","WinGPP_surv","WinSnow_surv","WinPSNNET_surv", "WinFPAR_surv")],
+pheno_surv <- merge(pheno_surv,
                     tmp2,
                     by.x = c("year"), 
                     by.y = c("year"), 
                     all.x= T)
 
+colnames(pheno_surv)
 
-# 3 - make pheno pca with appropriate time lags ---------------------------------------------------------------
+
+# 3 - make pheno pca for seasons  ---------------------------------------------------------------
 
 # scale
 colnames(pheno_surv)
 pheno_surv<-pheno_surv %>% 
   filter(year > 2000 & year <2016)
 
-lengths <- pheno_surv[c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR","WinNDVI_surv" ,
-                   "WinEVI_surv","WinLAI_surv","WinGPP_surv","WinSnow_surv","WinPSNNET_surv", "WinFPAR_surv")] 
+lengths <- pheno_surv[c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR",
+                        "WinNDVIsurvT1","WinEVIsurvT1","WinLAIsurvT1","WinGPPsurvT1","WinSnowsurvT1","WinPSNNETsurvT1", "WinFPARsurvT1")] 
 hist(unlist(lengths))# need multinormal distn
 
 # Standardisation
@@ -262,11 +274,12 @@ biplot(acp_surv, scaling=1)
 biplot(acp_surv, scaling=2) # relationships between variables 
 biplot(acp_surv, scaling="species")
 
-# make pca on timing  ------------------------------------------------------
+#  make pca on timing  ------------------------------------------------------
 
 colnames(pheno_surv)
 
-lengths2 <- pheno_surv[c( "NDVIsurv","EVIsurv","LAIsurv","GPPsurv","SNOWsurv", "PSNNETsurv", "FPARsurv")] 
+lengths2 <- pheno_surv[c( "NDVIsurvT","EVIsurvT","LAIsurvT","GPPsurvT","SNOWsurvT", "PSNNETsurvT", "FPARsurvT", 
+                          "NDVIsurvT1","EVIsurvT1","LAIsurvT1","GPPsurvT1","SNOWsurvT1", "PSNNETsurvT1", "FPARsurvT1")] 
 hist(unlist(lengths2))# need multinormal distn
 
 lengths2 <- na.omit(lengths2) 
@@ -301,7 +314,7 @@ biplot(acpTiming, scaling="species")
 # need exact number of lines in two df 
 
 pheno_surv<- pheno_surv[!is.na(pheno_surv$SummerGPP), ] # missing data 
-pheno_surv<- pheno_surv[!is.na(pheno_surv$WinNDVI_surv), ] # missing data 
+pheno_surv<- pheno_surv[!is.na(pheno_surv$WinNDVIsurvT1), ] # missing data 
 
 pheno_surv<-cbind(pheno_surv, year[, 1:2])
 pheno_surv<-cbind(pheno_surv, yearTiming[, 1:2])
@@ -469,7 +482,7 @@ colnames(weather)
 tmp <- weather[, c("yr","T.WIN.m1", "P.WIN.m1", "T.SPRING.m1","P.SPRING.m1")]
 
 tmp$yr <- tmp$yr-1
-names(tmp)<-c("yr", "T.WIN", "P.WIN", "T.SPRING", "P.SPRING") # these have the time lag 
+names(tmp)<-c("yr", "T.WIN", "P.WIN", "T.SPRING", "P.SPRING") # these have the time lag t+1
 head(tmp)
 
 #weather_surv<-weather[, c("yr","T.Win","P.Win","T.SPRING","P.SPRING")]
@@ -526,6 +539,7 @@ tmp3<-merge(tmp2,
 dataSurv <- tmp3
 
 # tidy up rest as factor, numeric
+colnames(dataSurv)
 
 dataSurv$yr<-as.factor(dataSurv$yr)
 dataSurv$alive_t1<-as.factor(dataSurv$alive_t1)
@@ -538,7 +552,8 @@ dataSurv$MassAutumn<-as.numeric(as.character(dataSurv$MassAutumn))
 
 dataSurv$PC1<-as.numeric(as.character(dataSurv$PC1))
 dataSurv$PC2<-as.numeric(as.character(dataSurv$PC2))
-
+dataSurv$PC1.1<-as.numeric(as.character(dataSurv$PC1.1))
+dataSurv$PC2.1<-as.numeric(as.character(dataSurv$PC2.1))
 
 dataSurv$PDO.winter_surv<-as.numeric(as.character(dataSurv$PDO.winter_surv))
 dataSurv$PDO.summer_surv<-as.numeric(as.character(dataSurv$PDO.summer_surv))
@@ -581,7 +596,7 @@ colnames(dataSurv)
 # only keep ndvi + pc
 dataSurv <- dataSurv[, c("yr","ID","alive_t1","age" , "pred","first_yr_trans" , "ageClass",
                          "MassSpring","MassAutumn", 
-                         "SummerNDVI","WinNDVI_surv","NDVIsurv",
+                         "SummerNDVI","WinNDVIsurvT1","NDVIsurvT","NDVIsurvT1",
                           "PC1","PC2","PC1.1","PC2.1",
                          "PDO.summer_surv", "PDO.fall_surv",   "SOI.summer_surv", "SOI.fall_surv","PDO.winter_tm1","SOI.winter_tm1", 
                          "PDO.winter_surv", "PDO.spring_surv", "SOI.winter_surv", "SOI.spring_surv",
@@ -590,9 +605,8 @@ dataSurv <- dataSurv[, c("yr","ID","alive_t1","age" , "pred","first_yr_trans" , 
                          "PDOSOI_winter",  "PDOSOI_spring","PDOSOI_summer", "PDOSOI_fall", "PDOSOI_winter_tm1" )]
 
 
-dataSurv[, c(8:43)] <- scale(dataSurv[, c(8:43)])
+dataSurv[, c(8:44)] <- scale(dataSurv[, c(8:44)])
 dataSurvScld = dataSurv
-
 
 
 # cleaning 
@@ -604,11 +618,11 @@ rm(tmp,tmp1, tmp2, tmp3)
 getwd()
 
 #
-# save(sheep_data, pheno_surv, clim_surv, weather_surv, dataSurvUnscld, dataSurvScld,
-#      file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData")
-# 
-# drive_upload("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData",
-#              path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
+save(sheep_data, pheno_surv, clim_surv, weather_surv, dataSurvUnscld, dataSurvScld,
+     file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData")
+
+drive_upload("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData",
+             path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
 
 
 
