@@ -185,12 +185,11 @@ tmp1 <- tmp1 %>%
          WinFPAR_surv =WinFPAR)
 head(tmp1)
 
-# survival - add time lag for spring timing  
+# survival - NO time lag for spring timing  
 tmp2 <- unique(pheno[, c("year", "ndvi_log_up_jul","evi_log_up_jul","lai_log_up_jul",
                          "gpp_log_up_jul","snow_log_up_jul","psnnet_log_up_jul",
                          "fpar_log_up_jul")])
 
-tmp2$year <- tmp2$year - 1 # on leur met l'année de la survie 
 dim(tmp2)
 tmp2 <- tmp2 %>% 
   rename(NDVIsurv = ndvi_log_up_jul,
@@ -610,7 +609,7 @@ getwd()
 # 
 # drive_upload("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData",
 #              path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
-# 
+
 
 
 
