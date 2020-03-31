@@ -86,7 +86,7 @@ results.surv$coefs.surv.3rdbest[, 1:4] <- round(results.surv[["coefs.surv.3rdbes
 results.surv$r2.surv.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.surv[[as.character(results.surv[["aictable.surv"]][3,1])]]), digits = 3))
 
 # Option to create and save RData file with data, candidate models and results
-# save(df_surv,mod.surv,results.surv,file = "surv_clim.Rdata")
+# save(df_surv,mod.surv,results.surv,file = "surv_pheno.Rdata")
 
 ##### Reproduction ~ Phenology #########################################################################################
 # Setting up and importing data ----------------------------------------------------------------------------------------
@@ -136,19 +136,19 @@ mod.raw.repro$pc1tim <- glmer(raw_repro ~ -1 + ageClass/PC1Tim +  MassAutumn_tm1
                                                                                     optCtrl = list(maxfun = 2000000)))
 
 
-# does not converge
-mod.raw.repro$pc1pc2tim <- glmer(raw_repro ~ -1 + ageClass/PC1Tim + ageClass/PC2Tim + MassAutumn_tm1 + (1|ID), 
-                                 data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                        optCtrl = list(maxfun = 4000000)))
-modelfit.all <- lme4::allFit(mod.raw.repro$pc1pc2tim)
-ss <- summary(modelfit.all)
-
-# does not converge 
-mod.raw.repro$pc2tim <- glmer(raw_repro ~ -1 + ageClass/PC2Tim + MassAutumn_tm1 + (1|ID), 
-                              data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                     optCtrl = list(maxfun = 4000000)))
-modelfit.all <- lme4::allFit(model)
-ss <- summary(modelfit.all)
+# # does not converge
+# mod.raw.repro$pc1pc2tim <- glmer(raw_repro ~ -1 + ageClass/PC1Tim + ageClass/PC2Tim + MassAutumn_tm1 + (1|ID), 
+#                                  data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+#                                                                                         optCtrl = list(maxfun = 4000000)))
+# modelfit.all <- lme4::allFit(mod.raw.repro$pc1pc2tim)
+# ss <- summary(modelfit.all)
+# 
+# # does not converge 
+# mod.raw.repro$pc2tim <- glmer(raw_repro ~ -1 + ageClass/PC2Tim + MassAutumn_tm1 + (1|ID), 
+#                               data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+#                                                                                      optCtrl = list(maxfun = 4000000)))
+# modelfit.all <- lme4::allFit(model)
+# ss <- summary(modelfit.all)
 
 # Creating a list to store the results
 results.raw.repro<-list()
@@ -175,7 +175,7 @@ results.raw.repro$coefs.raw.repro.3rdbest[, 1:4] <- round(results.raw.repro[["co
 results.raw.repro$r2.raw.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][3,1])]]), digits = 3))
 
 # Option to create and save RData file with data, candidate models and results
-# save(df_fec,mod.raw.repro,results.raw.repro,file = "raw.repro_clim.Rdata")
+# save(df_fec,mod.raw.repro,results.raw.repro,file = "raw.repro_pheno.Rdata")
 
 # true repro model selection  -------------------------------------------------------------------------------------------
 mod.true.repro <- list()
@@ -245,4 +245,4 @@ results.true.repro$coefs.true.repro.3rdbest[, 1:4] <- round(results.true.repro[[
 results.true.repro$r2.true.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][3,1])]]), digits = 3))
 
 # Option to create and save RData file with data, candidate models and results
-# save(df_fec,mod.true.repro,results.true.repro,file = "true.repro_clim.Rdata")
+# save(df_fec,mod.true.repro,results.true.repro,file = "true.repro_pheno.Rdata")
