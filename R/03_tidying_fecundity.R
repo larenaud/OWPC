@@ -33,7 +33,8 @@ library(knitr)
 library(kableExtra)
 
 getwd()
-setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data") # where to download
+setwd("") 
+
 # clean up 
 
 rm(list = ls())
@@ -443,7 +444,7 @@ dataFec$SOIFallFec<-as.numeric(as.character(dataFec$SOIFallFec))
 dataFec$PDOSOI_winter <- dataFec$PDOWinterFec - dataFec$SOIWinterFec
 dataFec$PDOSOI_spring <- dataFec$PDOSpringFec - dataFec$SOISpringFec
 dataFec$PDOSOI_summer <- dataFec$PDOSummerFec - dataFec$SOISummerFec
-dataFec$PDOSOI_fall <- dataFec$PDOFallFec - dataFec$SOIFallFec
+dataFec$PDOSOI_fall <- dataFec$PDOFallFec - dataFec$SOIFallFec # n = 673
 
 
 # select translocation = 0 and filter 
@@ -452,10 +453,10 @@ dataFec<-filter(dataFec, first_yr_trans==0)  # n = 685
 dataFec<-filter(dataFec, age>=3) # n drops to 388
 
 
+
 # control variables 
 dataFec<- dataFec[!is.na(dataFec$MassSpring),] # n = 374 
 dataFec<- dataFec[!is.na(dataFec$MassAutumn),]
-
 
 # save unscaled 
 dataFecUnscld = dataFec
@@ -492,6 +493,6 @@ rm(df1, df2, df3)
 # save as R objects  ------------------------------------------------------
 # 
 # save(sheep_data, pheno_fec, clim_fec, weather_fec, dataFecUnscld, dataFecScld,
-#    file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataFecundityModels.RData")
-# drive_upload("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataFecundityModels.RData",
+#    file = "cache/dataFecundityModels.RData")
+# drive_upload("cache/dataFecundityModels.RData",
 #              path = "OWPC/Analyses/cache/dataFecundityModels.RData", overwrite = T)

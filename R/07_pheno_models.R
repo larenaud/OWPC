@@ -8,6 +8,10 @@ library(lme4)
 library(AICcmodavg)
 library(xtable)
 library(googledrive)
+library(lme4)
+require(optimx)
+require(nloptr)
+require(dfoptim)
 
 # Set working directory DIFFERENT FOR EACH PERSON
 setwd("")
@@ -25,7 +29,7 @@ drive_download("OWPC/Analyses/cache/dataSurvivalModels.RData",overwrite=T)
 # Import in R environment
 load("dataSurvivalModels.RData")
 # Rename scaled data frame and remove years with missing data for climate
-df_surv<-droplevels(subset(dataSurvScld,!(yr %in% c("1999","2000","2016"))))
+df_surv<-droplevels(subset(dataSurvScld,!(yr %in% c("1999","2000","2016")))) # n = 448
 # Remove unnecessary objects for the environment
 rm(clim_surv,pheno_surv,weather_surv,sheep_data,dataSurvUnscld,dataSurvScld)
 
@@ -34,54 +38,25 @@ mod.surv <- list()
 
 mod.surv$base <- glm(alive_t1 ~ -1 + ageClass + pred, data=df_surv, family="binomial")
 
+mod.surv$summerNDVI <- glm(alive_t1 ~ -1 + ageClass/SummerNDVI + pred, data=df_surv, family="binomial")# this is summer season t
+
+mod.surv$WinNDVIsurvT1 <- glm(alive_t1 ~ -1 + ageClass/WinNDVIsurvT1 + pred, data=df_surv, family="binomial") # this is winter season t+1
+
+mod.surv$NDVIsurvT <- glm(alive_t1 ~ -1 + ageClass/NDVIsurvT + pred, data=df_surv, family="binomial") # this is green-up t
+
+mod.surv$NDVIsurvT1 <- glm(alive_t1 ~ -1 + ageClass/NDVIsurvT1 + pred, data=df_surv, family="binomial") # this is green-up t+1
+
 mod.surv$pc1 <- glm(alive_t1 ~ -1 + ageClass/PC1 + pred, data=df_surv, family="binomial")
 
 mod.surv$pc1pc2 <- glm(alive_t1 ~ -1 + ageClass/PC1 + ageClass/PC2 + pred, data=df_surv, family="binomial")
 
 mod.surv$pc2 <- glm(alive_t1 ~ -1 + ageClass/PC2 + pred, data=df_surv, family="binomial")
 
-mod.surv$summerNDVI <- glm(alive_t1 ~ -1 + ageClass/SummerNDVI + pred, data=df_surv, family="binomial")
+mod.surv$pc1tim <- glm(alive_t1 ~ -1 + ageClass/PC1Tim + pred, data=df_surv, family="binomial") # these are PC of timing 
 
-mod.surv$summerEVI <- glm(alive_t1 ~ -1 + ageClass/SummerEVI + pred, data=df_surv, family="binomial")
+mod.surv$pc1pc2tim <- glm(alive_t1 ~ -1 + ageClass/PC1Tim+ ageClass/PC2Tim + pred, data=df_surv, family="binomial")
 
-mod.surv$summerLAI <- glm(alive_t1 ~ -1 + ageClass/SummerLAI + pred, data=df_surv, family="binomial")
-
-mod.surv$summerGPP <- glm(alive_t1 ~ -1 + ageClass/SummerGPP + pred, data=df_surv, family="binomial")
-
-mod.surv$summerSnow <- glm(alive_t1 ~ -1 + ageClass/SummerSnow + pred, data=df_surv, family="binomial")
-
-mod.surv$summerPSNET <- glm(alive_t1 ~ -1 + ageClass/SummerPSNNET + pred, data=df_surv, family="binomial")
-
-mod.surv$summerFPAR <- glm(alive_t1 ~ -1 + ageClass/SummerFPAR + pred, data=df_surv, family="binomial")
-
-mod.surv$WinNDVI_surv <- glm(alive_t1 ~ -1 + ageClass/WinNDVI_surv + pred, data=df_surv, family="binomial")
-
-mod.surv$WinEVI_surv <- glm(alive_t1 ~ -1 + ageClass/WinEVI_surv + pred, data=df_surv, family="binomial")
-
-mod.surv$WinLAI_surv <- glm(alive_t1 ~ -1 + ageClass/WinLAI_surv + pred, data=df_surv, family="binomial")
-
-mod.surv$WinGPP_surv <- glm(alive_t1 ~ -1 + ageClass/WinGPP_surv + pred, data=df_surv, family="binomial")
-
-mod.surv$WinSnow_surv <- glm(alive_t1 ~ -1 + ageClass/WinSnow_surv + pred, data=df_surv, family="binomial")
-
-mod.surv$WinPSNET_surv <- glm(alive_t1 ~ -1 + ageClass/WinPSNNET_surv + pred, data=df_surv, family="binomial")
-
-mod.surv$WinFPAR_surv <- glm(alive_t1 ~ -1 + ageClass/WinFPAR_surv + pred, data=df_surv, family="binomial")
-
-mod.surv$WinNDVI_tm1 <- glm(alive_t1 ~ -1 + ageClass/WinNDVI_tm1 + pred, data=df_surv, family="binomial")
-
-mod.surv$WinEVI_tm1 <- glm(alive_t1 ~ -1 + ageClass/WinEVI_tm1 + pred, data=df_surv, family="binomial")
-
-mod.surv$WinLAI_tm1 <- glm(alive_t1 ~ -1 + ageClass/WinLAI_tm1 + pred, data=df_surv, family="binomial")
-
-mod.surv$WinGPP_tm1 <- glm(alive_t1 ~ -1 + ageClass/WinGPP_tm1 + pred, data=df_surv, family="binomial")
-
-mod.surv$WinSnow_tm1 <- glm(alive_t1 ~ -1 + ageClass/WinSnow_tm1 + pred, data=df_surv, family="binomial")
-
-mod.surv$WinPSNET_tm1 <- glm(alive_t1 ~ -1 + ageClass/WinPSNNET_tm1 + pred, data=df_surv, family="binomial")
-
-mod.surv$WinFPAR_tm1 <- glm(alive_t1 ~ -1 + ageClass/WinFPAR_tm1 + pred, data=df_surv, family="binomial")
-
+mod.surv$pc2tim <- glm(alive_t1 ~ -1 + ageClass/PC2Tim + pred, data=df_surv, family="binomial")
 # Creating a list to store the results
 results.surv<-list()
 
@@ -132,73 +107,48 @@ mod.raw.repro$base <- glmer(raw_repro ~ -1 +  ageClass + MassAutumn_tm1 + (1|ID)
                             data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
                                                                                    optCtrl = list(maxfun = 1000000))) 
 
-mod.raw.repro$pc1 <- glmer(raw_repro ~ -1 + ageClass/PC1Fec +  MassAutumn_tm1+ (1|ID), 
+mod.raw.repro$WinNDVI <- glmer(raw_repro ~ -1 + ageClass/WinNDVIfecT + MassAutumn_tm1 + (1|ID), 
+                                   data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                          optCtrl = list(maxfun = 2000000)))
+
+mod.raw.repro$SummerNDVI <- glmer(raw_repro ~ -1 + ageClass/SummerNDVIfec + MassAutumn_tm1 + (1|ID), 
+                                      data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                             optCtrl = list(maxfun = 2000000)))
+
+mod.raw.repro$NDVItimng<- glmer(raw_repro ~ -1 + ageClass/NDVIfecT + MassAutumn_tm1 + (1|ID), 
+                                  data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 2000000)))
+
+mod.raw.repro$pc1 <- glmer(raw_repro ~ -1 + ageClass/PC1 +  MassAutumn_tm1+ (1|ID), 
                            data=df_fec, family="binomial",control = glmerControl(optimizer="bobyqa", 
                                                                                  optCtrl = list(maxfun = 2000000)))
 
-mod.raw.repro$pc1pc2 <- glmer(raw_repro ~ -1 + ageClass/PC1Fec + ageClass/PC2Fec + MassAutumn_tm1 + (1|ID), 
+mod.raw.repro$pc1pc2 <- glmer(raw_repro ~ -1 + ageClass/PC1 + ageClass/PC2 + MassAutumn_tm1 + (1|ID), 
                               data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
                                                                                      optCtrl = list(maxfun = 2000000)))
 
-mod.raw.repro$pc2 <- glmer(raw_repro ~ -1 + ageClass/PC2Fec + MassAutumn_tm1 + (1|ID), 
+mod.raw.repro$pc2 <- glmer(raw_repro ~ -1 + ageClass/PC2 + MassAutumn_tm1 + (1|ID), 
                            data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
                                                                                   optCtrl = list(maxfun = 2000000)))
 
-mod.raw.repro$WinNDVI_fec <- glmer(raw_repro ~ -1 + ageClass/WinNDVIFec + MassAutumn_tm1 + (1|ID), 
-                                   data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                          optCtrl = list(maxfun = 2000000)))
+mod.raw.repro$pc1tim <- glmer(raw_repro ~ -1 + ageClass/PC1Tim +  MassAutumn_tm1+ (1|ID), 
+                              data=df_fec, family="binomial",control = glmerControl(optimizer="bobyqa", 
+                                                                                    optCtrl = list(maxfun = 2000000)))
 
-mod.raw.repro$WinEVI_fec <- glmer(raw_repro ~ -1 + ageClass/WinEVIFec + MassAutumn_tm1 + (1|ID), 
-                                  data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                         optCtrl = list(maxfun = 2000000)))
 
-mod.raw.repro$WinLAI_fec <- glmer(raw_repro ~ -1 + ageClass/WinLAIFec + MassAutumn_tm1 + (1|ID), 
-                                  data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                         optCtrl = list(maxfun = 3000000)))
+# does not converge
+mod.raw.repro$pc1pc2tim <- glmer(raw_repro ~ -1 + ageClass/PC1Tim + ageClass/PC2Tim + MassAutumn_tm1 + (1|ID), 
+                                 data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                        optCtrl = list(maxfun = 4000000)))
+modelfit.all <- lme4::allFit(mod.raw.repro$pc1pc2tim)
+ss <- summary(modelfit.all)
 
-mod.raw.repro$WinGPP_fec <- glmer(raw_repro ~ -1 + ageClass/WinGPPFec + MassAutumn_tm1 + (1|ID), 
-                                  data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                         optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$WinSnow_fec <- glmer(raw_repro ~ -1 + ageClass/WinSnowFec + MassAutumn_tm1 + (1|ID), 
-                                   data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                          optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$WinPSNNET_fec <- glmer(raw_repro ~ -1 + ageClass/WinPSNNETFec + MassAutumn_tm1 + (1|ID), 
-                                     data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                            optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$WinFPAR_fec <- glmer(raw_repro ~ -1 + ageClass/WinFPARFec + MassAutumn_tm1 + (1|ID), 
-                                   data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                          optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$SummerNDVI_fec <- glmer(raw_repro ~ -1 + ageClass/SummerNDVIFec + MassAutumn_tm1 + (1|ID), 
-                                      data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                             optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$SummerEVI_fec <- glmer(raw_repro ~ -1 + ageClass/SummerEVIFec + MassAutumn_tm1 + (1|ID), 
-                                     data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                            optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$SummerLAI_fec <- glmer(raw_repro ~ -1 + ageClass/SummerLAIFec + MassAutumn_tm1 + (1|ID), 
-                                     data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                            optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$SummerGPP_fec <- glmer(raw_repro ~ -1 + ageClass/SummerGPPFec + MassAutumn_tm1 + (1|ID), 
-                                     data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                            optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$SummerSnow_fec <- glmer(raw_repro ~ -1 + ageClass/SummerSnowFec + MassAutumn_tm1 + (1|ID), 
-                                      data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                             optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$SummerPSNNET_fec <- glmer(raw_repro ~ -1 + ageClass/SummerPSNNETFec + MassAutumn_tm1 + (1|ID), 
-                                        data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                               optCtrl = list(maxfun = 2000000)))
-
-mod.raw.repro$SummerFPAR_fec <- glmer(raw_repro ~ -1 + ageClass/SummerFPARFec + MassAutumn_tm1 + (1|ID), 
-                                      data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                             optCtrl = list(maxfun = 2000000)))
+# does not converge 
+mod.raw.repro$pc2tim <- glmer(raw_repro ~ -1 + ageClass/PC2Tim + MassAutumn_tm1 + (1|ID), 
+                              data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                     optCtrl = list(maxfun = 4000000)))
+modelfit.all <- lme4::allFit(model)
+ss <- summary(modelfit.all)
 
 # Creating a list to store the results
 results.raw.repro<-list()
@@ -225,82 +175,50 @@ results.raw.repro$coefs.raw.repro.3rdbest[, 1:4] <- round(results.raw.repro[["co
 results.raw.repro$r2.raw.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][3,1])]]), digits = 3))
 
 # Option to create and save RData file with data, candidate models and results
-# save(df_raw.repro,mod.raw.repro,results.raw.repro,file = "raw.repro_clim.Rdata")
+# save(df_fec,mod.raw.repro,results.raw.repro,file = "raw.repro_clim.Rdata")
 
 # true repro model selection  -------------------------------------------------------------------------------------------
 mod.true.repro <- list()
 
 mod.true.repro$base <- glmer(true_repro ~ -1 +  ageClass + MassAutumn_tm1 + (1|ID), 
-                             data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                    optCtrl = list(maxfun = 1000000))) 
+                            data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                   optCtrl = list(maxfun = 1000000))) 
 
-mod.true.repro$pc1 <- glmer(true_repro ~ -1 + ageClass/PC1Fec +  MassAutumn_tm1+ (1|ID), 
-                            data=df_fec, family="binomial",control = glmerControl(optimizer="bobyqa", 
-                                                                                  optCtrl = list(maxfun = 2000000)))
-
-mod.true.repro$pc1pc2 <- glmer(true_repro ~ -1 + ageClass/PC1Fec + ageClass/PC2Fec + MassAutumn_tm1 + (1|ID), 
+mod.true.repro$WinNDVI <- glmer(true_repro ~ -1 + ageClass/WinNDVIfecT + MassAutumn_tm1 + (1|ID), 
                                data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
                                                                                       optCtrl = list(maxfun = 2000000)))
 
-mod.true.repro$pc2 <- glmer(true_repro ~ -1 + ageClass/PC2Fec + MassAutumn_tm1 + (1|ID), 
-                            data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                   optCtrl = list(maxfun = 2000000)))
+mod.true.repro$SummerNDVI <- glmer(true_repro ~ -1 + ageClass/SummerNDVIfec + MassAutumn_tm1 + (1|ID), 
+                                  data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 2000000)))
 
-mod.true.repro$WinNDVI_fec <- glmer(true_repro ~ -1 + ageClass/WinNDVIFec + MassAutumn_tm1 + (1|ID), 
-                                    data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                           optCtrl = list(maxfun = 2000000)))
+mod.true.repro$NDVItimng<- glmer(true_repro ~ -1 + ageClass/NDVIfecT + MassAutumn_tm1 + (1|ID), 
+                                data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                       optCtrl = list(maxfun = 2000000)))
 
-mod.true.repro$WinEVI_fec <- glmer(true_repro ~ -1 + ageClass/WinEVIFec + MassAutumn_tm1 + (1|ID), 
-                                   data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                          optCtrl = list(maxfun = 2000000)))
+mod.true.repro$pc1 <- glmer(true_repro ~ -1 + ageClass/PC1 +  MassAutumn_tm1+ (1|ID), 
+                           data=df_fec, family="binomial",control = glmerControl(optimizer="bobyqa", 
+                                                                                 optCtrl = list(maxfun = 2000000)))
 
-mod.true.repro$WinLAI_fec <- glmer(true_repro ~ -1 + ageClass/WinLAIFec + MassAutumn_tm1 + (1|ID), 
-                                   data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                          optCtrl = list(maxfun = 3000000)))
+mod.true.repro$pc1pc2 <- glmer(true_repro ~ -1 + ageClass/PC1 + ageClass/PC2 + MassAutumn_tm1 + (1|ID), 
+                              data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                     optCtrl = list(maxfun = 2000000)))
 
-mod.true.repro$WinGPP_fec <- glmer(true_repro ~ -1 + ageClass/WinGPPFec + MassAutumn_tm1 + (1|ID), 
-                                   data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                          optCtrl = list(maxfun = 2000000)))
+mod.true.repro$pc2 <- glmer(true_repro ~ -1 + ageClass/PC2 + MassAutumn_tm1 + (1|ID), 
+                           data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                  optCtrl = list(maxfun = 2000000)))
 
-mod.true.repro$WinSnow_fec <- glmer(true_repro ~ -1 + ageClass/WinSnowFec + MassAutumn_tm1 + (1|ID), 
-                                    data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                           optCtrl = list(maxfun = 2000000)))
+mod.true.repro$pc1tim <- glmer(true_repro ~ -1 + ageClass/PC1Tim +  MassAutumn_tm1+ (1|ID), 
+                              data=df_fec, family="binomial",control = glmerControl(optimizer="bobyqa", 
+                                                                                    optCtrl = list(maxfun = 2000000)))
 
-mod.true.repro$WinPSNNET_fec <- glmer(true_repro ~ -1 + ageClass/WinPSNNETFec + MassAutumn_tm1 + (1|ID), 
-                                      data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                             optCtrl = list(maxfun = 2000000)))
+mod.true.repro$pc1pc2tim <- glmer(true_repro ~ -1 + ageClass/PC1Tim + ageClass/PC2Tim + MassAutumn_tm1 + (1|ID), 
+                                 data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                        optCtrl = list(maxfun = 4000000)))
 
-mod.true.repro$WinFPAR_fec <- glmer(true_repro ~ -1 + ageClass/WinFPARFec + MassAutumn_tm1 + (1|ID), 
-                                    data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                           optCtrl = list(maxfun = 2000000)))
-
-mod.true.repro$SummerNDVI_fec <- glmer(true_repro ~ -1 + ageClass/SummerNDVIFec + MassAutumn_tm1 + (1|ID), 
-                                       data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                              optCtrl = list(maxfun = 2000000)))
-
-mod.true.repro$SummerEVI_fec <- glmer(true_repro ~ -1 + ageClass/SummerEVIFec + MassAutumn_tm1 + (1|ID), 
-                                      data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                             optCtrl = list(maxfun = 2000000)))
-
-mod.true.repro$SummerLAI_fec <- glmer(true_repro ~ -1 + ageClass/SummerLAIFec + MassAutumn_tm1 + (1|ID), 
-                                      data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                             optCtrl = list(maxfun = 2000000)))
-
-mod.true.repro$SummerGPP_fec <- glmer(true_repro ~ -1 + ageClass/SummerGPPFec + MassAutumn_tm1 + (1|ID), 
-                                      data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                             optCtrl = list(maxfun = 2000000)))
-
-mod.true.repro$SummerSnow_fec <- glmer(true_repro ~ -1 + ageClass/SummerSnowFec + MassAutumn_tm1 + (1|ID), 
-                                       data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                              optCtrl = list(maxfun = 2000000)))
-
-mod.true.repro$SummerPSNNET_fec <- glmer(true_repro ~ -1 + ageClass/SummerPSNNETFec + MassAutumn_tm1 + (1|ID), 
-                                         data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                                optCtrl = list(maxfun = 2000000)))
-
-mod.true.repro$SummerFPAR_fec <- glmer(true_repro ~ -1 + ageClass/SummerFPARFec + MassAutumn_tm1 + (1|ID), 
-                                       data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
-                                                                                              optCtrl = list(maxfun = 2000000)))
+mod.true.repro$pc2tim <- glmer(true_repro ~ -1 + ageClass/PC2Tim + MassAutumn_tm1 + (1|ID), 
+                              data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                                                                     optCtrl = list(maxfun = 4000000)))
 
 # Creating a list to store the results
 results.true.repro<-list()
@@ -327,4 +245,4 @@ results.true.repro$coefs.true.repro.3rdbest[, 1:4] <- round(results.true.repro[[
 results.true.repro$r2.true.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][3,1])]]), digits = 3))
 
 # Option to create and save RData file with data, candidate models and results
-# save(df_true.repro,mod.true.repro,results.true.repro,file = "true.repro_clim.Rdata")
+# save(df_fec,mod.true.repro,results.true.repro,file = "true.repro_clim.Rdata")

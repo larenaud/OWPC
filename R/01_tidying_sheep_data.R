@@ -12,7 +12,7 @@ library(dplyr)
 
 
 # Set working directory
-setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data") # to CHANGE
+setwd("") # 
 getwd()
 
 # clean 
@@ -44,13 +44,13 @@ rm(list = ls())
 # get necessary data ------------------------------------------------------
 
 # my surv file with reproductive success codes 
-surv <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/SURV20170328.csv", sep = ",")
+surv <- read.csv2("SURV20170328.csv", sep = ",")
 
 # THIS FILE MISSES 6 U FEMALES IN 2015 (TRANSLOCATED)
 # added manually based on marco files "yrlgs - all" and "ewes - all"
 
 
-surv <- read.csv("~/Documents/PhD/Analyses/OWPC/OWPC/data/raw/edited-2020-03-24.csv")
+surv <- read.csv("edited-2020-03-24.csv")
 surv$sex[surv$sex == 'F'] <- "female"
 colnames(surv)
 surv <- surv[, c("yr","age","ID","sex","alive_t1","reproduced", "age.class", "code.sr", "pred")]
@@ -295,7 +295,7 @@ rm(ghost, df1, mass, mjune, msep, surv)
 
 # compare with ram mtn pop
 library(readxl)
-RamMtnpop <- read_excel("~/Documents/PhD/Analyses/MilkFitness/Data/RamMtnpop.xls")
+RamMtnpop <- read_excel("RamMtnpop.xls")
 
 survF%>% 
   group_by(yr) %>% 

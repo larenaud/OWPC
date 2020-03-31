@@ -11,7 +11,7 @@
 
 
 
-# load libraries - a ton... 
+# load libraries 
 library(googledrive)
 library(plyr)
 library(dplyr)
@@ -31,7 +31,7 @@ library(knitr)
 rm(list = ls())
 
 getwd()
-setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data") 
+setwd("") 
 
 
 # 1- Add pheno season lengths ------------------------------------------------------
@@ -40,7 +40,7 @@ setwd("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data")
 
 
 # drive_download("OWPC/Analyses/data/Raw/pheno_ram.csv", overwrite = T) # where to get file
-# pheno <- read.csv2("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/data/raw/pheno_ram.csv", sep = ",")
+# pheno <- read.csv2("pheno_ram.csv", sep = ",")
 
 head(pheno)
 
@@ -572,17 +572,15 @@ dataSurv$PDOSOI_winter <- dataSurv$PDO.winter_surv - dataSurv$SOI.winter_surv
 dataSurv$PDOSOI_spring <- dataSurv$PDO.spring_surv - dataSurv$SOI.spring_surv
 dataSurv$PDOSOI_summer <- dataSurv$PDO.summer_surv - dataSurv$SOI.summer_surv
 dataSurv$PDOSOI_fall <- dataSurv$PDO.fall_surv - dataSurv$SOI.fall_surv
-dataSurv$PDOSOI_winter_tm1 <- dataSurv$PDO.winter_tm1 - dataSurv$SOI.winter_tm1
+dataSurv$PDOSOI_winter_tm1 <- dataSurv$PDO.winter_tm1 - dataSurv$SOI.winter_tm1 # n = 673
 
 
 # select translocation = 0 and filter 
-dataSurv<-filter(dataSurv, first_yr_trans==0)
+dataSurv<-filter(dataSurv, first_yr_trans==0) # n  653
 
-
-#dataFec<-filter(dataFec, yr>=2000) # removes yr 1999 full of NA
-
+# control variables
 dataSurv<- dataSurv[!is.na(dataSurv$MassSpring),]
-dataSurv<- dataSurv[!is.na(dataSurv$MassAutumn),]
+dataSurv<- dataSurv[!is.na(dataSurv$MassAutumn),] # n = 578
 
 
 # save unscaled 
@@ -619,8 +617,8 @@ getwd()
 
 #
 # save(sheep_data, pheno_surv, clim_surv, weather_surv, dataSurvUnscld, dataSurvScld,
-#      file = "/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData")
-# drive_upload("/Users/LimoilouARenaud/Documents/PhD/Analyses/OWPC/OWPC/cache/dataSurvivalModels.RData",
+#      file = "cache/dataSurvivalModels.RData")
+# drive_upload("cache/dataSurvivalModels.RData",
 #              path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
 
 
