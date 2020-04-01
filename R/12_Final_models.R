@@ -45,16 +45,13 @@ glm(formula = alive_t1 ~ -1 + ageClass/PDOSOI_winter_tm1 + pred,
 
 
 
-
-
 # raw
 load("raw.repro_clim.Rdata")
 aictab(mod.raw.repro)
 
 
-mod.raw.repro$springPDOSOI
-raw_repro ~ -1 + ageClass/PDOSpringFec + ageClass/SOISpringFec +      MassAutumn_tm1 + (1 | ID)
-
+mod.raw.repro$springPDO
+raw_repro ~ -1 + ageClass/PDOSpringFec +      MassAutumn_tm1 + (1 | ID)
 
 
 # true 
@@ -66,8 +63,8 @@ mod.true.repro$base
 true_repro ~ -1 + ageClass + MassAutumn_tm1 + (1 | ID)
 
 mod.true.repro$winterPDOSOI
-true_repro ~ -1 + ageClass/PDOWinterFec + ageClass/SOIWinterFec +      MassAutumn_tm1 + (1 | ID)
-Data: df_fec
+true_repro ~ -1 + ageClass/PDOWinterFec + ageClass/SOIWinterFec +MassAutumn_tm1 + (1 | ID)
+
 
 
 
@@ -163,7 +160,7 @@ aictab(mod.true.repro)
 
 
 mod.true.repro$TxPWin
-true_repro ~ -1 + ageClass/(TWin * PWin) + MassAutumn_tm1 + (1 |      ID)
+ true_repro ~ -1 + ageClass/(TWin * PWin) + MassAutumn_tm1 + (1 |      ID)
 Data: df_fec
 
 
@@ -235,7 +232,7 @@ mod.raw$base <- glmer(raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1 | ID),
                       control = glmerControl(optimizer="bobyqa", 
                                              optCtrl = list(maxfun = 2000000)))
 
-mod.raw$springPDOSOI <- glmer(raw_repro ~ -1 + ageClass/PDOSpringFec + ageClass/SOISpringFec + MassAutumn_tm1 + (1 | ID),
+mod.raw$springPDO <- glmer(raw_repro ~ -1 + ageClass/PDOSpringFec + MassAutumn_tm1 + (1 | ID),
                                     family = "binomial",
                                     df_fec,
                                     control = glmerControl(optimizer="bobyqa",
@@ -424,10 +421,10 @@ newd$lwr <- lwr2
 newd$upr <- upr2 
 newd$fit <- fit2
 
-plot_surv <- ggplot(newd, aes(PC2Tim, y=fit, group= ageClass)) +  
-  geom_line(aes(linetype = ageClass)) + 
+plot_surv <- ggplot(newd, aes(PC2Tim, y=fit, group= 1)) +  
+  geom_line() + 
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3, fill = 'navyblue') +
-  geom_point(data = df_surv, aes(x = PC2Tim, y = as.numeric(alive_t1)-1)) + # pour mettre la distribution des points brutes 
+  geom_point(data = df_surv, aes(x = PC2Tim, y = as.numeric(alive_t1)-1), alpha = 0.3)+ # pour mettre la distribution des points brutes 
   labs(x="Index of green-up (std)", 
        y="Survival probability to one year") +
   theme_pander() + 
@@ -443,6 +440,7 @@ ggsave("survivalPC2Tim.pdf", width = 110, height = 130, units = "mm", pointsize 
 
 
 
+# change newd number 
 
 
 
@@ -463,74 +461,64 @@ finalRaw <- glmer(raw_repro ~ -1 + ageClass/TWin + MassAutumn_tm1 + (1 | ID),
                                          optCtrl = list(maxfun = 2000000)))
 
 summary(finalRaw)
+
+
 newd<- data.frame()
 newdata = expand.grid(TWin  = seq(min(df_fec$TWin , na.rm = T),
                                       max(df_fec$TWin , na.rm = T), length = 50), # la variable d'intérêt
-                      ageClass = "9", 
+                      ageClass = c("9", "3"),
                       MassAutumn_tm1 = mean(df_fec$MassAutumn_tm1, na.rm = T),
                       ID = c("A50", "E13", "I6",  "L2",  "M7"))
-newd <- rbind(newd, newdata)
+newd2 <- rbind(newd, newdata)
 # tmp = subset(df_fec, ageClass %in% 8) 
 # sample(tmp$ID, 5)
 
 # now in glmer, we can generate distribution of estimates and extract CI
 # bootMer travaille en fonction - lui en spécifier une qui extrait nos coefficients de modèle avec predict 
-myfun <- function(x) predict(x,newdata=newd,type="link",re.form=NA)
-boo <- bootMer(finalRaw, myfun, nsim = 100, verbose = T) # increase nsim if necessary - could be more
+myfun <- function(x) predict(x,newdata=newd2,type="link",re.form=NA)
+boo <- bootMer(finalRaw, myfun, nsim = 1000, verbose = T) # increase nsim if necessary - could be more
 
 # warnigns of problems of convergence so exclude NAs
 boo <- na.omit(data.frame(boo))
 str(boo)
 
-newd$predi <- apply(boo, 2, mean) 
-newd$upr<- apply(boo, 2, function(x) quantile(x, 0.975))
-newd$lwr <- apply(boo, 2, function(x) quantile(x, 0.025))
+newd2$predi <- apply(boo, 2, mean) 
+newd2$upr<- apply(boo, 2, function(x) quantile(x, 0.975))
+newd2$lwr <- apply(boo, 2, function(x) quantile(x, 0.025))
 
 # check if makes sense
 summary(finalRaw)
-#inv.logit()
-
-
-# show effect for two different age classes by adding group
-plot_raw<- ggplot(newd, aes(TWin, y=inv.logit(predi), group = ageClass)) + 
-  geom_line(linetype = c("dotted", "solid")) + 
-  geom_ribbon(aes(ymin = inv.logit(lwr), ymax = inv.logit(upr)), alpha = 0.3, fill = 'navyblue') +  
-  geom_point(data = df_fec, aes(x = TWin, y = as.numeric(as.character(raw_repro))), alpha = 0.5) + # pour mettre la distribution des points brutes 
-  labs(x=expression('Winter temperature (std)' [t-1]), 
-       y="Probability to reproduce") +
-  theme_pander() 
+#inv.logit(2.5695)
+#inv.logit(4.2064)
 
 # only one age class
-ggplot(newd, aes(TWin, y=inv.logit(predi), group = 1)) + 
+ggplot(newd2, aes(TWin, y=inv.logit(predi), group = 1)) + 
   geom_line() + 
   geom_ribbon(aes(ymin = inv.logit(lwr), ymax = inv.logit(upr)), alpha = 0.3, fill = 'navyblue') +  
   geom_point(data = df_fec, aes(x = TWin, y = as.numeric(as.character(raw_repro))), alpha = 0.5) + # pour mettre la distribution des points brutes 
-  labs(x=expression('Winter temperature (std)' [t-1]), 
+  labs(x=expression('Winter temperature (std) ' [t-1]), 
        y="Probability to reproduce") +
   theme_pander() 
 
 
-
-p_spring <- ggplot(newd, aes(T.SPRING, y=fit, group= ageClass)) +  
+# show effect for two different age classes by adding group
+plot_raw<- ggplot(newd2, aes(TWin, y=inv.logit(predi), group = ageClass)) + 
   geom_line(aes(linetype = ageClass)) + 
-  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3, fill = 'navyblue') +
-  geom_point(data = df_surv, aes(x = T.FALL, y = as.numeric(alive_t1)-1)) + # pour mettre la distribution des points brutes 
-  labs(x="Spring temperature (std)", 
-       y="Survival probability to one year") +
-  theme_pander() + 
+  geom_ribbon(aes(ymin = inv.logit(lwr), ymax = inv.logit(upr)), alpha = 0.3, fill = 'navyblue') +  
+  geom_point(data = df_fec, aes(x = TWin, y = as.numeric(as.character(raw_repro))), alpha = 0.5) + # pour mettre la distribution des points brutes 
+  labs(x=expression('Winter temperature (std)' [t-1]), 
+       y="Probability to reproduce") +
+  theme_pander() +
   theme(legend.position = c(0.5, 0.4)) # coordonnées x-y de ton graph
-p_spring <- p_spring  + guides(linetype=guide_legend(title="Age class")) # here linetype is what age class is called in aesthetics
-print(p_spring)
-
-
-
+plot_raw <- plot_raw  + guides(linetype=guide_legend(title="Age class"))
+plot_raw
 
 ggsave("rawTWin.pdf", width = 110, height = 130, units = "mm", pointsize = 8)
 
 
 # control variables 
 
-
+# change newd number 
 
 
 
@@ -555,7 +543,7 @@ finalTrue <- glmer(true_repro ~ -1 + ageClass/(TWin * PWin) + MassAutumn_tm1 + (
 
 summary(finalTrue)
 
-# inv.logit(0.761) = 0.6815708
+# inv.logit(0.78639) =0.6870557
 
 # show interaction between TWin and PWin 
 # choose value for 2nd term of interaction 
@@ -572,27 +560,24 @@ newdata = expand.grid(TWin  = seq(min(df_fec$TWin , na.rm = T),
                                       max(df_fec$TWin, na.rm = T), length = 50), 
                       ageClass = "48", 
                       MassAutumn_tm1 = mean(df_fec$MassAutumn_tm1, na.rm = T),
-                      PWin  = c(-0.74019, 0.07058, 0.87347), # lui choisir des valeurs 
+                      PWin  = c(-0.74019, 0.07058, 0.87347), # quartiles.. 
                       ID = c("A50", "E13", "I6",  "L2",  "M7")) # assign random ID from real dataset
-newd <- rbind(newd, newdata)
+newd3 <- rbind(newd, newdata)
 
-
-
-# now in glmer, we can generate distribution of estimates and extract CI
-# bootMer travaille en fonction - lui specifier d'extraire nos coefficients de modèle avec predict 
-myfun <- function(x) predict(x,newdata=newd,type="link",re.form=NA)
+# generate distn of prediction and extract CI 
+myfun <- function(x) predict(x,newdata=newd3,type="link",re.form=NA)
 boo <- bootMer(finalTrue, myfun, nsim = 500, verbose = T)
 
 boo <- data.frame(boo)
 str(boo)
 
-newd$predi <- apply(boo, 2, mean) # removed boo$t because not in seq of x anymore
-newd$upr<- apply(boo, 2, function(x) quantile(x, 0.975))
-newd$lwr <- apply(boo, 2, function(x) quantile(x, 0.025))
+newd3$predi <- apply(boo, 2, mean) # removed boo$t because not in seq of x anymore
+newd3$upr<- apply(boo, 2, function(x) quantile(x, 0.975))
+newd3$lwr <- apply(boo, 2, function(x) quantile(x, 0.025))
 
 
 # make figure with interaction visible
-plot_true <- ggplot(newd, aes(TWin, inv.logit(predi), colour=interaction(colour=factor(PWin), 
+plot_true <- ggplot(newd3, aes(TWin, inv.logit(predi), colour=interaction(colour=factor(PWin), 
                                                                linetype = factor(PWin)), # change to factor?? 
                                  linetype=interaction(colour=factor(PWin), linetype = factor(PWin)), 
                                  fill=interaction(colour=factor(PWin), linetype = factor(PWin)))) + 
@@ -601,7 +586,9 @@ plot_true <- ggplot(newd, aes(TWin, inv.logit(predi), colour=interaction(colour=
   #geom_point(data = df_fec, aes(x = TWin, y = as.numeric(as.character(true_repro)))) + # pour mettre la distribution des points brutes 
   labs(x="Winter temperature (std)", 
        y="Probability to have a viable lamb") +
-  theme_pander() 
+  theme_pander() +
+  theme(legend.position = c(0.7, 0.3)) # coordonnées x-y de ton graph
+
 
 
 plot_true = plot_true + 
@@ -620,15 +607,10 @@ ggsave("trueTWin.pdf", width = 110, height = 130, units = "mm", pointsize = 8)
 
 
 
-
-
-
-
-
-
 # control variables 
 
 
+# change newd number 
 
 
 
@@ -646,18 +628,19 @@ p <- plot_grid (plot_surv,
                 plot_raw, 
                 plot_true,
                 labels = c("A", "B", "C"), 
-                align = "vh")
+                align = "vh", 
+                ncol = 3)
 getwd()
-save_plot("graphs/panelFinalModels.pdf", p,
+save_plot("panelFinalModels.pdf", p,
           ncol = 3, # 
           nrow = 1, # 
           # each individual subplot should have an aspect ratio of 1.3
-          base_aspect_ratio = 1.3
+          base_aspect_ratio = 1 # carré, rectangle ? 
 )
 
 
 
 # SAVE OBJECT FIGURES -----------------------------------------------------
-#ALL BUT PREDATION ARE SAVED ; FUCKED UP 
-save(newd, newd2, newd3, newd4, dt3, gpp_length_graph, snow_length, snowmelt_date, trend_neonatal, 
-     file = "Graphs/Figures_1A-1C.RData")
+
+save(newd, newd2, newd3, df_fec, df_surv, finalRaw, finalSurv, finalTrue, 
+     file = "figures1A-C.RData")
