@@ -46,7 +46,6 @@ rm(clim_surv,pheno_surv,weather_surv,sheep_data,dataSurvUnscld,dataSurvScld)
 
 # Survival model selection -----------------------------------------------------
 
-#colnames(df_surv)
 mod.surv <- list()
 
 # base
@@ -191,7 +190,7 @@ results.surv$coefs.surv.3rdbest[, 1:4] <- round(results.surv[["coefs.surv.3rdbes
 results.surv$r2.surv.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.surv[[as.character(results.surv[["aictable.surv"]][3,1])]]), digits = 3))
 
 # Option to create and save RData file with data, candidate models and results
-# save(df_surv,mod.surv,results.surv,file = "surv_clim.Rdata")
+# save(df_surv,mod.surv,results.surv,file = "surv_weather.Rdata")
 
 ##### Reproduction ~ Weather #########################################################################################
 # Setting up and importing data ----------------------------------------------------------------------------------------
@@ -233,11 +232,11 @@ mod.raw.repro$PTWin <-glmer(raw_repro ~ -1 + ageClass/PWin +ageClass/TWin +  Mas
                                                    optCtrl = list(maxfun = 2000000))) 
 
 
-mod.raw.repro$TxPWin <- glmer(raw_repro ~ -1 + ageClass/(TWin*PWin) + MassAutumn_tm1 + (1|ID), # here write the model
-                         data=df_fec, 
-                         family="binomial",
-                         control = glmerControl(optimizer="bobyqa", 
-                                                optCtrl = list(maxfun = 2000000))) 
+# mod.raw.repro$TxPWin <- glmer(raw_repro ~ -1 + ageClass/(TWin*PWin) + MassAutumn_tm1 + (1|ID), # here write the model
+#                          data=df_fec, 
+#                          family="binomial",
+#                          control = glmerControl(optimizer="bobyqa", 
+#                                                 optCtrl = list(maxfun = 2000000))) 
 
 
 mod.raw.repro$TWin <- glmer(raw_repro ~ -1 + ageClass/TWin +  MassAutumn_tm1 + (1|ID), # here write the model
@@ -283,11 +282,12 @@ mod.raw.repro$PTSummer<-glmer(raw_repro ~ -1 + ageClass/PSummerFec +ageClass/TSu
                          family="binomial",
                          control = glmerControl(optimizer="bobyqa", 
                                                 optCtrl = list(maxfun = 2000000))) 
-mod.raw.repro$TxPSummer <- glmer(raw_repro ~ -1 + ageClass/(TSummerFec*PSummerFec) +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=df_fec, 
-                          family="binomial",
-                          control = glmerControl(optimizer="bobyqa", 
-                                                 optCtrl = list(maxfun = 2000000))) 
+
+# mod.raw.repro$TxPSummer <- glmer(raw_repro ~ -1 + ageClass/(TSummerFec*PSummerFec) +  MassAutumn_tm1 + (1|ID), # here write the model
+#                           data=df_fec, 
+#                           family="binomial",
+#                           control = glmerControl(optimizer="bobyqa", 
+#                                                  optCtrl = list(maxfun = 2000000))) 
 
 mod.raw.repro$TSummer <- glmer(raw_repro ~ -1 + ageClass/TSummerFec +  MassAutumn_tm1 + (1|ID), # here write the model
                         data=df_fec, 
@@ -302,17 +302,17 @@ mod.raw.repro$PSummer <- glmer(raw_repro ~ -1 + ageClass/PSummerFec +  MassAutum
                                                optCtrl = list(maxfun = 1000000))) 
 
 # Fall yr-1
-mod.raw.repro$P.TFall <-glmer(raw_repro ~ -1 + ageClass/PAutFec + ageClass/TAutFec + MassAutumn_tm1 + (1|ID), # here write the model
-                         data=df_fec, 
-                         family="binomial",
-                         control = glmerControl(optimizer="bobyqa", 
-                                                optCtrl = list(maxfun = 2000000))) 
+# mod.raw.repro$P.TFall <-glmer(raw_repro ~ -1 + ageClass/PAutFec + ageClass/TAutFec + MassAutumn_tm1 + (1|ID), # here write the model
+#                          data=df_fec,
+#                          family="binomial",
+#                          control = glmerControl(optimizer="bobyqa",
+#                                                 optCtrl = list(maxfun = 2000000)))
 
-mod.raw.repro$TxFall <- glmer(raw_repro ~ -1 + ageClass/(TAutFec*PAutFec) +  MassAutumn_tm1 + (1|ID), # here write the model
-                          data=df_fec, 
-                          family="binomial",
-                          control = glmerControl(optimizer="bobyqa", 
-                                                 optCtrl = list(maxfun = 2000000))) 
+# mod.raw.repro$TxPFall <- glmer(raw_repro ~ -1 + ageClass/(TAutFec*PAutFec) +  MassAutumn_tm1 + (1|ID), # here write the model
+#                           data=df_fec,
+#                           family="binomial",
+#                           control = glmerControl(optimizer="bobyqa",
+#                                                  optCtrl = list(maxfun = 2000000)))
 
 mod.raw.repro$TFall <- glmer(raw_repro ~ -1 + ageClass/TAutFec +  MassAutumn_tm1 + (1|ID), # here write the model
                         data=df_fec, 
@@ -351,7 +351,7 @@ results.raw.repro$coefs.raw.repro.3rdbest[, 1:4] <- round(results.raw.repro[["co
 results.raw.repro$r2.raw.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][3,1])]]), digits = 3))
 
 # Option to create and save RData file with data, candidate models and results
-# save(df_raw.repro,mod.raw.repro,results.raw.repro,file = "raw.repro_clim.Rdata")
+# save(df_fec,mod.raw.repro,results.raw.repro,file = "raw.repro_weather.Rdata")
 
 
 
@@ -493,4 +493,4 @@ results.true.repro$coefs.true.repro.3rdbest[, 1:4] <- round(results.true.repro[[
 results.true.repro$r2.true.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][3,1])]]), digits = 3))
 
 # Option to create and save RData file with data, candidate models and results
-# save(df_true.repro,mod.true.repro,results.true.repro,file = "true.repro_clim.Rdata")
+# save(df_fec,mod.true.repro,results.true.repro,file = "true.repro_weather.Rdata")
