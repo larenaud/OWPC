@@ -217,7 +217,7 @@ results.raw.repro$coefs.raw.repro.3rdbest[, 1:4] <- round(results.raw.repro[["co
 results.raw.repro$r2.raw.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.raw.repro[[as.character(results.raw.repro[["aictable.raw.repro"]][3,1])]]), digits = 3))
 
 # Option to create and save RData file with data, candidate models and results
-# save(df_raw.repro,mod.raw.repro,results.raw.repro,file = "raw.repro_clim.Rdata")
+# save(df_fec,mod.raw.repro,results.raw.repro,file = "raw.repro_clim.Rdata")
 
 
 # True repro model selection -------------------------------------------------------
@@ -298,3 +298,8 @@ results.true.repro$r2.true.repro.2ndbest<-data.frame(round(MuMIn::r.squaredGLMM(
 results.true.repro$coefs.true.repro.3rdbest <- data.frame(coef(summary(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][3,1])]])))
 results.true.repro$coefs.true.repro.3rdbest[, 1:4] <- round(results.true.repro[["coefs.true.repro.3rdbest"]][, 1:4], digits = 3)
 results.true.repro$r2.true.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][3,1])]]), digits = 3))
+
+
+# Option to create and save RData file with data, candidate models and results
+# save(df_fec,mod.true.repro,results.true.repro,file = "true.repro_clim.Rdata")
+
