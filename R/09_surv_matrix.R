@@ -1,4 +1,15 @@
-# Matrice Dynamique de pop
+#09_surv_matrix
+# Modified by Sandrine Beaumont-Courteau 
+# 22/04/2020
+
+# This code create the Leslie matrix for all years combined
+# Also create a table with the demographic rates used for the matrix
+# For Raw and True reproduction
+
+
+
+
+# Librairies 
 
 library(popbio)
 library(readr)
@@ -9,10 +20,23 @@ library(readxl)
 
 
 #drive_download("OWPC/Analyses/data/sheep_data.txt")
-pop <- read.table("/Users/Sandrine/Documents/Sherbrooke/OWPC/Analyse/OWPC/data/sheep_data.txt", header = T)
+#pop <- read.table("/Users/Sandrine/Documents/Sherbrooke/OWPC/Analyse/OWPC/data/sheep_data.txt", header = T)
+
+
+# Database from the R object in the google drive >Analyses>cache
+
+pop <- sheep_data
+
 
 # New column surv where survival is coded as 0 or 1 
 pop$surv <- ifelse(pop$alive_t1 == FALSE, 0, ifelse(pop$alive_t1 == TRUE, 1, pop$alive_t1))
+
+
+#ageClass from dataset not the same then the one I will be using 
+#but still preserved the original class in a new column
+
+pop$ageClassOld <- pop$ageClass
+
 
 #New column ageClass (0,1,2,37,8)
 
@@ -30,10 +54,10 @@ pop <- droplevels(pop[pop$first_yr_trans == 0, ])
 #To calculate SE on vital rates
 binSE <- function(x){ sqrt((sum(x)/length(x))*(1-(sum(x)/length(x)))/length(x))} #For survival
 se <- function(x) sd(x)/sqrt(length(x)) #For reproduction 
-#From Joanie
+#From Joanie Van de Wall
 
 
-## START WILL ALL YEARS COMBINED 
+# == Make Dataframe for sample size and demo rates == #
 
 
 demoRatesAll <- matrix(nrow=1, ncol=30)
@@ -49,12 +73,23 @@ colnames(sampleSizeAll) <- c("0R","0T","1","2","3to7","8Plus")
 sampleSizeAll <- as.data.frame(sampleSizeAll)
 #POUR REPRO SAMPLE 8+ est 129 bc A28 morte sans qu'on sache si elle s'était reproduit
 
+
+
+# ================= CALCULATE DEMOGRAPHIC RATES ===================== # 
+
+# In new dataset, the gost where already divided by 2 
+#Also, in 1999, an adult had the ID 20R
+#No other lamb had an ID starting by a number! 
+
 Y0 <- pop[pop$age == 0, ]
 Y0$substr <- substr(Y0$ID,1,2)
-ghost <- Y0[Y0$substr == "20",]
-notGhost <- Y0[Y0$substr != "20",]
-randomGhost <- ghost[sample(nrow(ghost), length(ghost$ID)/2), ]
-newY0 <- rbind(notGhost,randomGhost)
+ghost <- Y0[Y0$substr == "20" | Y0$substr == "19",]
+notGhost <- Y0[Y0$substr != "20" & Y0$substr != "19",]
+
+newY0 <- Y0 # Because didnt have to divide the ghost lamb in 2 to account for sex
+
+#randomGhost <- ghost[sample(nrow(ghost), length(ghost$ID)/2), ]
+#newY0 <- rbind(notGhost,randomGhost)
 
 s0R <- newY0$surv
 sampleSizeAll[, "0R"] <- length(s0R)
@@ -142,7 +177,7 @@ demoRatesAll[, "RT9SE"] <- se(rt9)
 
 
 
-#Boot
+# === Boot === # 
 
 xs0R <- 1:length(s0R)
 s0Rboot <- cbind(xs0R, s0R)
@@ -213,7 +248,7 @@ FT8 <- mean(S8)*mean(RT9)
 
 # Bootstrap 
 
-#raw
+#raw 
 
 xRaw <- replicate(10000, {
   ibootcubssurvO <- sample(1:nrow(s0Rboot), replace = TRUE)
@@ -240,7 +275,7 @@ xRaw <- replicate(10000, {
   bootR48 <- mean(RR48boot[ibootc48repro,2])
   
   ibootc9repro <- sample(1:nrow(RR9boot), replace = TRUE)
-  bootR9 <- mean(RR9boot[ibootc9repro,2])
+  bootR9 <- mean(RR9boot[ibootc9repro,2],na.rm = T)
   
   # Fecundity rates
   bootF2= bootS2*bootR3/2 
@@ -308,7 +343,7 @@ xTrue <- replicate(10000, {
   bootR48 <- mean(RT48boot[ibootc48repro,2])
   
   ibootc9repro <- sample(1:nrow(RT9boot), replace = TRUE)
-  bootR9 <- mean(RT9boot[ibootc9repro,2])
+  bootR9 <- mean(RT9boot[ibootc9repro,2], na.rm = T)
   
   # Fecundity rates
   bootF2= bootS2*bootR3/2 
@@ -343,6 +378,7 @@ xTrue <- replicate(10000, {
   
 })
 
+
 hist(xTrue)
 mean(xTrue) 
 demoRatesAll[, "lambdaTDOWN"] <- quantile(xTrue, 0.025)
@@ -353,15 +389,15 @@ demoRatesAll[, "lambdaTUP"] <- quantile(xTrue, 0.975)
 ####### Mean lambda #######
 #Calculate survival for all years 
 
-# For survival of "ghost" lambs, divide their number in 2 to assume sex ratio of 1:1
-#Create a subset of year 0
 
 Y0 <- pop[pop$age == 0, ]
 Y0$substr <- substr(Y0$ID,1,2)
-ghost <- Y0[Y0$substr == "20",]
-notGhost <- Y0[Y0$substr != "20",]
-randomGhost <- ghost[sample(nrow(ghost), length(ghost$ID)/2), ]
-newY0 <- rbind(notGhost,randomGhost)
+ghost <- Y0[Y0$substr == "20" | Y0$substr == "19",]
+notGhost <- Y0[Y0$substr != "20" & Y0$substr != "19",]
+
+newY0 <- Y0
+
+
 
 S0R <- mean(newY0$surv, na.rm = TRUE)
 S0T <- mean(notGhost$surv,na.rm =T)
@@ -414,12 +450,12 @@ TF8 <- S8*T9
 # Make a table
 
 allYrTbl <- data.frame(Age_Class = c("0","1","2","3 à 7","8+"),
-                      Survival_Raw = c(S0R,S1,S2,S37,S8),
+                       Survival_Raw = c(S0R,S1,S2,S37,S8),
                        Survival_True = c(S0T,S1,S2,S37,S8),
-                      Raw_Repro = c(R0,R1,R2,R37,R8),
-                      True_Repro = c(T0,T1,T2,T37,T8),
-                    Raw_Fecundity = c(RF0,RF1,RF2,RF37,RF8),
-                    True_Fecundity = c(TF0,TF1,TF2,TF37,TF8))
+                       Raw_Repro = c(R0,R1,R2,R37,R8),
+                       True_Repro = c(T0,T1,T2,T37,T8),
+                       Raw_Fecundity = c(RF0,RF1,RF2,RF37,RF8),
+                       True_Fecundity = c(TF0,TF1,TF2,TF37,TF8))
 
 allYrTbl <- xtable(allYrTbl)
 
@@ -576,12 +612,6 @@ generation_time_True <- generation.time(allYearTF)
 
 
 
-
-
-
-
-
-
 #####Sensitivity####
 SR <- eigen.analysis(allYearRF)$sensitivities
 ST <- eigen.analysis(allYearTF)$sensitivities
@@ -594,8 +624,10 @@ ST <- eigen.analysis(allYearTF)$sensitivities
 # lambda all years grouped, using RAW fecundity = 0.9996975 (11/02/2020)
 # lambda all years grouped, using TRUE fecundity = 1.010092 (11/02/2020)
 
-mean(AGR$lambdaRF) # 0.9874683
-mean(AGR$lambdaTF) # 1.015228
+#After adding 1999
+# lambda all years grouped, using RAW fecundity = 0.9839261 (22/04/2020)
+# lambda all years grouped, using TRUE fecundity = 0.9976678 (22/04/2020)
+
 
 ##############################################
 
