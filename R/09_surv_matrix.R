@@ -151,9 +151,12 @@ demoRatesAll[, "RR48"] <- RR48
 demoRatesAll[, "RR48SE"] <- se(rr48)
 
 rr9 <- pop_repro[which(pop_repro$ageClass >= 9), "raw_repro"]
-RR9 <- mean(rr9)/2
+rr9_noNA <- rr9[!is.na(rr9)]
+
+RR9 <- mean(rr9,na.rm = T)/2
 demoRatesAll[, "RR9"] <- RR9
-demoRatesAll[, "RR9SE"] <- se(rr9)
+demoRatesAll[, "RR9SE"] <- se(rr9_noNA)
+
 
 
 ## true repro
@@ -171,9 +174,11 @@ demoRatesAll[, "RT48"] <- RT48
 demoRatesAll[, "RT48SE"] <- se(rt48)
 
 rt9 <- pop_repro[which(pop_repro$ageClass >= 9), "true_repro"]
-RT9 <- mean(rt9)/2
+rt9_noNA <- rt9[!is.na(rt9)]
+RT9 <- mean(rt9,na.rm = T )/2
 demoRatesAll[, "RT9"] <- RT9
-demoRatesAll[, "RT9SE"] <- se(rt9)
+demoRatesAll[, "RT9SE"] <- se(rt9_noNA)
+
 
 
 
