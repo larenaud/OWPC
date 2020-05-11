@@ -116,6 +116,8 @@ for (i in 1:16){
 }
 
 pheno<- merge(pheno, Winter, by.x = "year", by.y ="Year")
+
+
 #write.csv(pheno, "data/pheno_by_yr.csv", row.names = FALSE)
 #drive_upload("data/pheno_by_yr.csv", path = "OWPC/Analyses/data/Raw/pheno_by_yr.csv", overwrite = T)
 
@@ -156,7 +158,7 @@ getwd()
 
 # 2 - survival & pheno dataframe ------------------------------------------------------
 
-pheno = read.csv2("pheno_by_yr.csv",
+pheno = read.csv2("data/pheno_by_yr.csv",
                   na.string = c("", "NA"),sep = ",")
 
 # select needed only
@@ -226,15 +228,61 @@ pheno_surv <- merge(pheno_surv,
 colnames(pheno_surv)
 
 
-# 3 - make pheno pca for seasons  ---------------------------------------------------------------
+# 3 - make pheno pca for seasons - ALL SEASONS  ---------------------------------------------------------------
 
 # scale
 colnames(pheno_surv)
 pheno_surv<-pheno_surv %>% 
   filter(year > 2000 & year <2016)
 
-lengths <- pheno_surv[c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR",
-                        "WinNDVIsurvT1","WinEVIsurvT1","WinLAIsurvT1","WinGPPsurvT1","WinSnowsurvT1","WinPSNNETsurvT1", "WinFPARsurvT1")] 
+lengths <- pheno_surv[c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerPSNNET","SummerFPAR", # removed snow 
+                        "WinNDVIsurvT1","WinEVIsurvT1","WinLAIsurvT1","WinGPPsurvT1","WinPSNNETsurvT1", "WinFPARsurvT1")] 
+hist(unlist(lengths))# need multinormal distn
+
+# Standardisation
+lengths <-scale(lengths)
+lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
+
+# faire la PCA
+acp_surv <- rda(lengths) # Option par défaut : scale=FALSE
+
+
+summary(acp_surv) # by default scaling 2 is used in summary 
+summary(acp_surv, scaling = 1)
+
+eigenvals(acp_surv)
+year <- summary(acp_surv)$sites # this is the new scores for year
+var <- summary(acp_surv)$species # this is the contribution of variables to each pc
+summary(acp_surv)$sp
+
+
+library(kableExtra)
+
+#these are the loadings (correlations of each variable with each pca xis)
+test = round(scores(acp_surv, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
+
+
+kable(test) %>%
+  kable_styling(font_size = 10) %>%
+  row_spec(c(0,1,12)) %>%
+kable_styling("bordered") %>%
+save_kable(file = "graph/tableS1PcaVegSeasons.html", self_contained = T) 
+
+# show results 
+biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
+biplot(acp_surv, scaling=2) # relationships between variables 
+
+
+
+# 4 - make pheno pca for seasons - SUMMER ONLY   ---------------------------------------------------------------
+
+
+# scale
+colnames(pheno_surv)
+pheno_surv<-pheno_surv %>% 
+  filter(year > 2000 & year <2016)
+
+lengths <- pheno_surv[c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerPSNNET","SummerFPAR")] 
 hist(unlist(lengths))# need multinormal distn
 
 # Standardisation
@@ -251,28 +299,70 @@ summary(acp_surv) # by default scaling 2 is used in summary
 summary(acp_surv, scaling = 1)
 
 eigenvals(acp_surv)
-year <- summary(acp_surv)$sites # this is the new scores for year
+yearSummer <- summary(acp_surv)$sites # this is the new scores for year
+colnames(yearSummer)[1:2] <- c("PC1Summer", "PC2Summer")
+
 var <- summary(acp_surv)$species # this is the contribution of variables to each pc
 summary(acp_surv)$sp
 
 
-library(kableExtra)
 kable(test) %>%
   kable_styling(font_size = 10) %>%
-  row_spec(c(0,1, 14)) %>%
-kable_styling("bordered") %>%
-save_kable(file = "table1.html", self_contained = T) 
+  kable_styling("bordered") %>%
+  save_kable(file = "graph/tableS1PcaVegSummerOnly.html", self_contained = T) 
 
 # show results 
 biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
 biplot(acp_surv, scaling=2) # relationships between variables 
 
-#  make pca on timing  ------------------------------------------------------
+
+# 5 - make pheno pca for seasons - WINTER  ONLY   ---------------------------------------------------------------
+
+
+# scale
+colnames(pheno_surv)
+pheno_surv<-pheno_surv %>% 
+  filter(year > 2000 & year <2016)
+
+lengths <- pheno_surv[c("WinNDVIsurvT1","WinEVIsurvT1","WinLAIsurvT1","WinGPPsurvT1","WinPSNNETsurvT1", "WinFPARsurvT1")] 
+hist(unlist(lengths))# need multinormal distn
+
+# Standardisation
+lengths <-scale(lengths)
+lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
+
+# faire la PCA
+acp_surv <- rda(lengths) # Option par défaut : scale=FALSE
+
+#these are the loadings (correlations of each variable with each pca xis)
+test = round(scores(acp_surv, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
+
+summary(acp_surv) # by default scaling 2 is used in summary 
+summary(acp_surv, scaling = 1)
+
+eigenvals(acp_surv)
+yearWinter <- summary(acp_surv)$sites # this is the new scores for year
+colnames(yearWinter)[1:2] <- c("PC1Winter", "PC2Winter")
+
+var <- summary(acp_surv)$species # this is the contribution of variables to each pc
+summary(acp_surv)$sp
+
+kable(test) %>%
+  kable_styling(font_size = 10) %>%
+  kable_styling("bordered") %>%
+  save_kable(file = "graph/tableS1PcaVegWinterOnly.html", self_contained = T) 
+
+# show results 
+biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
+biplot(acp_surv, scaling=2) # relationships between variables 
+
+
+# 6 - make pca on timing  ------------------------------------------------------
 
 colnames(pheno_surv)
 
-lengths2 <- pheno_surv[c( "NDVIsurvT","EVIsurvT","LAIsurvT","GPPsurvT","SNOWsurvT", "PSNNETsurvT", "FPARsurvT", 
-                          "NDVIsurvT1","EVIsurvT1","LAIsurvT1","GPPsurvT1","SNOWsurvT1", "PSNNETsurvT1", "FPARsurvT1")] 
+lengths2 <- pheno_surv[c( "NDVIsurvT","EVIsurvT","LAIsurvT","GPPsurvT", "PSNNETsurvT", "FPARsurvT", # removed snow 
+                          "NDVIsurvT1","EVIsurvT1","LAIsurvT1","GPPsurvT1","PSNNETsurvT1", "FPARsurvT1")] 
 hist(unlist(lengths2))# need multinormal distn
 
 lengths2 <- na.omit(lengths2) 
@@ -288,7 +378,7 @@ summary(acpTiming, scaling = 1)
 
 eigenvals(acpTiming)
 yearTiming <- data.frame(summary(acpTiming)$sites)
-names(yearTiming)[1:2] <- c("PC1Tim", "PC2Tim")
+colnames(yearTiming)[1:2] <- c("PC1Date", "PC2Date")
 
 varTiming <- summary(acpTiming)$species # this is the contribution of variables to each pc
 
@@ -297,12 +387,9 @@ kable(timingLoadings) %>%
   kable_styling(font_size = 10) %>%
   row_spec(c(0,1)) %>%
   kable_styling("bordered") %>%
-  save_kable(file = "tableTimingPca.html", self_contained = T) 
+  save_kable(file = "tableSXXPcaDates.html", self_contained = T) 
 
 # show results 
-biplot(acpTiming, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
-biplot(acpTiming, scaling=1)
-
 biplot(acpTiming, scaling=2) # relationships between variables 
 biplot(acpTiming, scaling="species")
 
@@ -311,7 +398,8 @@ biplot(acpTiming, scaling="species")
 pheno_surv<- pheno_surv[!is.na(pheno_surv$SummerGPP), ] # missing data 
 pheno_surv<- pheno_surv[!is.na(pheno_surv$WinNDVIsurvT1), ] # missing data 
 
-pheno_surv<-cbind(pheno_surv, year[, 1:2])
+pheno_surv<-cbind(pheno_surv, yearSummer[, 1:2])
+pheno_surv<-cbind(pheno_surv, yearWinter[, 1:2])
 pheno_surv<-cbind(pheno_surv, yearTiming[, 1:2])
 
 # clean up 
@@ -321,10 +409,25 @@ rm(tmp1, tmp2, var, year, pheno, lengths, acp_surv, test)
 
 colnames(pheno_surv)
 
-pheno_surv<- pheno_surv[, c("year","SummerNDVI","WinNDVIsurvT1",   
-                            "NDVIsurvT1","NDVIsurvT","PC1" ,"PC2"  ,"PC1Tim","PC2Tim" )]
+# save this for projections ! 
+save(pheno_surv, file = "cache/dataProjections.RData")
 
-# 4 - create climate data ------------------------------------------------
+
+
+
+
+# KEEP ALL 
+
+
+
+# pheno_surv<- pheno_surv[, c("year","SummerNDVI","WinNDVIsurvT1",   
+#                             "NDVIsurvT1","NDVIsurvT","PC1" ,"PC2"  ,"PC1Tim","PC2Tim" )]
+
+
+
+
+
+# 7 - create climate data ------------------------------------------------
 
 # THIS IS FOR RAW DATA - SKIP AND GO TO STEP 5
 
@@ -408,7 +511,7 @@ rm(SOI, tmp, sheep_data, PDO, monthly_climate, data)
 
 
 
-# 5 - add time lags climate   ----------------------------------------------
+# 8 - add time lags climate   ----------------------------------------------
 
 clim = read.csv2("season_climate_ram.csv",
                  na.string = c("", "NA"),sep = ",")
@@ -447,7 +550,7 @@ clim_surv <- clim_surv %>%
          SOI.winter_tm1 =SOI.winter)
 head(clim)
 
-# 6 - tidy weather data   ---------------------------------------------------
+# 9 - tidy weather data   ---------------------------------------------------
 
 # get data from françois
 
@@ -465,7 +568,7 @@ weather<-read.delim("monthlyRam", header=T, sep=",") # this is from François
 
 
 
-# 7 - add time lags to weather  -------------------------------------------
+# 10 - add time lags to weather  -------------------------------------------
 
 # originally by Y. Ritchot - modified by LR march 24 2020
 
