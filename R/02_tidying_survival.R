@@ -429,7 +429,7 @@ save(pheno_surv, file = "cache/dataProjections.RData")
 
 # 7 - create climate data ------------------------------------------------
 
-# THIS IS FOR RAW DATA - SKIP AND GO TO STEP 5
+# THIS IS FOR RAW DATA - SKIP AND GO TO NEXT STEP 
 
 
 # Download database from google drive and save it in previously set working directory
