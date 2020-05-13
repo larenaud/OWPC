@@ -513,7 +513,7 @@ rm(SOI, tmp, sheep_data, PDO, monthly_climate, data)
 
 # 8 - add time lags climate   ----------------------------------------------
 
-clim = read.csv2("season_climate_ram.csv",
+clim = read.csv2("data/season_climate_ram.csv",
                  na.string = c("", "NA"),sep = ",")
 
 # add time lag # careful this is tricky
@@ -555,7 +555,7 @@ head(clim)
 # get data from françois
 
 #drive_download("OWPC/Analyses/data/Raw/Climat/monthlyRam", type="xls", overwrite = T)
-weather<-read.delim("monthlyRam", header=T, sep=",") # this is from François 
+weather<-read.delim("data/monthlyRam", header=T, sep=",") # this is from François 
 
 # create seasons
 
@@ -574,7 +574,7 @@ weather<-read.delim("monthlyRam", header=T, sep=",") # this is from François
 
 #drive_download("OWPC/Analyses/data/Raw/Climat/Localweather_seasons",type="csv", overwrite=T)
 
-weather<-read.delim("Localweather_seasons", header=T, sep=",")
+weather<-read.delim("data/Localweather_seasons", header=T, sep=",")
 
 # No time lag for survival
 weather$yr <- as.numeric(as.character(weather$yr))
@@ -599,7 +599,7 @@ head(weather_surv, 10)
 
 # merge into one dataframe  -----------------------------------------------
 
-sheep_data <- read.csv2("repro_mass.csv", sep = ",")
+sheep_data <- read.csv2("data/repro_mass.csv", sep = ",")
 
 # add age class 
 
@@ -653,10 +653,12 @@ dataSurv$MassSpring<-as.numeric(as.character(dataSurv$MassSpring))
 dataSurv$MassAutumn<-as.numeric(as.character(dataSurv$MassAutumn))
 
 
-dataSurv$PC1<-as.numeric(as.character(dataSurv$PC1))
-dataSurv$PC2<-as.numeric(as.character(dataSurv$PC2))
-dataSurv$PC1Tim-as.numeric(as.character(dataSurv$PC1Tim))
-dataSurv$PC2Tim<-as.numeric(as.character(dataSurv$PC2Tim))
+dataSurv$PC1Summer<-as.numeric(as.character(dataSurv$PC1Summer))
+dataSurv$PC2Summer<-as.numeric(as.character(dataSurv$PC2Summer))
+dataSurv$PC1Winter<-as.numeric(as.character(dataSurv$PC1Winter))
+dataSurv$PC2Winter<-as.numeric(as.character(dataSurv$PC2Winter))
+dataSurv$PC1Date<-as.numeric(as.character(dataSurv$PC1Date))
+dataSurv$PC2Date<-as.numeric(as.character(dataSurv$PC2Date))
 
 dataSurv$PDO.winter_surv<-as.numeric(as.character(dataSurv$PDO.winter_surv))
 dataSurv$PDO.summer_surv<-as.numeric(as.character(dataSurv$PDO.summer_surv))
@@ -691,14 +693,47 @@ dataSurvUnscld = dataSurv
 str(dataSurvUnscld)
 
 
-# reorder things 
-colnames(dataSurv)
 
-# only keep ndvi + pc
+# calculate sd for projections 
+colnames(dataSurvUnscld)
+dim(dataSurvUnscld)
+
+data.SD<-apply(dataSurvUnscld[, 10:70], 2,sd, na.rm = T) # 2 pour prendre colonnes
+head(data.SD)
+data.MEAN<-apply(dataSurvUnscld[, 10:70], 2,mean, na.rm = T)
+
+# get something and backtransform 
+#newd$snow<-(data.MEAN["SummerEVI"]*data.SD) + data.MEAN
+
+
+
+# reorder things 
+colnames(dataSurv) 
+
+
+# reorder to scale 
+dataSurv <- dataSurv[, c("yr","ID","alive_t1","ageClass","age","pred","first_yr_trans",     
+                         "MassSpring","MassAutumn",
+                          "SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR" ,      
+                         "WinNDVIsurvT1","WinEVIsurvT1","WinLAIsurvT1","WinGPPsurvT1","WinSnowsurvT1","WinPSNNETsurvT1","WinFPARsurvT1","NDVIsurvT1",       
+                         "EVIsurvT1","LAIsurvT1","GPPsurvT1","SNOWsurvT1","PSNNETsurvT1","FPARsurvT1","NDVIsurvT","EVIsurvT",
+                         "LAIsurvT","GPPsurvT","SNOWsurvT","PSNNETsurvT","FPARsurvT","PC1Summer","PC2Summer","PC1Winter",
+                         "PC2Winter","PC1Date","PC2Date","PDO.summer_surv","PDO.fall_surv","SOI.summer_surv","SOI.fall_surv","PDO.winter_tm1" ,  
+                         "SOI.winter_tm1","PDO.winter_surv","PDO.spring_surv","SOI.winter_surv","SOI.spring_surv","T.WIN.m1","P.WIN.m1","T.SPRING.m1",      
+                         "P.SPRING.m1","T.SUMMER","P.SUMMER","T.FALL","P.FALL","T.WIN","P.WIN","T.SPRING",
+                         "P.SPRING","PDOSOI_winter","PDOSOI_spring","PDOSOI_summer","PDOSOI_fall","PDOSOI_winter_tm1")]
+
+dataSurv[, c(8:70)] <- scale(dataSurv[, c(8:70)])
+fullSurvDataScled = dataSurv
+
+#save(data.SD, data.MEAN, dataSurvUnscld, fullSurvDataScled, file = "cache/dataProjections.RData")
+
+
+# only keep ndvi + pc for models 
 dataSurv <- dataSurv[, c("yr","ID","alive_t1","age" , "pred","first_yr_trans" , "ageClass",
                          "MassSpring","MassAutumn", 
                          "SummerNDVI","WinNDVIsurvT1","NDVIsurvT","NDVIsurvT1",
-                          "PC1","PC2","PC1Tim","PC2Tim",
+                          "PC1Summer","PC2Summer","PC1Winter","PC2Winter","PC1Date","PC2Date",
                          "PDO.summer_surv", "PDO.fall_surv",   "SOI.summer_surv", "SOI.fall_surv","PDO.winter_tm1","SOI.winter_tm1", 
                          "PDO.winter_surv", "PDO.spring_surv", "SOI.winter_surv", "SOI.spring_surv",
                          "T.WIN.m1","P.WIN.m1","T.SPRING.m1","P.SPRING.m1","T.SUMMER","P.SUMMER","T.FALL","P.FALL","T.WIN","P.WIN",
@@ -706,7 +741,7 @@ dataSurv <- dataSurv[, c("yr","ID","alive_t1","age" , "pred","first_yr_trans" , 
                          "PDOSOI_winter",  "PDOSOI_spring","PDOSOI_summer", "PDOSOI_fall", "PDOSOI_winter_tm1" )]
 
 
-dataSurv[, c(8:44)] <- scale(dataSurv[, c(8:44)])
+dataSurv[, c(8:46)] <- scale(dataSurv[, c(8:46)])
 dataSurvScld = dataSurv
 
 
@@ -720,10 +755,10 @@ getwd()
 
 #
 # save(sheep_data, pheno_surv, clim_surv, weather_surv, dataSurvUnscld, dataSurvScld,
-#      file = "cache/dataSurvivalModels.RData")
+#       file = "cache/dataSurvivalModels.RData")
 # drive_upload("cache/dataSurvivalModels.RData",
-#              path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
-
+#               path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
+# 
 
 
 
