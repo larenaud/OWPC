@@ -33,66 +33,73 @@ rm(clim_surv,pheno_surv,weather_surv,sheep_data,dataSurvUnscld,dataSurvScld)
 # List of candidate models
 mod.surv <- list()
 
+# Base model
 mod.surv$base <- glm(alive_t1 ~ -1 + ageClass + pred, data=df_surv, family="binomial")
 
-mod.surv$summerPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.summer_surv + pred, 
+# Summer 
+mod.surv$Summer_PDO <- glm(alive_t1 ~ -1 + ageClass/PDO.summer_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.surv$summerSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.summer_surv + pred, 
+mod.surv$Summer_SOI <- glm(alive_t1 ~ -1 + ageClass/SOI.summer_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.surv$summer_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_summer + pred, 
+mod.surv$Summer_PDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.summer_surv + ageClass/SOI.summer_surv + pred, 
+                          data=df_surv, family="binomial")
+
+mod.surv$Summer_Int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_summer + pred, 
                         data=df_surv, family="binomial")
 
-mod.surv$fallPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.fall_surv + pred, 
+# Autumn
+mod.surv$Autumn_PDO <- glm(alive_t1 ~ -1 + ageClass/PDO.fall_surv + pred, 
                      data=df_surv, family="binomial")
 
-mod.surv$fallSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.fall_surv + pred, 
+mod.surv$Autumn_SOI <- glm(alive_t1 ~ -1 + ageClass/SOI.fall_surv + pred, 
                      data=df_surv, family="binomial")
 
-mod.surv$fallPDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.fall_surv+ageClass/SOI.fall_surv + pred, 
+mod.surv$Autumn_PDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.fall_surv + ageClass/SOI.fall_surv + pred, 
                         data=df_surv, family="binomial") 
 
-mod.surv$fall_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_fall + pred, 
+mod.surv$Autumn_Int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_fall + pred, 
                       data=df_surv, family="binomial")
 
-mod.surv$winterPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_surv + pred, 
+# Winter
+mod.surv$Winter_PDO <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.surv$winterSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.winter_surv + pred, 
+mod.surv$Winter_SOI <- glm(alive_t1 ~ -1 + ageClass/SOI.winter_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.surv$winterPDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_surv+ageClass/SOI.winter_surv + pred, 
+mod.surv$Winter_PDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_surv+ageClass/SOI.winter_surv + pred, 
                           data=df_surv, family="binomial") 
 
-mod.surv$winter_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_winter + pred, 
+mod.surv$Winter_Int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_winter + pred, 
                         data=df_surv, family="binomial")
 
-mod.surv$springPDO <- glm(alive_t1 ~ -1 + ageClass/PDO.spring_surv + pred, 
+# Spring
+mod.surv$Spring_PDO <- glm(alive_t1 ~ -1 + ageClass/PDO.spring_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.surv$springSOI <- glm(alive_t1 ~ -1 + ageClass/SOI.spring_surv + pred, 
+mod.surv$Spring_SOI <- glm(alive_t1 ~ -1 + ageClass/SOI.spring_surv + pred, 
                        data=df_surv, family="binomial")
 
-mod.surv$springPDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.spring_surv+ageClass/SOI.spring_surv + pred, 
+mod.surv$Spring_PDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.spring_surv+ageClass/SOI.spring_surv + pred, 
                           data=df_surv, family="binomial") 
 
-mod.surv$spring_int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_spring + pred, 
+mod.surv$Spring_Int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_spring + pred, 
                         data=df_surv, family="binomial")
 
-mod.surv$winter.tm1.PDO <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_tm1 + pred, 
+# Winter t-1
+mod.surv$Winter_tm1_PDO <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_tm1 + pred, 
                             data=df_surv, family="binomial")
 
-mod.surv$winter.tm1.SOI <- glm(alive_t1 ~ -1 + ageClass/SOI.winter_tm1 + pred, 
+mod.surv$Winter_tm1_SOI <- glm(alive_t1 ~ -1 + ageClass/SOI.winter_tm1 + pred, 
                             data=df_surv, family="binomial")
 
-mod.surv$winter.tm1.PDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_tm1+ageClass/SOI.winter_tm1 + pred, 
+mod.surv$Winter_tm1_PDOSOI <- glm(alive_t1 ~ -1 + ageClass/PDO.winter_tm1+ageClass/SOI.winter_tm1 + pred, 
                                data=df_surv, family="binomial") 
 
-mod.surv$winter.tm1.int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_winter_tm1 + pred, 
+mod.surv$Winter_tm1_Int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_winter_tm1 + pred, 
                             data=df_surv, family="binomial")
-
-# female density and mass not included as control variables because correlated with age classes 
 
 # Creating a list to store the results
 results.surv<-list()
@@ -140,57 +147,77 @@ rm(clim_fec,pheno_fec,weather_fec,sheep_data,dataFecUnscld,dataFecScld)
 # Raw repro model selection  -------------------------------------------------------------------------------------------
 mod.raw.repro <- list()
 
-mod.raw.repro$summerPDO <- glmer(raw_repro ~ -1 + ageClass/PDOSummerFec + MassAutumn_tm1 + (1|ID), 
+#Base model
+mod.raw.repro$Base <- glmer(raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID),
+                            family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                            optCtrl = list(maxfun = 100000)))
+
+# Summer
+mod.raw.repro$Summer_PDO <- glmer(raw_repro ~ -1 + ageClass/PDOSummerFec + MassAutumn_tm1 + (1|ID), 
                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
                                  optCtrl = list(maxfun = 100000)))
 
-mod.raw.repro$fallPDO <- glmer(raw_repro ~ -1 + ageClass/PDOFallFec + MassAutumn_tm1 + (1|ID), 
-                               family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                               optCtrl = list(maxfun = 100000)))
-
-mod.raw.repro$winterPDO <- glmer(raw_repro ~ -1 + ageClass/PDOWinterFec + MassAutumn_tm1+  (1|ID), 
+mod.raw.repro$Summer_SOI <- glmer(raw_repro ~ -1 + ageClass/SOISummerFec + MassAutumn_tm1 + (1|ID), 
                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
                                  optCtrl = list(maxfun = 100000)))
 
-mod.raw.repro$springPDO <- glmer(raw_repro ~ -1 + ageClass/PDOSpringFec + MassAutumn_tm1+ (1|ID), 
-                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                 optCtrl = list(maxfun = 100000)))
-
-mod.raw.repro$summerPDOSOI <- glmer(raw_repro ~ -1 + ageClass/PDOSummerFec + ageClass/SOISummerFec + MassAutumn_tm1 + (1|ID), 
+mod.raw.repro$Summer_PDOSOI <- glmer(raw_repro ~ -1 + ageClass/PDOSummerFec + ageClass/SOISummerFec + MassAutumn_tm1 + (1|ID), 
                                     family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
                                     optCtrl = list(maxfun = 100000)))
 
-mod.raw.repro$fallPDOSOI <- glmer(raw_repro ~ -1 + ageClass/PDOFallFec + ageClass/SOIFallFec + MassAutumn_tm1 + (1|ID), 
+mod.raw.repro$Summer_Int <- glmer(raw_repro ~ -1 + ageClass/PDOSOI_summer + MassAutumn_tm1+ (1|ID),
+                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                        optCtrl = list(maxfun = 100000)))
+
+# Autumn
+mod.raw.repro$Autumn_PDO <- glmer(raw_repro ~ -1 + ageClass/PDOFallFec + MassAutumn_tm1 + (1|ID), 
+                               family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                               optCtrl = list(maxfun = 100000)))
+
+mod.raw.repro$Autumn_SOI <- glmer(raw_repro ~ -1 + ageClass/SOIFallFec + MassAutumn_tm1 + (1|ID), 
+                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                        optCtrl = list(maxfun = 100000)))
+
+mod.raw.repro$Autumn_PDOSOI <- glmer(raw_repro ~ -1 + ageClass/PDOFallFec + ageClass/SOIFallFec + MassAutumn_tm1 + (1|ID), 
                                   family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
                                   optCtrl = list(maxfun = 100000)))
 
-mod.raw.repro$winterPDOSOI <- glmer(raw_repro ~ -1 + ageClass/PDOWinterFec + ageClass/SOIWinterFec + MassAutumn_tm1 + (1|ID),
-                                    family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                    optCtrl = list(maxfun = 100000)))
-
-#mod.raw.repro$springPDOSOI <- glmer(raw_repro ~ -1 + ageClass/PDOSpringFec + ageClass/SOISpringFec + MassAutumn_tm1 + (1|ID),
-#                                    family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-#                                    optCtrl = list(maxfun = 100000)))
-
-mod.raw.repro$summerInt <- glmer(raw_repro ~ -1 + ageClass/PDOSOI_summer + MassAutumn_tm1+ (1|ID),
-                            family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                            optCtrl = list(maxfun = 100000)))
-
-mod.raw.repro$fallInt <- glmer(raw_repro ~ -1 + ageClass/PDOSOI_fall + MassAutumn_tm1 + (1|ID),
+mod.raw.repro$Autumn_Int <- glmer(raw_repro ~ -1 + ageClass/PDOSOI_fall + MassAutumn_tm1 + (1|ID),
                                family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
                                optCtrl = list(maxfun = 100000)))
 
-mod.raw.repro$winterInt <- glmer(raw_repro ~ -1 + ageClass/PDOSOI_winter + MassAutumn_tm1 + (1|ID),
+# Winter
+mod.raw.repro$Winter_PDO <- glmer(raw_repro ~ -1 + ageClass/PDOWinterFec + MassAutumn_tm1+  (1|ID), 
                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
                                  optCtrl = list(maxfun = 100000)))
 
-mod.raw.repro$springInt <- glmer(raw_repro ~ -1 + ageClass/PDOSOI_spring  + MassAutumn_tm1 + (1|ID),
+mod.raw.repro$Winter_SOI <- glmer(raw_repro ~ -1 + ageClass/SOIWinterFec + MassAutumn_tm1 + (1|ID), 
                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
                                  optCtrl = list(maxfun = 100000)))
 
-mod.raw.repro$base <- glmer(raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID),
-                            family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                            optCtrl = list(maxfun = 100000)))
+mod.raw.repro$Winter_PDOSOI <- glmer(raw_repro ~ -1 + ageClass/PDOWinterFec + ageClass/SOIWinterFec + MassAutumn_tm1 + (1|ID),
+                                    family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                    optCtrl = list(maxfun = 100000)))
+
+mod.raw.repro$Winter_Int <- glmer(raw_repro ~ -1 + ageClass/PDOSOI_winter + MassAutumn_tm1 + (1|ID),
+                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                 optCtrl = list(maxfun = 100000)))
+# Spring
+mod.raw.repro$Spring_PDO <- glmer(raw_repro ~ -1 + ageClass/PDOSpringFec + MassAutumn_tm1 + (1|ID), 
+                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                 optCtrl = list(maxfun = 100000)))
+
+mod.raw.repro$Spring_SOI <- glmer(raw_repro ~ -1 + ageClass/SOISpringFec + MassAutumn_tm1 + (1|ID), 
+                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                 optCtrl = list(maxfun = 100000)))
+
+mod.raw.repro$Spring_PDOSOI <- glmer(raw_repro ~ -1 + ageClass/PDOSpringFec + ageClass/SOISpringFec + MassAutumn_tm1 + (1|ID),
+                                    family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                    optCtrl = list(maxfun = 100000)))
+
+mod.raw.repro$Spring_Int <- glmer(raw_repro ~ -1 + ageClass/PDOSOI_spring  + MassAutumn_tm1 + (1|ID),
+                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                 optCtrl = list(maxfun = 100000)))
 
 # Creating a list to store the results
 results.raw.repro<-list()
@@ -220,60 +247,80 @@ results.raw.repro$r2.raw.repro.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mo
 # save(df_fec,mod.raw.repro,results.raw.repro,file = "raw.repro_clim.Rdata")
 
 
-# True repro model selection -------------------------------------------------------
+# True repro model selection  -------------------------------------------------------------------------------------------
 mod.true.repro <- list()
 
-mod.true.repro$summerPDO <- glmer(true_repro ~ -1 + ageClass/PDOSummerFec + MassAutumn_tm1 + (1|ID), 
-                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                        optCtrl = list(maxfun = 100000)))
+#Base model
+mod.true.repro$Base <- glmer(true_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID),
+                            family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                   optCtrl = list(maxfun = 100000)))
 
-mod.true.repro$fallPDO <- glmer(true_repro ~ -1 + ageClass/PDOFallFec + MassAutumn_tm1 + (1|ID), 
-                               family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                      optCtrl = list(maxfun = 100000)))
-
-mod.true.repro$winterPDO <- glmer(true_repro ~ -1 + ageClass/PDOWinterFec + MassAutumn_tm1+  (1|ID), 
-                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                        optCtrl = list(maxfun = 100000)))
-
-mod.true.repro$springPDO <- glmer(true_repro ~ -1 + ageClass/PDOSpringFec + MassAutumn_tm1+ (1|ID), 
-                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                        optCtrl = list(maxfun = 100000)))
-
-mod.true.repro$summerPDOSOI <- glmer(true_repro ~ -1 + ageClass/PDOSummerFec + ageClass/SOISummerFec + MassAutumn_tm1 + (1|ID), 
-                                    family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                           optCtrl = list(maxfun = 100000)))
-
-mod.true.repro$fallPDOSOI <- glmer(true_repro ~ -1 + ageClass/PDOFallFec + ageClass/SOIFallFec + MassAutumn_tm1 + (1|ID), 
+# Summer
+mod.true.repro$Summer_PDO <- glmer(true_repro ~ -1 + ageClass/PDOSummerFec + MassAutumn_tm1 + (1|ID), 
                                   family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
                                                                                          optCtrl = list(maxfun = 100000)))
 
-mod.true.repro$winterPDOSOI <- glmer(true_repro ~ -1 + ageClass/PDOWinterFec + ageClass/SOIWinterFec + MassAutumn_tm1 + (1|ID),
-                                    family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                           optCtrl = list(maxfun = 100000)))
+mod.true.repro$Summer_SOI <- glmer(true_repro ~ -1 + ageClass/SOISummerFec + MassAutumn_tm1 + (1|ID), 
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
 
-mod.true.repro$springPDOSOI <- glmer(true_repro ~ -1 + ageClass/PDOSpringFec + ageClass/SOISpringFec + MassAutumn_tm1 + (1|ID),
-                                    family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                    optCtrl = list(maxfun = 100000)))
+mod.true.repro$Summer_PDOSOI <- glmer(true_repro ~ -1 + ageClass/PDOSummerFec + ageClass/SOISummerFec + MassAutumn_tm1 + (1|ID), 
+                                     family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                            optCtrl = list(maxfun = 100000)))
 
-mod.true.repro$summerInt <- glmer(true_repro ~ -1 + ageClass/PDOSOI_summer + MassAutumn_tm1+ (1|ID),
-                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                        optCtrl = list(maxfun = 100000)))
+mod.true.repro$Summer_Int <- glmer(true_repro ~ -1 + ageClass/PDOSOI_summer + MassAutumn_tm1+ (1|ID),
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
 
-mod.true.repro$fallInt <- glmer(true_repro ~ -1 + ageClass/PDOSOI_fall + MassAutumn_tm1 + (1|ID),
-                               family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                      optCtrl = list(maxfun = 100000)))
+# Autumn
+mod.true.repro$Autumn_PDO <- glmer(true_repro ~ -1 + ageClass/PDOFallFec + MassAutumn_tm1 + (1|ID), 
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
 
-mod.true.repro$winterInt <- glmer(true_repro ~ -1 + ageClass/PDOSOI_winter + MassAutumn_tm1 + (1|ID),
-                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                        optCtrl = list(maxfun = 100000)))
+mod.true.repro$Autumn_SOI <- glmer(true_repro ~ -1 + ageClass/SOIFallFec + MassAutumn_tm1 + (1|ID), 
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
 
-mod.true.repro$springInt <- glmer(true_repro ~ -1 + ageClass/PDOSOI_spring  + MassAutumn_tm1 + (1|ID),
-                                 family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                        optCtrl = list(maxfun = 100000)))
+mod.true.repro$Autumn_PDOSOI <- glmer(true_repro ~ -1 + ageClass/PDOFallFec + ageClass/SOIFallFec + MassAutumn_tm1 + (1|ID), 
+                                     family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                            optCtrl = list(maxfun = 100000)))
 
-mod.true.repro$base <- glmer(true_repro ~ -1 + ageClass + MassAutumn_tm1 + (1|ID),
-                            family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
-                                                                                   optCtrl = list(maxfun = 100000)))
+mod.true.repro$Autumn_Int <- glmer(true_repro ~ -1 + ageClass/PDOSOI_fall + MassAutumn_tm1 + (1|ID),
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
+
+# Winter
+mod.true.repro$Winter_PDO <- glmer(true_repro ~ -1 + ageClass/PDOWinterFec + MassAutumn_tm1+  (1|ID), 
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
+
+mod.true.repro$Winter_SOI <- glmer(true_repro ~ -1 + ageClass/SOIWinterFec + MassAutumn_tm1 + (1|ID), 
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
+
+mod.true.repro$Winter_PDOSOI <- glmer(true_repro ~ -1 + ageClass/PDOWinterFec + ageClass/SOIWinterFec + MassAutumn_tm1 + (1|ID),
+                                     family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                            optCtrl = list(maxfun = 100000)))
+
+mod.true.repro$Winter_Int <- glmer(true_repro ~ -1 + ageClass/PDOSOI_winter + MassAutumn_tm1 + (1|ID),
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
+# Spring
+mod.true.repro$Spring_PDO <- glmer(true_repro ~ -1 + ageClass/PDOSpringFec + MassAutumn_tm1 + (1|ID), 
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
+
+mod.true.repro$Spring_SOI <- glmer(true_repro ~ -1 + ageClass/SOISpringFec + MassAutumn_tm1 + (1|ID), 
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
+
+mod.true.repro$Spring_PDOSOI <- glmer(true_repro ~ -1 + ageClass/PDOSpringFec + ageClass/SOISpringFec + MassAutumn_tm1 + (1|ID),
+                                     family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                            optCtrl = list(maxfun = 100000)))
+
+mod.true.repro$Spring_Int <- glmer(true_repro ~ -1 + ageClass/PDOSOI_spring  + MassAutumn_tm1 + (1|ID),
+                                  family="binomial", data=df_fec, control = glmerControl(optimizer="bobyqa", 
+                                                                                         optCtrl = list(maxfun = 100000)))
 
 # Creating a list to store the results
 results.true.repro<-list()
