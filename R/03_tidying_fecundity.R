@@ -65,7 +65,7 @@ colnames(pheno)
 
 # those that need time lag t-1 
 tmp1 <- unique(pheno[, c("year", "SummerNDVI","SummerEVI","SummerLAI",
-                         "SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR")])
+                         "SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR", "snow_log_do_jul")])
 
 # add time lag for summer lengths (real time lag t-1)
 tmp1$year <- tmp1$year + 1
@@ -76,7 +76,8 @@ tmp1 <- tmp1 %>%
          SummerGPPfec=SummerGPP,
          SummerSnowfec =SummerSnow,
          SummerPSNNETfec =SummerPSNNET,
-         SummerFPARfec =SummerFPAR)
+         SummerFPARfec =SummerFPAR, 
+         SNOWCOVERfec = snow_log_do_jul) #  this is NEW 
 
 pheno_fec <- merge(pheno,
                    tmp1,
@@ -98,16 +99,59 @@ pheno_fec<- pheno_fec%>%
          EVIfecT =evi_log_up_jul, 
          LAIfecT =lai_log_up_jul,
          GPPfecT =gpp_log_up_jul,
-         SNOWfecT =snow_log_up_jul,
+         SNOWMELTfecT =snow_log_up_jul,
          PSNNETfecT =psnnet_log_up_jul,
          FPARfecT =fpar_log_up_jul
   )
+
 colnames(pheno_fec)
-pheno_fec <- pheno_fec[, c("year","NDVIfecT", "EVIfecT","LAIfecT", "GPPfecT",   "SNOWfecT" , "PSNNETfecT",  "FPARfecT",
+pheno_fec <- pheno_fec[, c("year","NDVIfecT", "EVIfecT","LAIfecT", "GPPfecT",   "SNOWMELTfecT" , "PSNNETfecT",  "FPARfecT","SNOWCOVERfec", # NEW
                            "WinNDVIfecT","WinEVIfecT","WinLAIfecT", "WinGPPfecT","WinSnowfecT","WinPSNNETfecT","WinFPARfecT",
                            "SummerNDVIfec","SummerEVIfec","SummerLAIfec","SummerGPPfec","SummerSnowfec","SummerPSNNETfec", "SummerFPARfec")]
 
 # 3 - make pca with appropriate time lags ---------------------------------------------------------------
+# 
+# colnames(pheno_fec)
+# 
+# pheno_fec<-pheno_fec %>% 
+#   filter(year > 2001)
+# 
+# 
+# lengths <- pheno_fec[c("WinNDVIfecT","WinEVIfecT","WinLAIfecT","WinGPPfecT","WinSnowfecT","WinPSNNETfecT","WinFPARfecT",
+#                     "SummerNDVIfec","SummerEVIfec", "SummerLAIfec","SummerGPPfec","SummerSnowfec","SummerPSNNETfec",
+#                     "SummerFPARfec")] 
+# hist(unlist(lengths))# MVN distribution
+# 
+# # Standardisation
+# lengths <-scale(lengths)
+# lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
+# 
+# # PCA
+# acp_fec <- rda(lengths) # Option par défaut : scale=FALSE
+# 
+# #loadings scaling 2
+# spScores = round(scores(acp_fec, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
+# 
+# # see different results - keep scaling 2
+# summary(acp_fec)
+# summary(acp_fec, scaling = 1)
+# 
+# eigenvals(acp_fec)
+# year <- summary(acp_fec)$sites
+# var <- summary(acp_fec)$species # keep default scaling 
+# summary(acp_fec)$sp
+# 
+# kable(spScores) %>%
+#   kable_styling(font_size = 10) %>%
+#   row_spec(c(0,1, 14)) %>%
+#   kable_styling("bordered") %>%
+#   save_kable(file = "table2_pca_fec.html", self_contained = T) 
+
+
+
+
+# 4 - pca Summer only NO SNOW ---------------------------------------------------------
+
 
 colnames(pheno_fec)
 
@@ -115,9 +159,8 @@ pheno_fec<-pheno_fec %>%
   filter(year > 2001)
 
 
-lengths <- pheno_fec[c("WinNDVIfecT","WinEVIfecT","WinLAIfecT","WinGPPfecT","WinSnowfecT","WinPSNNETfecT","WinFPARfecT",
-                    "SummerNDVIfec","SummerEVIfec", "SummerLAIfec","SummerGPPfec","SummerSnowfec","SummerPSNNETfec",
-                    "SummerFPARfec")] 
+lengths <- pheno_fec[c("SummerNDVIfec","SummerEVIfec", "SummerLAIfec","SummerGPPfec","SummerPSNNETfec",
+                       "SummerFPARfec")] 
 hist(unlist(lengths))# MVN distribution
 
 # Standardisation
@@ -127,29 +170,84 @@ lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
 # PCA
 acp_fec <- rda(lengths) # Option par défaut : scale=FALSE
 
-#loadings scaling 2
-spScores = round(scores(acp_fec, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
+
+# see different results - keep scaling 2
+summary(acp_fec)
+summary(acp_fec, scaling = 1)
+eigenvals(acp_fec)
+
+#loadings - unscaled scores 
+spScores = data.frame(round(scores(acp_fec, choices = 1:4, display = "species", scaling = 0), 3)) # used default scaling # could swith to 0
+yearSummer <- data.frame(summary(acp_fec)$sites)
+colnames(yearSummer)[1:2] <- c("PC1Summer", "PC2Summer")
+
+
+kable(spScores) %>%
+  kable_styling(font_size = 10) %>%
+  row_spec(c(0,1,6)) %>%
+  kable_styling("bordered") %>%
+  save_kable(file = "tableS4PcaSummerFEC.html", self_contained = T) 
+
+
+
+ggplot(yearSummer,aes(PC1Summer, PC2Summer)) +
+  geom_point(data=yearSummer,aes(x=PC1Summer, y=PC2Summer, colour= NULL), size= 3, shape=16) +
+  geom_hline(yintercept=0, size=.2) + geom_vline(xintercept=0, size=.2)+
+  theme_minimal()+
+  xlab("PC1Summer (64.7%)")+
+  ylab("PC2Summer (18.6%)")+
+  geom_segment(data=spScores, aes(x = 0, y = 0, xend = PC1*3, yend = PC2*3), arrow = arrow(length = unit(1/2, 'picas')), color = "grey30")+
+  geom_text(data=spScores, aes(x=PC1*3.5,y=PC2*3.5,label=rownames(spScores)), size=3, colour=  "navyblue",position=position_jitter(width=0.15,height=0.1))
+ggsave("BiplotSummerFEC.pdf", width = 130, height = 130, units = "mm", pointsize = 8)
+
+
+# 5 - pca Winter only NO SNOW ---------------------------------------------------------
+
+lengths <- pheno_fec[c("WinNDVIfecT","WinEVIfecT","WinLAIfecT","WinGPPfecT","WinPSNNETfecT","WinFPARfecT")] 
+hist(unlist(lengths))# MVN distribution
+
+# Standardisation
+lengths <-scale(lengths)
+lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
+
+# PCA
+acp_fec <- rda(lengths) # Option par défaut : scale=FALSE
+
 
 # see different results - keep scaling 2
 summary(acp_fec)
 summary(acp_fec, scaling = 1)
 
 eigenvals(acp_fec)
-year <- summary(acp_fec)$sites
-var <- summary(acp_fec)$species # keep default scaling 
-summary(acp_fec)$sp
+
+yearWinter <- data.frame(summary(acp_fec)$sites)
+colnames(yearWinter)[1:2] <- c("PC1Winter", "PC2Winter")
+
+#loadings scaling 2
+spScores = data.frame(round(scores(acp_fec, choices = 1:4, display = "species", scaling = 0), 3)) # used default scaling # could swith to 0
+
 
 kable(spScores) %>%
   kable_styling(font_size = 10) %>%
-  row_spec(c(0,1, 14)) %>%
+  row_spec(c(0,1,6)) %>%
   kable_styling("bordered") %>%
-  save_kable(file = "table2_pca_fec.html", self_contained = T) 
+  save_kable(file = "tableS5PcaWinterFEC.html", self_contained = T) 
 
 
-# pca for timing  ---------------------------------------------------------
+ggplot(yearWinter,aes(PC1Winter, PC2Winter)) +
+  geom_point(data=yearWinter,aes(x=PC1Winter, y=PC2Winter, colour= NULL), size= 3, shape=16) +
+  geom_hline(yintercept=0, size=.2) + geom_vline(xintercept=0, size=.2)+
+  theme_minimal()+
+  xlab("PC1Winter (80.7%)")+
+  ylab("PC2Winter (10.8%)")+
+  geom_segment(data=spScores, aes(x = 0, y = 0, xend = PC1*3, yend = PC2*3), arrow = arrow(length = unit(1/2, 'picas')), color = "grey30") +
+  geom_text(data=spScores, aes(x=PC1*3.5,y=PC2*3.5,label=rownames(spScores)), size=3, colour=  "navyblue",position=position_jitter(width=0.15,height=0.1))
+ggsave("BiplotWinterFEC.pdf", width = 130, height = 130, units = "mm", pointsize = 8)
+
+# 6 - pca for timing NO SNOW ---------------------------------------------------------
 
 colnames(pheno_fec)
-lengths2<- pheno_fec[c("NDVIfecT","EVIfecT","LAIfecT","GPPfecT","SNOWfecT","PSNNETfecT","FPARfecT" )] 
+lengths2<- pheno_fec[c("NDVIfecT","EVIfecT","LAIfecT","GPPfecT","PSNNETfecT","FPARfecT" )] 
 hist(unlist(lengths2))# MVN distribution
 
 # Standardisation
@@ -159,26 +257,43 @@ lengths2 <- na.omit(lengths2) # ça enlève toutes les lignes avec des NA
 # PCA
 acpTiming <- rda(lengths2) # Option par défaut : scale=FALSE
 
-#loadings scaling 2
-spScores = round(scores(acpTiming, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
-
 # see different results - keep scaling 2
 summary(acpTiming)
 summary(acpTiming, scaling = 1)
 
 eigenvals(acpTiming)
-yearTim <- data.frame(summary(acpTiming)$sites)
+yearTim <- data.frame(summary(acpTiming)$sites) # ONLY PC1 COULD BE TAKEN  ? 
 
-names(yearTim)[1:2] = c("PC1Tim", "PC2Tim")
+names(yearTim)[1:2] = c("PC1Date", "PC2Date")
 
-varTim <- summary(acpTiming)$species # keep default scaling 
-summary(acpTiming)$sp
+#loadings UNSCALED SCORES 
+spScores = data.frame(round(scores(acpTiming, choices = 1:4, display = "species", scaling = 0),3)) # that gets you the loadings 
+
 
 kable(spScores) %>%
   kable_styling(font_size = 10) %>%
   row_spec(c(0,1)) %>%
   kable_styling("bordered") %>%
-  save_kable(file = "table2_pca_fec.html", self_contained = T) 
+  save_kable(file = "tableS6PcaDateFEC.html", self_contained = T) 
+
+# show results 
+biplot(acp_fec, scaling=2) # relationships between variables 
+biplot(acpTiming, scaling=3) # this is equivalent to what ggplot does 
+
+
+ggplot(yearTim,aes(PC1Date, PC2Date)) +
+  geom_point(data=yearTim,aes(x=PC1Date, y=PC2Date, colour= NULL), size= 3, shape=16) +
+  geom_hline(yintercept=0, size=.2) + geom_vline(xintercept=0, size=.2)+
+  theme_minimal()+
+  xlab("PC1Date (91.2%)")+
+  ylab("PC2Date (5.4%)")+
+  geom_segment(data=spScores, aes(x = 0, y = 0, xend = PC1*3, yend = PC2*3), arrow = arrow(length = unit(1/2, 'picas')), color = "grey30")+
+  geom_text(data=spScores, aes(x=PC1*3.5,y=PC2*3.5,label=rownames(spScores)), size=3, colour=  "navyblue",position=position_jitter(width=0.15,height=0.1))
+ggsave("BiplotTimingFec.pdf", width = 130, height = 130, units = "mm", pointsize = 8)
+
+
+
+# bind pca data ---------------------------------------------------------------
 
 
 # need exact number of lines in two df 
@@ -187,27 +302,12 @@ pheno_fec<- pheno_fec[!is.na(pheno_fec$SummerNDVI), ]
 pheno_fec<- pheno_fec[!is.na(pheno_fec$SummerGPP), ]
 pheno_fec<- pheno_fec[!is.na(pheno_fec$WinNDVI), ] # now has equal number of lines
 
-# need exact number of lines in two df 
-pheno_fec<-cbind(pheno_fec, year[, 1:2])
+pheno_fec<-cbind(pheno_fec, yearSummer[, 1:2])
+pheno_fec<-cbind(pheno_fec, yearWinter[, 1:2])
 pheno_fec<-cbind(pheno_fec, yearTim[, 1:2])
 
 
-# show results 
-biplot(acp_fec, scaling=1)
-biplot(acp_fec, scaling=2) # relationships between variables 
-biplot(acpTiming, scaling=1)
-biplot(acpTiming, scaling=2) # relationships between variables 
-
-
-# clean up 
-
-pheno_fec <- pheno_fec[, c( "year","NDVIfecT",
-                            "WinNDVIfecT",
-                            "SummerNDVIfec",
-                            "PC1","PC2",
-                            "PC1Tim","PC2Tim" )]
-
-# 4 - get raw climate data  ---------------------------------------------------
+# 7 - get raw climate data  ---------------------------------------------------
 getwd()
 
 # see 02_tidying_survival.R for early steps to create climate data from montly data 
@@ -220,7 +320,7 @@ getwd()
 
 
 
-# 5 - tidy climate data and add time lags ---------------------------------
+# 8 - tidy climate data and add time lags ---------------------------------
 
 clim = read.csv2("season_climate_ram.csv",
                  na.string = c("", "NA"),sep = ",")
@@ -265,9 +365,9 @@ clim_fec <- clim_fec[, c("yr", "PDO.winter_fec", "PDO.spring_fec","PDO.summer_fe
 
 
 
-# 6- get weather data   ---------------------------------------------------
+# 9 - get weather data   ---------------------------------------------------
 
-# get data from François or skip and go to step 6
+# get data from François or skip and go to step 10
 
 #drive_download("OWPC/Analyses/data/Raw/Climat/monthlyRam", type="xls", overwrite = T)
 weather<-read.delim("monthlyRam", header=T, sep=",") # this is from François 
@@ -281,7 +381,7 @@ weather<-read.delim("monthlyRam", header=T, sep=",") # this is from François
 
 
 
-# 7 - add time lags to weather data --------------------------------------------------------
+# 10 - add time lags to weather data --------------------------------------------------------
 
 
 # originally by Y. Ritchot - modified by LR march 24 2020
@@ -321,7 +421,7 @@ weather_fec <- merge(weather_fec,
 rm(tmp, tmp1, acp_fec, clim, pheno, var, spScores, lengths)
 
 
-# 8 - prepare sheep data ------------------------------------------------------
+# 11 - prepare sheep data ------------------------------------------------------
 
 sheep_data <- read.csv2("repro_mass.csv", sep = ",")
 
@@ -369,7 +469,7 @@ sheep_data = tmp1
 
 rm(tmp, tmp1)
 
-# 9 - merge all dataframes to sheep data  -----------------------------------------
+# 12 - merge all dataframes to sheep data  -----------------------------------------
 
 # merge # 1 # only keep ndvi
 
@@ -416,15 +516,35 @@ dataFec <- df3
 
 # tidy up for models : factors, scaling, structure
 
+
+# reorder 
+colnames(dataFec)
+
+dataFec <- dataFec[, c("yr","ID","raw_repro","true_repro","true_repro_tm1" , "age","ageClass","pred","first_yr_trans" ,"pred_tm1",
+                       "MassSpring","MassAutumn","MassAutumn_tm1",
+                       "NDVIfecT","EVIfecT","LAIfecT","GPPfecT","SNOWMELTfecT", "PSNNETfecT","FPARfecT","SNOWCOVERfec",
+                       "WinNDVIfecT","WinEVIfecT","WinLAIfecT","WinGPPfecT","WinSnowfecT","WinPSNNETfecT", "WinFPARfecT",
+                       "SummerNDVIfec","SummerEVIfec","SummerLAIfec","SummerGPPfec","SummerSnowfec","SummerPSNNETfec", "SummerFPARfec",
+                       "PC1Summer" , "PC2Summer","PC1Winter","PC2Winter","PC1Date","PC2Date",
+                       "PDOWinterFec","PDOSpringFec","PDOSummerFec","PDOFallFec", "SOIWinterFec","SOISpringFec","SOISummerFec","SOIFallFec",
+                       "TWin","PWin","TSpring","PSpring","TSummerFec", "PSummerFec","TAutFec","PAutFec" )]
+
 str(dataFec)
 
 dataFec$yr<-as.factor(dataFec$yr)
+dataFec$ID<-as.factor(dataFec$ID)
 dataFec$raw_repro<-as.factor(dataFec$raw_repro)
 dataFec$true_repro<-as.factor(dataFec$true_repro)
 dataFec$true_repro_tm1<-as.factor(dataFec$true_repro_tm1)
-
 dataFec$pred<-as.factor(dataFec$pred)
 dataFec$pred_tm1<-as.factor(dataFec$pred_tm1)
+dataFec$ageClass<-as.factor(dataFec$ageClass)
+
+
+colnames(dataFec)
+
+# dataFec[, c(11:57)]<-as.numeric(as.character(dataFec[, c(11:57)]))
+# other are integer TO CHECK
 
 dataFec$MassSpring<-as.numeric(as.character(dataFec$MassSpring))
 dataFec$MassAutumn<-as.numeric(as.character(dataFec$MassAutumn))
@@ -463,22 +583,37 @@ dataFecUnscld = dataFec
 str(dataFecUnscld)
 
 
-# reorder things to scale and deep essential data 
+# calculate sd for projections 
+colnames(dataFecUnscld)
+dim(dataFecUnscld)
+
+data.SD<-apply(dataFecUnscld[, 11:61], 2,sd, na.rm = T) # 2 pour prendre colonnes
+head(data.SD)
+data.MEAN<-apply(dataFecUnscld[, 11:61], 2,mean, na.rm = T)
+
+# get something and backtransform 
+#newd$snow<-(data.MEAN["SummerEVI"]*data.SD) + data.MEAN
+
+dataFec[, c(11:61)] <- scale(dataFec[, c(11:61)])
+fullFecDataScld = dataFec
+
+
+# this is for projections 
+#save(data.SD, data.MEAN, dataFecUnscld, fullFecDataScld, file = "dataProjectionsR.RData")
+
+
+# keep essential data 
 colnames(dataFec)
 
 colnames(pheno_fec)
 
-dataFec <- dataFec[, c("yr","ID","raw_repro","true_repro", "age" ,"ageClass", "pred","first_yr_trans" ,"pred_tm1",
-                       "true_repro_tm1","MassSpring","MassAutumn", "MassAutumn_tm1",
-                       "NDVIfecT","WinNDVIfecT","SummerNDVIfec", "PC1","PC2","PC1Tim","PC2Tim", 
+dataFecScld <- dataFec[, c("yr","ID","raw_repro","true_repro", "true_repro_tm1", "age" ,"ageClass", "pred","pred_tm1",
+                       "MassSpring","MassAutumn", "MassAutumn_tm1",
+                       "NDVIfecT","WinNDVIfecT","SummerNDVIfec", "SNOWMELTfecT", "SNOWCOVERfec", "WinSnowfecT", "SummerSnowfec",
+                       "PC1Summer","PC2Summer","PC1Winter","PC2Winter","PC1Date","PC2Date",
                        "PDOWinterFec","PDOSpringFec","PDOSummerFec","PDOFallFec","SOIWinterFec","SOISpringFec","SOISummerFec", "SOIFallFec",
                        "TWin","PWin","TSpring","PSpring","TSummerFec","PSummerFec","TAutFec","PAutFec", 
                        "PDOSOI_winter","PDOSOI_spring"  , "PDOSOI_summer","PDOSOI_fall")]
-
-colnames(dataFec)
-
-dataFec[, c(11:40)] <- scale(dataFec[, c(11:40)])
-dataFecScld = dataFec
 
 
 # cleaning 
@@ -488,11 +623,9 @@ rm(df1, df2, df3)
 
 
 
-
-
 # save as R objects  ------------------------------------------------------
 # 
-# save(sheep_data, pheno_fec, clim_fec, weather_fec, dataFecUnscld, dataFecScld,
-#    file = "cache/dataFecundityModels.RData")
-# drive_upload("cache/dataFecundityModels.RData",
+# save(sheep_data, pheno_fec, clim_fec, weather_fec, fullFecDataScld, dataFecUnscld, dataFecScld,
+#    file = "dataFecundityModels.RData")
+# drive_upload("dataFecundityModels.RData",
 #              path = "OWPC/Analyses/cache/dataFecundityModels.RData", overwrite = T)

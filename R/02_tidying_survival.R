@@ -296,37 +296,35 @@ lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
 # faire la PCA
 acp_surv <- rda(lengths) # Option par défaut : scale=FALSE
 
-#these are the loadings (correlations of each variable with each pca xis)
-test = round(scores(acp_surv, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
-
 summary(acp_surv) # by default scaling 2 is used in summary 
 summary(acp_surv, scaling = 1)
-
 eigenvals(acp_surv)
-yearSummer <- summary(acp_surv)$sites # this is the new scores for year
+
+# scores 
+yearSummer <- data.frame(summary(acp_surv)$sites) # this is the new scores for year
 colnames(yearSummer)[1:2] <- c("PC1Summer", "PC2Summer")
 
-var <- summary(acp_surv)$species # this is the contribution of variables to each pc
-summary(acp_surv)$sp
+# loadings
+scores = data.frame(round(scores(acp_surv, choices = 1:4, display = "species", scaling = 0), 3))
 
-
-kable(test) %>%
+kable(scores) %>%
   kable_styling(font_size = 10) %>%
   kable_styling("bordered") %>%
-  save_kable(file = "tableS1PcaVegSummerOnly.html", self_contained = T) 
+  save_kable(file = "tableS1PcaSummerSURV.html", self_contained = T) 
 
-# show results 
-biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
-biplot(acp_surv, scaling=2) # relationships between variables 
+plotsummer =ggplot(yearSummer,aes(PC1Summer, PC2Summer)) +
+  geom_point(data=yearSummer,aes(x=PC1Summer, y=PC2Summer, colour= NULL), size= 3, shape=16) +
+  geom_hline(yintercept=0, size=.2) + geom_vline(xintercept=0, size=.2)+
+  theme_minimal()+
+  xlab("PC1Summer (64.7%)")+
+  ylab("PC2Summer (18.6%)")+
+  geom_segment(data=scores, aes(x = 0, y = 0, xend = PC1*3, yend = PC2*3), arrow = arrow(length = unit(1/2, 'picas')), color = "grey30")+
+  geom_text(data=scores, aes(x=PC1*3.2,y=PC2*3.2,label=rownames(scores)), size=3, colour=  "navyblue",position=position_jitter(width=0.15,height=0.05))
+ggsave("BiplotSummerSURV.pdf", width = 130, height = 130, units = "mm", pointsize = 8)
 
 
 # 5 - make pheno pca for seasons - WINTER  ONLY   ---------------------------------------------------------------
 
-
-# scale
-colnames(pheno_surv)
-pheno_surv<-pheno_surv %>% 
-  filter(year > 2000 & year <2016)
 
 lengths <- pheno_surv[c("WinNDVIsurvT1","WinEVIsurvT1","WinLAIsurvT1","WinGPPsurvT1","WinPSNNETsurvT1", "WinFPARsurvT1")] 
 hist(unlist(lengths))# need multinormal distn
@@ -338,27 +336,39 @@ lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
 # faire la PCA
 acp_surv <- rda(lengths) # Option par défaut : scale=FALSE
 
-#these are the loadings (correlations of each variable with each pca xis)
-test = round(scores(acp_surv, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
 
 summary(acp_surv) # by default scaling 2 is used in summary 
 summary(acp_surv, scaling = 1)
 
 eigenvals(acp_surv)
-yearWinter <- summary(acp_surv)$sites # this is the new scores for year
+
+
+# scores 
+yearWinter <- data.frame(summary(acp_surv)$sites) # this is the new scores for year
 colnames(yearWinter)[1:2] <- c("PC1Winter", "PC2Winter")
 
-var <- summary(acp_surv)$species # this is the contribution of variables to each pc
-summary(acp_surv)$sp
+# loadings (correlations of each variable with each pca xis)
+scores = data.frame(round(scores(acp_surv, choices = 1:4, display = "species", scaling = 0), 3))
 
-kable(test) %>%
+
+kable(scores) %>%
   kable_styling(font_size = 10) %>%
   kable_styling("bordered") %>%
-  save_kable(file = "tableS2PcaVegWinterOnly.html", self_contained = T) 
+  save_kable(file = "tableS2PcaWinterSURV.html", self_contained = T) 
 
-# show results 
-biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
-biplot(acp_surv, scaling=2) # relationships between variables 
+
+plotwinter=ggplot(yearWinter,aes(PC1Winter, PC2Winter)) +
+  geom_point(data=yearWinter,aes(x=PC1Winter, y=PC2Winter, colour= NULL), size= 3, shape=16) +
+  geom_hline(yintercept=0, size=.2) + geom_vline(xintercept=0, size=.2)+
+  theme_minimal()+
+  xlab("PC1Winter (80.7%)")+
+  ylab("PC2Winter (10.8%)")+
+  geom_segment(data=scores, aes(x = 0, y = 0, xend = PC1*3, yend = PC2*3), arrow = arrow(length = unit(1/2, 'picas')), color = "grey30") +
+  geom_text(data=scores, aes(x=PC1*3.5,y=PC2*3.5,label=rownames(scores)), size=3, colour=  "navyblue",position=position_jitter(width=0.15,height=0.1))
+ggsave("BiplotWinterSURV.pdf", width = 130, height = 130, units = "mm", pointsize = 8)
+
+
+
 
 
 # 6 - make pca on timing NO SNOW ------------------------------------------------------
@@ -375,7 +385,7 @@ lengths2 <-scale(lengths2)
 acpTiming <- rda(lengths2) 
 
 #loadings 
-timingLoadings <- round(scores(acpTiming, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
+timingLoadings <- data.frame(round(scores(acpTiming, choices = 1:4, display = "species", scaling = 0), 3)) # used default scaling # could swith to 0
 
 summary(acpTiming) # by default scaling 2 is used in summary 
 summary(acpTiming, scaling = 1)
@@ -384,18 +394,27 @@ eigenvals(acpTiming)
 yearTiming <- data.frame(summary(acpTiming)$sites)
 colnames(yearTiming)[1:2] <- c("PC1Date", "PC2Date")
 
-varTiming <- summary(acpTiming)$species # this is the contribution of variables to each pc
-
 # save table 
 kable(timingLoadings) %>%
   kable_styling(font_size = 10) %>%
   row_spec(c(0,1)) %>%
   kable_styling("bordered") %>%
-  save_kable(file = "tableS3PcaDates.html", self_contained = T) 
+  save_kable(file = "tableS3PcaDatesSURV.html", self_contained = T) 
 
 # show results 
 biplot(acpTiming, scaling=2) # relationships between variables 
-biplot(acpTiming, scaling="species")
+
+
+plotdate = ggplot(yearTiming,aes(PC1Date, PC2Date)) +
+  geom_point(data=yearTiming,aes(x=PC1Date, y=PC2Date, colour= NULL), size= 3, shape=16) +
+  geom_hline(yintercept=0, size=.2) + geom_vline(xintercept=0, size=.2)+
+  theme_minimal()+
+  xlab("PC1Date (60.7%)")+
+  ylab("PC2Date (28.2%)")+
+  geom_segment(data=timingLoadings, aes(x = 0, y = 0, xend = PC1*3, yend = PC2*3), arrow = arrow(length = unit(1/2, 'picas')), color = "grey30")+
+  geom_text(data=timingLoadings, aes(x=PC1*3.5,y=PC2*3.5,label=rownames(timingLoadings)), size=3, colour=  "navyblue",position=position_jitter(width=0.15,height=0.1))
+ggsave("BiplotTimingSURV.pdf", width = 130, height = 130, units = "mm", pointsize = 8)
+
 
 # need exact number of lines in two df 
 
@@ -412,9 +431,6 @@ rm(tmp1, tmp2, var, year, pheno, lengths, acp_surv, test)
 
 
 colnames(pheno_surv)
-
-# save this for projections ! 
-#save(pheno_surv, file = "dataProjections.RData")
 
 
 getwd()
@@ -595,7 +611,7 @@ weather_surv <- merge(weather,
 
 head(weather_surv, 10)
 
-# merge into one dataframe  -----------------------------------------------
+# 11- merge into one dataframe  -----------------------------------------------
 
 sheep_data <- read.csv2("repro_mass.csv", sep = ",")
 
