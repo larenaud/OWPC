@@ -23,7 +23,7 @@ drive_find(n_max = 10)
 # Download RData from drive
 drive_download("OWPC/Analyses/cache/dataSurvivalModels.RData",overwrite=T)
 # Import in R environment
-load("dataSurvivalModels.RData")
+load("cache/dataSurvivalModels.RData")
 # Rename scaled data frame and remove years with missing data for climate
 df_surv<-droplevels(subset(dataSurvScld,!(yr %in% c("1999","2000","2016"))))
 # Remove unnecessary objects for the environment
@@ -131,7 +131,7 @@ results.surv$r2.surv.3rdbest<-data.frame(round(MuMIn::r.squaredGLMM(mod.surv[[as
 # Download RData from drive
 drive_download("OWPC/Analyses/cache/dataFecundityModels.RData",overwrite=T)
 # Import in R environment
-load("dataFecundityModels.RData")
+load("cache/dataFecundityModels.RData")
 # Rename scaled data frame and remove years with missing data for climate
 df_fec<-droplevels(subset(dataFecScld,!(yr %in% c("1999","2000","2001"))))
 # Remove unnecessary objects for the environment
