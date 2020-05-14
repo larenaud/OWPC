@@ -158,7 +158,7 @@ getwd()
 
 # 2 - survival & pheno dataframe ------------------------------------------------------
 
-pheno = read.csv2("data/pheno_by_yr.csv",
+pheno = read.csv2("pheno_by_yr.csv",
                   na.string = c("", "NA"),sep = ",")
 
 # select needed only
@@ -173,10 +173,12 @@ colnames(pheno)
 # WIN : spans across 2 years : thus it is classified as year of december despite spanning jan t+1
 
 
-colnames(pheno) # here only winter season is a problem - summer is on same year than surv
+colnames(pheno) # here winter season is NEXT YR (T1). # Both current (T) and next (T1) greenup 
+#summer is on same year than surv 
 tmp1 <- unique(pheno[, c("year", "WinNDVI","WinEVI","WinLAI","WinGPP","WinSnow","WinPSNNET","WinFPAR", 
                          "ndvi_log_up_jul","evi_log_up_jul","lai_log_up_jul",
-                         "gpp_log_up_jul","snow_log_up_jul","psnnet_log_up_jul", "fpar_log_up_jul")])
+                         "gpp_log_up_jul","snow_log_up_jul","psnnet_log_up_jul", "fpar_log_up_jul")]) 
+
 tmp1$year <- tmp1$year - 1 # on leur met l'année de la survie t+1
 colnames(tmp1)
 tmp1 <- tmp1 %>% 
@@ -191,16 +193,17 @@ tmp1 <- tmp1 %>%
          EVIsurvT1 =evi_log_up_jul, 
          LAIsurvT1 =lai_log_up_jul,
          GPPsurvT1 =gpp_log_up_jul,
-         SNOWsurvT1 =snow_log_up_jul,
+         SNOWMELTsurvT1 =snow_log_up_jul,
          PSNNETsurvT1 =psnnet_log_up_jul,
          FPARsurvT1 =fpar_log_up_jul
          )
 head(tmp1)
 
-# survival - NO time lag for current spring timing affecting survival to next year 
+# survival - NO time lag for current spring timing AND SNOW COVER affecting survival to next year 
 tmp2 <- unique(pheno[, c("year", "ndvi_log_up_jul","evi_log_up_jul","lai_log_up_jul",
                          "gpp_log_up_jul","snow_log_up_jul","psnnet_log_up_jul",
-                         "fpar_log_up_jul")])
+                         "fpar_log_up_jul",
+                         "snow_log_do_jul")])# NEW ADDED SNOW COVER - FALL 
 
 dim(tmp2)
 tmp2 <- tmp2 %>% 
@@ -208,9 +211,10 @@ tmp2 <- tmp2 %>%
          EVIsurvT =evi_log_up_jul, 
          LAIsurvT =lai_log_up_jul,
          GPPsurvT =gpp_log_up_jul,
-         SNOWsurvT =snow_log_up_jul,
+         SNOWMELTsurvT =snow_log_up_jul,
          PSNNETsurvT =psnnet_log_up_jul,
-         FPARsurvT =fpar_log_up_jul)
+         FPARsurvT =fpar_log_up_jul, 
+         SNOWCOVERsurvT = snow_log_do_jul)
 head(tmp2)
 
 pheno_surv <- merge(pheno[, c("year","SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET", "SummerFPAR")],
@@ -230,47 +234,47 @@ colnames(pheno_surv)
 
 # 3 - make pheno pca for seasons - ALL SEASONS  ---------------------------------------------------------------
 
-# scale
-colnames(pheno_surv)
-pheno_surv<-pheno_surv %>% 
-  filter(year > 2000 & year <2016)
-
-lengths <- pheno_surv[c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerPSNNET","SummerFPAR", # removed snow 
-                        "WinNDVIsurvT1","WinEVIsurvT1","WinLAIsurvT1","WinGPPsurvT1","WinPSNNETsurvT1", "WinFPARsurvT1")] 
-hist(unlist(lengths))# need multinormal distn
-
-# Standardisation
-lengths <-scale(lengths)
-lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
-
-# faire la PCA
-acp_surv <- rda(lengths) # Option par défaut : scale=FALSE
-
-
-summary(acp_surv) # by default scaling 2 is used in summary 
-summary(acp_surv, scaling = 1)
-
-eigenvals(acp_surv)
-year <- summary(acp_surv)$sites # this is the new scores for year
-var <- summary(acp_surv)$species # this is the contribution of variables to each pc
-summary(acp_surv)$sp
-
-
-library(kableExtra)
-
-#these are the loadings (correlations of each variable with each pca xis)
-test = round(scores(acp_surv, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
-
-
-kable(test) %>%
-  kable_styling(font_size = 10) %>%
-  row_spec(c(0,1,12)) %>%
-kable_styling("bordered") %>%
-save_kable(file = "graph/tableS1PcaVegSeasons.html", self_contained = T) 
-
-# show results 
-biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
-biplot(acp_surv, scaling=2) # relationships between variables 
+# # scale
+# colnames(pheno_surv)
+# pheno_surv<-pheno_surv %>% 
+#   filter(year > 2000 & year <2016)
+# 
+# lengths <- pheno_surv[c("SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerPSNNET","SummerFPAR", # removed snow 
+#                         "WinNDVIsurvT1","WinEVIsurvT1","WinLAIsurvT1","WinGPPsurvT1","WinPSNNETsurvT1", "WinFPARsurvT1")] 
+# hist(unlist(lengths))# need multinormal distn
+# 
+# # Standardisation
+# lengths <-scale(lengths)
+# lengths <- na.omit(lengths) # ça enlève toutes les lignes avec des NA
+# 
+# # faire la PCA
+# acp_surv <- rda(lengths) # Option par défaut : scale=FALSE
+# 
+# 
+# summary(acp_surv) # by default scaling 2 is used in summary 
+# summary(acp_surv, scaling = 1)
+# 
+# eigenvals(acp_surv)
+# year <- summary(acp_surv)$sites # this is the new scores for year
+# var <- summary(acp_surv)$species # this is the contribution of variables to each pc
+# summary(acp_surv)$sp
+# 
+# 
+# library(kableExtra)
+# 
+# #these are the loadings (correlations of each variable with each pca xis)
+# test = round(scores(acp_surv, choices = 1:4, display = "species", scaling = 2), 3) # used default scaling # could swith to 0
+# 
+# 
+# kable(test) %>%
+#   kable_styling(font_size = 10) %>%
+#   row_spec(c(0,1,12)) %>%
+# kable_styling("bordered") %>%
+# save_kable(file = "tableS1PcaVegSeasons.html", self_contained = T) 
+# 
+# # show results 
+# biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
+# biplot(acp_surv, scaling=2) # relationships between variables 
 
 
 
@@ -309,7 +313,7 @@ summary(acp_surv)$sp
 kable(test) %>%
   kable_styling(font_size = 10) %>%
   kable_styling("bordered") %>%
-  save_kable(file = "graph/tableS1PcaVegSummerOnly.html", self_contained = T) 
+  save_kable(file = "tableS1PcaVegSummerOnly.html", self_contained = T) 
 
 # show results 
 biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
@@ -350,14 +354,14 @@ summary(acp_surv)$sp
 kable(test) %>%
   kable_styling(font_size = 10) %>%
   kable_styling("bordered") %>%
-  save_kable(file = "graph/tableS1PcaVegWinterOnly.html", self_contained = T) 
+  save_kable(file = "tableS2PcaVegWinterOnly.html", self_contained = T) 
 
 # show results 
 biplot(acp_surv, scaling="sites") # relationships between years # the eigenvalues are expressed for sites, and species are left unscaled.
 biplot(acp_surv, scaling=2) # relationships between variables 
 
 
-# 6 - make pca on timing  ------------------------------------------------------
+# 6 - make pca on timing NO SNOW ------------------------------------------------------
 
 colnames(pheno_surv)
 
@@ -387,7 +391,7 @@ kable(timingLoadings) %>%
   kable_styling(font_size = 10) %>%
   row_spec(c(0,1)) %>%
   kable_styling("bordered") %>%
-  save_kable(file = "tableSXXPcaDates.html", self_contained = T) 
+  save_kable(file = "tableS3PcaDates.html", self_contained = T) 
 
 # show results 
 biplot(acpTiming, scaling=2) # relationships between variables 
@@ -395,7 +399,7 @@ biplot(acpTiming, scaling="species")
 
 # need exact number of lines in two df 
 
-pheno_surv<- pheno_surv[!is.na(pheno_surv$SummerGPP), ] # missing data 
+pheno_surv<- pheno_surv[!is.na(pheno_surv$SummerGPP), ] # missing data (GPP) 2001-2015 
 pheno_surv<- pheno_surv[!is.na(pheno_surv$WinNDVIsurvT1), ] # missing data 
 
 pheno_surv<-cbind(pheno_surv, yearSummer[, 1:2])
@@ -410,19 +414,13 @@ rm(tmp1, tmp2, var, year, pheno, lengths, acp_surv, test)
 colnames(pheno_surv)
 
 # save this for projections ! 
-save(pheno_surv, file = "cache/dataProjections.RData")
+#save(pheno_surv, file = "dataProjections.RData")
 
 
-
+getwd()
 
 
 # KEEP ALL 
-
-
-
-# pheno_surv<- pheno_surv[, c("year","SummerNDVI","WinNDVIsurvT1",   
-#                             "NDVIsurvT1","NDVIsurvT","PC1" ,"PC2"  ,"PC1Tim","PC2Tim" )]
-
 
 
 
@@ -513,7 +511,7 @@ rm(SOI, tmp, sheep_data, PDO, monthly_climate, data)
 
 # 8 - add time lags climate   ----------------------------------------------
 
-clim = read.csv2("data/season_climate_ram.csv",
+clim = read.csv2("season_climate_ram.csv",
                  na.string = c("", "NA"),sep = ",")
 
 # add time lag # careful this is tricky
@@ -552,7 +550,7 @@ head(clim)
 
 # 9 - tidy weather data   ---------------------------------------------------
 
-# get data from françois
+# get RAW data from françois
 
 #drive_download("OWPC/Analyses/data/Raw/Climat/monthlyRam", type="xls", overwrite = T)
 weather<-read.delim("data/monthlyRam", header=T, sep=",") # this is from François 
@@ -574,7 +572,7 @@ weather<-read.delim("data/monthlyRam", header=T, sep=",") # this is from Franço
 
 #drive_download("OWPC/Analyses/data/Raw/Climat/Localweather_seasons",type="csv", overwrite=T)
 
-weather<-read.delim("data/Localweather_seasons", header=T, sep=",")
+weather<-read.delim("Localweather_seasons", header=T, sep=",")
 
 # No time lag for survival
 weather$yr <- as.numeric(as.character(weather$yr))
@@ -599,7 +597,7 @@ head(weather_surv, 10)
 
 # merge into one dataframe  -----------------------------------------------
 
-sheep_data <- read.csv2("data/repro_mass.csv", sep = ",")
+sheep_data <- read.csv2("repro_mass.csv", sep = ",")
 
 # add age class 
 
@@ -659,6 +657,14 @@ dataSurv$PC1Winter<-as.numeric(as.character(dataSurv$PC1Winter))
 dataSurv$PC2Winter<-as.numeric(as.character(dataSurv$PC2Winter))
 dataSurv$PC1Date<-as.numeric(as.character(dataSurv$PC1Date))
 dataSurv$PC2Date<-as.numeric(as.character(dataSurv$PC2Date))
+dataSurv$SNOWMELTsurvT<-as.numeric(as.character(dataSurv$SNOWMELTsurvT))
+dataSurv$SNOWCOVERsurvT<-as.numeric(as.character(dataSurv$SNOWCOVERsurvT))
+dataSurv$SNOWMELTsurvT1<-as.numeric(as.character(dataSurv$SNOWMELTsurvT1))
+dataSurv$NDVIsurvT<-as.numeric(as.character(dataSurv$NDVIsurvT))
+dataSurv$NDVIsurvT1<-as.numeric(as.character(dataSurv$NDVIsurvT1))
+dataSurv$SummerNDVI<-as.numeric(as.character(dataSurv$SummerNDVI))
+dataSurv$WinNDVIsurvT1<-as.numeric(as.character(dataSurv$WinNDVIsurvT1))
+
 
 dataSurv$PDO.winter_surv<-as.numeric(as.character(dataSurv$PDO.winter_surv))
 dataSurv$PDO.summer_surv<-as.numeric(as.character(dataSurv$PDO.summer_surv))
@@ -698,9 +704,9 @@ str(dataSurvUnscld)
 colnames(dataSurvUnscld)
 dim(dataSurvUnscld)
 
-data.SD<-apply(dataSurvUnscld[, 10:70], 2,sd, na.rm = T) # 2 pour prendre colonnes
+data.SD<-apply(dataSurvUnscld[, 10:71], 2,sd, na.rm = T) # 2 pour prendre colonnes
 head(data.SD)
-data.MEAN<-apply(dataSurvUnscld[, 10:70], 2,mean, na.rm = T)
+data.MEAN<-apply(dataSurvUnscld[, 10:71], 2,mean, na.rm = T)
 
 # get something and backtransform 
 #newd$snow<-(data.MEAN["SummerEVI"]*data.SD) + data.MEAN
@@ -716,32 +722,31 @@ dataSurv <- dataSurv[, c("yr","ID","alive_t1","ageClass","age","pred","first_yr_
                          "MassSpring","MassAutumn",
                           "SummerNDVI","SummerEVI","SummerLAI","SummerGPP","SummerSnow","SummerPSNNET","SummerFPAR" ,      
                          "WinNDVIsurvT1","WinEVIsurvT1","WinLAIsurvT1","WinGPPsurvT1","WinSnowsurvT1","WinPSNNETsurvT1","WinFPARsurvT1","NDVIsurvT1",       
-                         "EVIsurvT1","LAIsurvT1","GPPsurvT1","SNOWsurvT1","PSNNETsurvT1","FPARsurvT1","NDVIsurvT","EVIsurvT",
-                         "LAIsurvT","GPPsurvT","SNOWsurvT","PSNNETsurvT","FPARsurvT","PC1Summer","PC2Summer","PC1Winter",
+                         "EVIsurvT1","LAIsurvT1","GPPsurvT1","SNOWMELTsurvT1","PSNNETsurvT1","FPARsurvT1","NDVIsurvT","EVIsurvT",
+                         "LAIsurvT","GPPsurvT","SNOWMELTsurvT","PSNNETsurvT","FPARsurvT","PC1Summer","PC2Summer","PC1Winter",
                          "PC2Winter","PC1Date","PC2Date","PDO.summer_surv","PDO.fall_surv","SOI.summer_surv","SOI.fall_surv","PDO.winter_tm1" ,  
                          "SOI.winter_tm1","PDO.winter_surv","PDO.spring_surv","SOI.winter_surv","SOI.spring_surv","T.WIN.m1","P.WIN.m1","T.SPRING.m1",      
                          "P.SPRING.m1","T.SUMMER","P.SUMMER","T.FALL","P.FALL","T.WIN","P.WIN","T.SPRING",
-                         "P.SPRING","PDOSOI_winter","PDOSOI_spring","PDOSOI_summer","PDOSOI_fall","PDOSOI_winter_tm1")]
+                         "P.SPRING","PDOSOI_winter","PDOSOI_spring","PDOSOI_summer","PDOSOI_fall","PDOSOI_winter_tm1", 
+                         "SNOWCOVERsurvT")]
 
-dataSurv[, c(8:70)] <- scale(dataSurv[, c(8:70)])
+dataSurv[, c(8:71)] <- scale(dataSurv[, c(8:71)])
 fullSurvDataScled = dataSurv
 
-#save(data.SD, data.MEAN, dataSurvUnscld, fullSurvDataScled, file = "cache/dataProjections.RData")
+#save(data.SD, data.MEAN, dataSurvUnscld, fullSurvDataScled, file = "dataProjections.RData")
 
-
-# only keep ndvi + pc for models 
+colnames(dataSurv)
+# only keep ndvi + snow + PCs for models # added snow MELT AND SNOW COVER (NEW)
 dataSurv <- dataSurv[, c("yr","ID","alive_t1","age" , "pred","first_yr_trans" , "ageClass",
                          "MassSpring","MassAutumn", 
-                         "SummerNDVI","WinNDVIsurvT1","NDVIsurvT","NDVIsurvT1",
+                         "SummerNDVI","WinNDVIsurvT1","NDVIsurvT","NDVIsurvT1","SummerSnow", "WinSnowsurvT1",
+                         "SNOWMELTsurvT", "SNOWMELTsurvT1","SNOWCOVERsurvT",
                           "PC1Summer","PC2Summer","PC1Winter","PC2Winter","PC1Date","PC2Date",
                          "PDO.summer_surv", "PDO.fall_surv",   "SOI.summer_surv", "SOI.fall_surv","PDO.winter_tm1","SOI.winter_tm1", 
                          "PDO.winter_surv", "PDO.spring_surv", "SOI.winter_surv", "SOI.spring_surv",
                          "T.WIN.m1","P.WIN.m1","T.SPRING.m1","P.SPRING.m1","T.SUMMER","P.SUMMER","T.FALL","P.FALL","T.WIN","P.WIN",
                           "T.SPRING","P.SPRING", 
                          "PDOSOI_winter",  "PDOSOI_spring","PDOSOI_summer", "PDOSOI_fall", "PDOSOI_winter_tm1" )]
-
-
-dataSurv[, c(8:46)] <- scale(dataSurv[, c(8:46)])
 dataSurvScld = dataSurv
 
 
@@ -753,12 +758,12 @@ rm(tmp,tmp1, tmp2, tmp3)
 # save only necessary data as R objects ---------------------------------------------------------
 getwd()
 
-#
-# save(sheep_data, pheno_surv, clim_surv, weather_surv, dataSurvUnscld, dataSurvScld,
-#       file = "cache/dataSurvivalModels.RData")
-# drive_upload("cache/dataSurvivalModels.RData",
+
+# save(sheep_data, pheno_surv, clim_surv, weather_surv, fullSurvDataScled, dataSurvUnscld, dataSurvScld,
+#       file = "dataSurvivalModels.RData")
+# drive_upload("dataSurvivalModels.RData",
 #               path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
-# 
+
 
 
 
