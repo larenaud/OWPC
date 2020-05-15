@@ -71,7 +71,7 @@ true <- glmer(true_repro ~ -1 + ageClass/(TWin * PWin) + MassAutumn_tm1 + (1 |ID
                    control = glmerControl(optimizer="bobyqa", 
                                           optCtrl = list(maxfun = 2000000)))
 
-
+summary(true)
 plot(df_fec$TWin ~ df_fec$yr)
 
 
@@ -215,12 +215,16 @@ lambda <- data.frame(lambda.true.now,
 
 # projection figure FOR TEMPERATURE  -----------------------------------------------------------------
 
-projectionTemp <- ggplot(lambda, aes(lambda.true.now, fill = "true.now")) + 
+projectionTemp <- ggplot(lambda, aes(lambda.true.now, fill = "Current winter temperature")) + # le fill est transofrmé en facteur, donc le niveau devient en ordre alphab. 
   geom_density(alpha = 0.5) + 
-  geom_density(aes(lambda.true.future, fill = "true.future"), alpha = 0.5) + 
-  labs(x=expression('Population growth rate based on true reproduction'), 
+  geom_density(aes(lambda.true.future, fill = "Warming of 1.5°C"), alpha = 0.5) + 
+  labs(x=expression('Population growth rate'), 
        y="Density") +
-  theme_cowplot() 
+  theme_cowplot(14) +
+  theme(legend.title=element_blank(),
+        legend.position = c(0.1, 0.9)) # removed legend title , give it coordinate
+  #guides(fill = guide_legend(override.aes = list(colour = NULL)),
+   #      color = guide_legend(override.aes = list(colour = NULL)))
 projectionTemp
 
 
@@ -255,23 +259,23 @@ env.future <- data.frame(TWin = mean(df_fec$TWin, na.rm = T),
 
 
 
-
-# raw fec # need 10 000
-lambda.raw.now = 
-  sapply(1:100, function(it){
-    bob = eigen.analysis(newLeslie(fec = raw,env = env.now))
-    return(bob$lambda1)
-  })
-hist(lambda.raw.now)
-
-
-
-lambda.raw.future = 
-  sapply(1:100, function(it){ # sapply fait des itérations 
-    bob = eigen.analysis(newLeslie(fec = raw,env = env.future))
-    return(bob$lambda1)
-  })
-hist(lambda.raw.future)
+# 
+# # raw fec # need 10 000
+# lambda.raw.now = 
+#   sapply(1:100, function(it){
+#     bob = eigen.analysis(newLeslie(fec = raw,env = env.now))
+#     return(bob$lambda1)
+#   })
+# hist(lambda.raw.now)
+# 
+# 
+# 
+# lambda.raw.future = 
+#   sapply(1:100, function(it){ # sapply fait des itérations 
+#     bob = eigen.analysis(newLeslie(fec = raw,env = env.future))
+#     return(bob$lambda1)
+#   })
+# hist(lambda.raw.future)
 
 
 # make TRUE fecondity 
@@ -297,16 +301,34 @@ lambdaPheno <- data.frame(lambda.true.now,
 # figures pheno -----------------------------------------------------------
 
 
+library(scales)
+show_col(hue_pal()(4))
 
-projectionPheno <- ggplot(lambdaPheno, aes(lambda.true.now, fill = "true.now")) + 
-  geom_density(alpha = 0.5) + 
-  geom_density(aes(lambda.true.future, fill = "true.future"), alpha = 0.5) + 
-  labs(x=expression('Population growth rate based on reproduction'), 
+projectionTemp
+
+
+projectionPheno <- ggplot(lambdaPheno, aes(lambda.true.now)) + 
+  geom_density(alpha = 0.5, aes(fill = 'now'))+  # same as other fig 
+  geom_density(aes(lambda.true.future, fill = "fut"), alpha = 0.5) + 
+  labs(x=expression('Population growth rate'), 
        y="Density") +
-  theme_cowplot() 
-projectionPheno
+  scale_fill_manual(breaks = c("now","fut"),values = c('#F8766D',"#00BFC4"),
+                    labels=c("Current green-up date","19-d advance in green-up"))+ # on force l'ordre de la key + couleur 
+  theme_cowplot() +
+  theme(legend.position = c(0.1, 0.9), 
+        legend.title =element_blank())
 
 
+p <- plot_grid (projectionTemp,
+                projectionPheno, 
+                labels = c("A", "B"), 
+                align = "vh")
+getwd()
+save_plot("/TestProjections.pdf", p,
+          ncol = 2, # we're saving a grid plot of 2 columns
+          nrow = 1, # and 2 rows
+          base_aspect_ratio = 1.3
+)
 
 
 
