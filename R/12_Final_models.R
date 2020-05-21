@@ -18,195 +18,103 @@ library(dplyr)
 library(MuMIn)
 library(ggplot2)
 library(cowplot)
-
 library(xtable)
-
 library(readxl)
 library(boot)
 library(ggthemes)
 #install.packages("pander")
 library(pander)
 
+# Accessing google drive
+drive_find(n_max = 10)
+# Select a pre-authorised account by entering the corresponding number in the console or enter '0' to obtain a new token.
 
-# climate models  ---------------------------------------------------------
+# Set working directory DIFFERENT FOR EACH PERSON
+setwd("")
+#Ex: setwd("C:/Users/Proprietaire/Documents/uni poc/Phd/OWPC/Analyses/FinalModels")
 
+##### Survival ############################################################################################################
+# Cleaning R environment -----------------------------------------------------------------------
+rm(list = ls())
+# Importing data -------------------------------------------------------------------------------
 
-# surv
-load("surv_clim.Rdata")
-aictab(mod.surv)
+# Climate
+drive_download("OWPC/Analyses/results/surv_clim.RData",overwrite = T)
+load("surv_clim.RData")
 
-mod.surv$base
-glm(formula = alive_t1 ~ -1 + ageClass + pred, family = "binomial", 
-    data = df_surv)
+# Pheno
+drive_download("OWPC/Analyses/results/surv_pheno.RData",overwrite = T)
+load("surv_pheno.RData")
 
-mod.surv$winter.tm1.int
-glm(formula = alive_t1 ~ -1 + ageClass/PDOSOI_winter_tm1 + pred, 
-    family = "binomial", data = df_surv)
+# Weather
+drive_download("OWPC/Analyses/results/surv_weather.RData",overwrite = T)
+load("surv_weather.RData")
 
+# Selecting models for each categories of environmental variable -------------------------------
 
+# Climate
+View(results.surv.clim[["aictable.surv"]])
+# Best model is base model
+# No model is selected
 
-# raw
-load("raw.repro_clim.Rdata")
-aictab(mod.raw.repro)
+# Pheno
+View(results.surv.pheno[["aictable.surv"]])
+# Best model is Snow_present with a delta AICc >2 with base model.
+# Other models "beat" the base model but none with a delta AICc >2.
+# Snow_present is selected.
 
+# Weather
+View(results.surv.weat[["aictable.surv"]])
+# Best model is Fall_T, but with delta AICc <2 with base model which is the second best model.
 
-mod.raw.repro$springPDO
-raw_repro ~ -1 + ageClass/PDOSpringFec +      MassAutumn_tm1 + (1 | ID)
+anova(mod.surv.weat[["Base"]], mod.surv.weat[["Fall_T"]], test = "LRT")
 
+#  Resid. Df Resid. Dev Df Deviance Pr(>Chi)  
+#  1       442      375.8                       
+#  2       437      364.6  5     11.2  0.04756 *
 
-# true 
-load("true.repro_clim.Rdata")
-aictab(mod.true.repro)
+# Likelihood ratio test suggest our data significally "better" fit the Fall_T model.
+# Fall_T model is selected.
 
+# Final survival model -------------------------------------------------------------------------
 
-mod.true.repro$base
-true_repro ~ -1 + ageClass + MassAutumn_tm1 + (1 | ID)
-
-mod.true.repro$winterPDOSOI
-true_repro ~ -1 + ageClass/PDOWinterFec + ageClass/SOIWinterFec +MassAutumn_tm1 + (1 | ID)
-
-
-
-
-
-# pheno models ------------------------------------------------------------
-
-
-# surv
-load("surv_pheno.Rdata") 
-aictab(mod.surv) 
-
-# three equivalent models including base 
-mod.surv$base
-glm(formula = alive_t1 ~ -1 + ageClass + pred, family = "binomial", 
-    data = df_surv)
-
-mod.surv$pc2tim
-Call:  glm(formula = alive_t1 ~ -1 + ageClass/PC2Tim + pred, family = "binomial", 
-           data = df_surv)
-
-mod.surv$pc2
-Call:  glm(formula = alive_t1 ~ -1 + ageClass/PC2 + pred, family = "binomial", 
-           data = df_surv)
-
-
-
-
-# raw
-load("raw.repro_pheno.Rdata")
-aictab(mod.raw.repro)
-
-
-mod.raw.repro$base
-raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1 | ID)
-Data: df_fec
-
-mod.raw.repro$SummerNDVI
-raw_repro ~ -1 + ageClass/SummerNDVIfec + MassAutumn_tm1 + (1 |      ID)
-Data: df_fec
-
-
-
-
-# true
-load("true.repro_pheno.Rdata")
-aictab(mod.true.repro)
-
-
-mod.true.repro$pc2tim
-Formula: true_repro ~ -1 + ageClass/PC2Tim + MassAutumn_tm1 + (1 | ID)
-Data: df_fec
-
-
-
-
-# weather models  ---------------------------------------------------------
-
-
-
-# surv
-load("surv_weather.Rdata")
-aictab(mod.surv) 
-
-
-# 2 similar models 
-mod.surv$base 
-glm(formula = alive_t1 ~ -1 + ageClass + pred, family = "binomial", 
-    data = df_surv)
-
-
-mod.surv$T.Fall
-glm(formula = alive_t1 ~ -1 + ageClass/T.FALL + pred, family = "binomial", 
-           data = df_surv)
-
-
-
-# raw 
-load("raw.repro_weather.Rdata")
-aictab(mod.raw.repro)
-
-
-mod.raw.repro$TWin
-raw_repro ~ -1 + ageClass/TWin + MassAutumn_tm1 + (1 | ID)
-Data: df_fec
-
-
-
-
-# true 
-load("true.repro_weather.Rdata")
-aictab(mod.true.repro)
-
-
-
-mod.true.repro$TxPWin
- true_repro ~ -1 + ageClass/(TWin * PWin) + MassAutumn_tm1 + (1 |      ID)
-Data: df_fec
-
-
-
-# final model selection SURVIVAL ---------------------------------------------------
+# List of candidate models
 mod.surv <- list()
 
-mod.surv$base <- glm(alive_t1 ~ -1 + ageClass + pred, 
-                     family = "binomial",
-                     df_surv)
+# Base model
+mod.surv$Base<- mod.surv.clim[["base"]]
 
-mod.surv$winter.tm1.int <- glm(alive_t1 ~ -1 + ageClass/PDOSOI_winter_tm1 + pred, 
-                               family = "binomial", 
-                              df_surv)
+# Climate
+# no selected model
 
-mod.surv$pc2tim <- glm(alive_t1 ~ -1 + ageClass/PC2Tim + pred, 
-                       family = "binomial",
-                       df_surv)
+# Pheno
+mod.surv$Snow_present<- mod.surv.pheno[["Snow_present"]]
 
-mod.surv$pc2 <- glm(alive_t1 ~ -1 + ageClass/PC2 + pred,
-                    family = "binomial", 
-                    df_surv)
+# Weather
+mod.surv$Fall_T<- mod.surv.weat[["Fall_T"]]
 
-mod.surv$T.Fall <- glm(alive_t1 ~ -1 + ageClass/T.FALL + pred, 
-                       family = "binomial", 
-                       data = df_surv)
+# Pheno + weather
+mod.surv$Snowpres_FallT<- glm(alive_t1 ~ -1 + ageClass/WinSnowsurvT1 + ageClass/T.FALL + pred,
+                              data=df_surv, family="binomial")
 
-# does not converge 
-mod.surv$combined <- glm(alive_t1 ~ -1 + ageClass + pred + ageClass/PDOSOI_winter_tm1 + 
-                           ageClass/PC2Tim + ageClass/PC2 + ageClass/T.FALL, 
-                         family = "binomial", 
-                         df_surv)
-
-# extract results 
+# Creating a list to store the results
 results.surv<-list()
+
+## Creating and exporting AIC table to results list
 results.surv$aictable.surv <- xtable(aictab(mod.surv), caption = NULL, label = NULL, align = NULL,
-                                     digits = NULL, display = NULL, nice.names = TRUE,
-                                     include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
+                                          digits = NULL, display = NULL, nice.names = TRUE,
+                                          include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
 
 results.surv$aictable.surv[,3:6] <-round(results.surv[["aictable.surv"]][,3:6],digits=3)
 
+# Results from survival best model -------------------------------------------------------------------------------------- 
+
+# Snow_present
 results.surv$coefs.surv.best <- data.frame(coef(summary(mod.surv[[as.character(results.surv[["aictable.surv"]][1,1])]])))
 results.surv$coefs.surv.best[, 1:4] <- round(results.surv[["coefs.surv.best"]][, 1:4], digits = 3)
 results.surv$r2.surv.best<-data.frame(round(MuMIn::r.squaredGLMM(mod.surv[[as.character(results.surv[["aictable.surv"]][1,1])]]), digits = 3))
 
-# only one best 
+# Save results ---------------------------------------------------------------------------------------------------------- 
 
 save(df_surv,mod.surv,results.surv,file = "final_surv.Rdata")
 
@@ -222,123 +130,91 @@ kable(results.surv$coefs.surv.best) %>%
   kable_styling("bordered") %>%
   save_kable(file = "FinalSurvCoef.html", self_contained = T) 
 
-# final model selection RAW -----------------------------------------------
+##### True repro ##########################################################################################################
+# Cleaning R environment -----------------------------------------------------------------------
+rm(list = ls())
+# Importing data -------------------------------------------------------------------------------
 
-mod.raw <- list()
+# Climate
+drive_download("OWPC/Analyses/results/true_repro_clim.RData",overwrite = T)
+load("true_repro_clim.RData")
 
-mod.raw$base <- glmer(raw_repro ~ -1 + ageClass + MassAutumn_tm1 + (1 | ID), 
-                      family = "binomial", 
-                      df_fec, 
-                      control = glmerControl(optimizer="bobyqa", 
-                                             optCtrl = list(maxfun = 2000000)))
+# Pheno
+drive_download("OWPC/Analyses/results/true_repro_pheno.RData",overwrite = T)
+load("true_repro_pheno.RData")
 
-mod.raw$springPDO <- glmer(raw_repro ~ -1 + ageClass/PDOSpringFec + MassAutumn_tm1 + (1 | ID),
-                                    family = "binomial",
-                                    df_fec,
-                                    control = glmerControl(optimizer="bobyqa",
-                                                           optCtrl = list(maxfun = 4000000)))
+# Weather
+drive_download("OWPC/Analyses/results/true_repro_weather.RData",overwrite = T)
+load("true_repro_weather.RData")
 
-mod.raw$SummerNDVI <- glmer(raw_repro ~ -1 + ageClass/SummerNDVIfec + MassAutumn_tm1 + (1 |ID), 
-                            family = "binomial", 
-                            df_fec, 
-                            control = glmerControl(optimizer="bobyqa", 
-                                                   optCtrl = list(maxfun = 2000000)))
-mod.raw$TWin <- glmer(raw_repro ~ -1 + ageClass/TWin + MassAutumn_tm1 + (1 | ID), 
-                      family = "binomial", 
-                      df_fec, 
-                      control = glmerControl(optimizer="bobyqa", 
-                                             optCtrl = list(maxfun = 2000000)))
+# Selecting models for each categories of environmental variable -------------------------------
 
-# mod.raw$combined <- glmer(raw_repro ~ -1 + ageClass/PDOSpringFec + ageClass/SOISpringFec + 
-#                           ageClass/SummerNDVIfec +
-#                           ageClass/TWin + 
-#                           MassAutumn_tm1 + (1 | ID),
-#                           family = "binomial", 
-#                           df_fec, 
-#                           control = glmerControl(optimizer="bobyqa", 
-#                                                  optCtrl = list(maxfun = 2000000)))
+# Climate
+View(results.true.repro.clim[["aictable.true.repro"]])
+# Best model is base model
+# No model is selected
 
-# Creating a list to store the results
-results.raw.repro<-list()
-results.raw.repro$aictable.raw.repro <- xtable(aictab(mod.raw), caption = NULL, label = NULL, align = NULL,
-                                               digits = NULL, display = NULL, nice.names = TRUE,
-                                               include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
+# Pheno
+View(results.true.repro.pheno[["aictable.true.repro"]])
+# Best model is Date_PC2, but with a delta AICc <2 with base model which is the second best model.
 
-results.raw.repro$aictable.raw.repro[,3:6] <-round(results.raw.repro[["aictable.raw.repro"]][,3:6],digits=3)
+anova(mod.true.repro.pheno[["base"]], mod.true.repro.pheno[["Date_PC2"]], test = "LRT")
 
-results.raw.repro$coefs.raw.repro.best <- data.frame(coef(summary(mod.raw[[as.character(results.raw.repro[["aictable.raw.repro"]][1,1])]])))
-results.raw.repro$coefs.raw.repro.best[, 1:4] <- round(results.raw.repro[["coefs.raw.repro.best"]][, 1:4], digits = 3)
-results.raw.repro$r2.raw.repro.best<-data.frame(round(MuMIn::r.squaredGLMM(mod.raw[[as.character(results.raw.repro[["aictable.raw.repro"]][1,1])]]), digits = 3))
+#                                    Df    AIC    BIC     logLik  deviance  Chisq Chi Df Pr(>Chisq)  
+#mod.true.repro.pheno[["base"]]      5   301.47  319.54  -145.74   291.47                           
+#mod.true.repro.pheno[["Date_PC2"]]  8   300.02  328.93  -142.01   284.02     7.4456  3   0.05897 .
 
-# Option to create and save RData file with data, candidate models and results
-save(df_fec,mod.raw,results.raw.repro,file = "final_raw.Rdata")
+# Likelihood ratio test suggest our data marginally "better" fit the Date_PC2 model.
+# Date_PC2 model is selected.
 
+# Weather
+View(results.true.repro.weat[["aictable.true.repro"]])
+# Best model is Winter_PxT with delta AICc >2 with base model.
+# Other models "beat" the base model, but Winter_PxT is cleary the best model with a delta AICc of 6.477 with the second best model.
+# Winter_PxT is selected
 
-kable(results.raw.repro$aictable.raw.repro) %>%
-  kable_styling(font_size = 10) %>%
-  row_spec(c(0,1)) %>%
-  kable_styling("bordered") %>%
-  save_kable(file = "FinalAicRaw.html", self_contained = T) 
+# Final true repro model -------------------------------------------------------------------------
 
-kable(results.raw.repro$coefs.raw.repro.best[, 1:4]) %>%
-  kable_styling(font_size = 10) %>%
-  row_spec(c(0,1)) %>%
-  kable_styling("bordered") %>%
-  save_kable(file = "FinalRawCoef.html", self_contained = T) 
+# List of candidate models
+mod.true.repro <- list()
 
+# Base model
+mod.true.repro$Base<- mod.true.repro.clim[["Base"]]
 
+# Climate
+# no selected model
 
-# final model selection TRUE ----------------------------------------------
-mod.true<- list()
+# Pheno
+mod.true.repro$Date_PC2<- mod.true.repro.pheno[["Date_PC2"]]
 
-mod.true$base <- glmer(true_repro ~ -1 + ageClass + MassAutumn_tm1 + (1 | ID), 
-                       df_fec, 
-                       family = "binomial",
-                       control = glmerControl(optimizer="bobyqa", 
-                                              optCtrl = list(maxfun = 2000000)))
+# Weather
+mod.true.repro$Winter_PxT<- mod.true.repro.weat[["Winter_PxT"]]
 
-mod.true$winterPDOSOI <- glmer(true_repro ~ -1 + ageClass/PDOWinterFec + ageClass/SOIWinterFec +MassAutumn_tm1 + (1 | ID), 
-                               df_fec, 
-                               family = "binomial",
-                               control = glmerControl(optimizer="bobyqa", 
-                                                              optCtrl = list(maxfun = 2000000)))
-
-mod.true$pc2tim <- glmer( true_repro ~ -1 + ageClass/PC2Tim + MassAutumn_tm1 + (1 | ID), 
-                          df_fec, 
-                          family = "binomial",
-                          control = glmerControl(optimizer="bobyqa", 
-                                                 optCtrl = list(maxfun = 2000000)))
-
-mod.true$TxPWin <- glmer(true_repro ~ -1 + ageClass/(TWin * PWin) + MassAutumn_tm1 + (1 |ID), 
-                         df_fec, 
-                         family = "binomial",
-                         control = glmerControl(optimizer="bobyqa", 
-                                                optCtrl = list(maxfun = 2000000)))
-
-mod.true$combined <- glmer(true_repro ~ -1 + ageClass + ageClass/PDOWinterFec + ageClass/SOIWinterFec +
-                             ageClass/PC2Tim + 
-                             ageClass/(TWin * PWin)+ MassAutumn_tm1 + (1 | ID),
-                           family = "binomial",
-                           df_fec, 
-                           control = glmerControl(optimizer="bobyqa", 
-                                               optCtrl = list(maxfun = 2000000)))
-
-
+# Pheno + weather
+mod.true.repro$DatePC2_WinterPxT<- glmer(true_repro ~ -1 + ageClass/PC2Date + ageClass/(TWin*PWin) + MassAutumn_tm1 + (1|ID), 
+                                         data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa", 
+                                         optCtrl = list(maxfun = 4000000)))
+  
 # Creating a list to store the results
 results.true.repro<-list()
-results.true.repro$aictable.true.repro <- xtable(aictab(mod.true), caption = NULL, label = NULL, align = NULL,
-                                                 digits = NULL, display = NULL, nice.names = TRUE,
-                                                 include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
+
+## Creating and exporting AIC table to results list
+results.true.repro$aictable.true.repro <- xtable(aictab(mod.true.repro), caption = NULL, label = NULL, align = NULL,
+                                     digits = NULL, display = NULL, nice.names = TRUE,
+                                     include.AICc = TRUE, include.LL = TRUE, include.Cum.Wt = FALSE)
 
 results.true.repro$aictable.true.repro[,3:6] <-round(results.true.repro[["aictable.true.repro"]][,3:6],digits=3)
 
-results.true.repro$coefs.true.repro.best <- data.frame(coef(summary(mod.true[[as.character(results.true.repro[["aictable.true.repro"]][1,1])]])))
+# Results from true repro best model -------------------------------------------------------------------------------------- 
+
+# Winter_PxT
+results.true.repro$coefs.true.repro.best <- data.frame(coef(summary(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][1,1])]])))
 results.true.repro$coefs.true.repro.best[, 1:4] <- round(results.true.repro[["coefs.true.repro.best"]][, 1:4], digits = 3)
-results.true.repro$r2.true.repro.best<-data.frame(round(MuMIn::r.squaredGLMM(mod.true[[as.character(results.true.repro[["aictable.true.repro"]][1,1])]]), digits = 3))
+results.true.repro$r2.true.repro.best<-data.frame(round(MuMIn::r.squaredGLMM(mod.true.repro[[as.character(results.true.repro[["aictable.true.repro"]][1,1])]]), digits = 3))
 
 
-# Option to create and save RData file with data, candidate models and results
-save(df_fec,mod.true,results.true.repro,file = "final_true_models.Rdata")
+# Save results ---------------------------------------------------------------------------------------------------------- 
+save(df_fec,mod.true.repro,results.true.repro,file = "final_true_models.Rdata")
 
 kable(results.true.repro$aictable.true.repro) %>%
   kable_styling(font_size = 10) %>%
@@ -352,45 +228,40 @@ kable(results.true.repro$coefs.true.repro.best[, 1:4]) %>%
   kable_styling("bordered") %>%
   save_kable(file = "FinalTrueCoef.html", self_contained = T) 
 
-# new final  models -----------------------------------------------
+#### Predictions ##########################################################################################################
+# Cleaning R environment --------------------------------------------------------------------------------------------------
+rm(list = ls())
+# Importing data ----------------------------------------------------------------------------------------------------------
 
-finalSurv <- glm(alive_t1 ~ -1 + ageClass/PC2Tim + pred, 
-                       family = "binomial",
-                       df_surv)# base equivalent to pc2tim
+# Survival
+# Download RData from drive
+drive_download("OWPC/Analyses/cache/dataSurvivalModels.RData",overwrite=T)
+# Import in R environment
+load("dataSurvivalModels.RData")
+# Rename scaled data frame and remove years with missing data for climate
+df_surv<-droplevels(subset(dataSurvScld,!(yr %in% c("1999","2000","2016"))))
+# Remove unnecessary objects for the environment
+rm(clim_surv,pheno_surv,weather_surv,sheep_data,dataSurvUnscld,dataSurvScld,fullSurvDataScled)
 
-finalRaw <- glmer(raw_repro ~ -1 + ageClass/TWin + MassAutumn_tm1 + (1 | ID), 
-                      family = "binomial", 
-                      df_fec, 
-                      control = glmerControl(optimizer="bobyqa", 
-                                             optCtrl = list(maxfun = 2000000)))
+# True repro
+# Download RData from drive
+drive_download("OWPC/Analyses/cache/dataFecundityModels.RData",overwrite=T)
+# Import in R environment
+load("dataFecundityModels.RData")
+# Rename scaled data frame and remove years with missing data for climate
+df_fec<-droplevels(subset(dataFecScld,!(yr %in% c("1999","2000","2001"))))
+# Remove unnecessary objects for the environment
+rm(clim_fec,pheno_fec,weather_fec,sheep_data,dataFecUnscld,dataFecScld,fullFecDataScld)
 
-finalTrue <- glmer(true_repro ~ -1 + ageClass/(TWin * PWin) + MassAutumn_tm1 + (1 |ID), 
-                         df_fec, 
-                         family = "binomial",
-                         control = glmerControl(optimizer="bobyqa", 
-                                                optCtrl = list(maxfun = 2000000)))
+# Final models ------------------------------------------------------------------------------------------------------------
+finalSurv <- glm(alive_t1 ~ -1 + ageClass/WinSnowsurvT1 + pred, data=df_surv, family="binomial")
 
-# OLD 
-# modfinal$combined <- glmer(raw_repro ~ -1 + ageClass/PDO.spring + ageClass/T.WIN.m1 + ageClass/P.WIN.m1 + MassAutumn_tm1 + (1|ID), 
-#                           data=df, 
-#                           family="binomial",
-#                           control = glmerControl(optimizer="bobyqa", 
-#                                                  optCtrl = list(maxfun = 2000000)))
-# mod.final$clim.win <- glmer(true_repro ~ -1 + ageClass/PDO.winter + ageClass/SOI.winter + MassAutumn_tm1 + (1|ID), 
-#                            data=df, 
-#                            family="binomial",
-#                            control = glmerControl(optimizer="bobyqa", 
-#                                                   optCtrl = list(maxfun = 2000000))) 
-
+finalTrue <- glmer(true_repro ~ -1 + ageClass/(TWin*PWin) + MassAutumn_tm1 + (1|ID),
+                   data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa",
+                   optCtrl = list(maxfun = 2000000)))
 
 
 # prediction figures survival  -----------------------------------------------------
-
-load("final_surv.Rdata")
-finalSurv <- glm(alive_t1 ~ -1 + ageClass/PC2Tim + pred, 
-                 family = "binomial",
-                 df_surv)# base equivalent to pc2tim
-
 
 # alwways good to check model output before predicting 
 summary(finalSurv) # choose affected age classes 
@@ -441,85 +312,6 @@ ggsave("survivalPC2Tim.pdf", width = 110, height = 130, units = "mm", pointsize 
 
 
 # change newd number 
-
-
-
-
-
-
-
-
-
-
-
-# prediction figures raw fecundity --------------------------------------------------------
-load("final_raw.Rdata")
-finalRaw <- glmer(raw_repro ~ -1 + ageClass/TWin + MassAutumn_tm1 + (1 | ID), 
-                  family = "binomial", 
-                  df_fec, 
-                  control = glmerControl(optimizer="bobyqa", 
-                                         optCtrl = list(maxfun = 2000000)))
-
-summary(finalRaw)
-
-
-newd<- data.frame()
-newdata = expand.grid(TWin  = seq(min(df_fec$TWin , na.rm = T),
-                                      max(df_fec$TWin , na.rm = T), length = 50), # la variable d'intérêt
-                      ageClass = c("9", "3"),
-                      MassAutumn_tm1 = mean(df_fec$MassAutumn_tm1, na.rm = T),
-                      ID = c("A50", "E13", "I6",  "L2",  "M7"))
-newd2 <- rbind(newd, newdata)
-# tmp = subset(df_fec, ageClass %in% 8) 
-# sample(tmp$ID, 5)
-
-# now in glmer, we can generate distribution of estimates and extract CI
-# bootMer travaille en fonction - lui en spécifier une qui extrait nos coefficients de modèle avec predict 
-myfun <- function(x) predict(x,newdata=newd2,type="link",re.form=NA)
-boo <- bootMer(finalRaw, myfun, nsim = 1000, verbose = T) # increase nsim if necessary - could be more
-
-# warnigns of problems of convergence so exclude NAs
-boo <- na.omit(data.frame(boo))
-str(boo)
-
-newd2$predi <- apply(boo, 2, mean) 
-newd2$upr<- apply(boo, 2, function(x) quantile(x, 0.975))
-newd2$lwr <- apply(boo, 2, function(x) quantile(x, 0.025))
-
-# check if makes sense
-summary(finalRaw)
-#inv.logit(2.5695)
-#inv.logit(4.2064)
-
-# only one age class
-ggplot(newd2, aes(TWin, y=inv.logit(predi), group = 1)) + 
-  geom_line() + 
-  geom_ribbon(aes(ymin = inv.logit(lwr), ymax = inv.logit(upr)), alpha = 0.3, fill = 'navyblue') +  
-  geom_point(data = df_fec, aes(x = TWin, y = as.numeric(as.character(raw_repro))), alpha = 0.5) + # pour mettre la distribution des points brutes 
-  labs(x=expression('Winter temperature (std) ' [t-1]), 
-       y="Probability to reproduce") +
-  theme_pander() 
-
-
-# show effect for two different age classes by adding group
-plot_raw<- ggplot(newd2, aes(TWin, y=inv.logit(predi), group = ageClass)) + 
-  geom_line(aes(linetype = ageClass)) + 
-  geom_ribbon(aes(ymin = inv.logit(lwr), ymax = inv.logit(upr)), alpha = 0.3, fill = 'navyblue') +  
-  geom_point(data = df_fec, aes(x = TWin, y = as.numeric(as.character(raw_repro))), alpha = 0.5) + # pour mettre la distribution des points brutes 
-  labs(x=expression('Winter temperature (std)' [t-1]), 
-       y="Probability to reproduce") +
-  theme_pander() +
-  theme(legend.position = c(0.5, 0.4)) # coordonnées x-y de ton graph
-plot_raw <- plot_raw  + guides(linetype=guide_legend(title="Age class"))
-plot_raw
-
-ggsave("rawTWin.pdf", width = 110, height = 130, units = "mm", pointsize = 8)
-
-
-# control variables 
-
-# change newd number 
-
 
 
 
