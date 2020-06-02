@@ -289,10 +289,16 @@ save_plot("/Projections.pdf", p,
 )
 
 
-mean(lambda[,1]) # lambda temperature present  = 1.088519
-mean(lambda[,2]) # lambda temperature future = 1.095101
+se <- function(x) sd(x)/sqrt(length(x))
 
+mean(lambda[,1]) # lambda temperature present  = 1.088519
+se(lambda[,1]) #  0.000233001
+
+mean(lambda[,2]) # lambda temperature future = 1.095101
+se(lambda[,2]) # 0.0002327636
 
 mean(lambdaPheno[,1]) # lambda pheno present =  1.088665
-mean(lambdaPheno[,2]) # lambda phene future = 0.9973135
+se(lambdaPheno[,1]) # 0.0002369745
 
+mean(lambdaPheno[,2]) # lambda phene future = 0.9973135
+se(lambdaPheno[,2]) # 0.000694024
