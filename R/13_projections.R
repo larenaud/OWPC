@@ -287,3 +287,12 @@ save_plot("/Projections.pdf", p,
           nrow = 1, # and 2 rows
           base_aspect_ratio = 1.3
 )
+
+
+mean(lambda[,1]) # lambda temperature present  = 1.088519
+mean(lambda[,2]) # lambda temperature future = 1.095101
+
+
+mean(lambdaPheno[,1]) # lambda pheno present =  1.088665
+mean(lambdaPheno[,2]) # lambda phene future = 0.9973135
+
