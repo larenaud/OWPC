@@ -2,8 +2,12 @@
 # created by S. C. Beaumont 
 # modified by L. Renaud # 2020-04-23
 # modified by S. C. Beaumont  # 2020-06-01
+# modified by J Van de Walle # 2020-07-16
+# modified by S. C. Beaumont  # 2020-07-20
 
-
+####========================####
+# Library
+####========================####
 
 library(plyr)
 library(dplyr)
@@ -13,8 +17,13 @@ library(popbio)
 library(ggplot2)
 library(pander)
 library(cowplot)
+library(boot)
+
 rm(list = ls ())
 
+####========================####
+#Load Databases
+####========================####
 
 # Load final databases 
 
@@ -24,287 +33,677 @@ rm(mod.surv.clim, results.surv.clim) # keep only df_surv
 load("/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Mai25/true_repro_clim.RData.Rdata")
 rm(mod.true.repro.clim,results.true.repro.clim) # keep only df_fec
 
-# get best models from output
-results.surv.clim
-results.surv.pheno
-results.surv.weat
 
-
-results.true.repro.clim
-results.true.repro.pheno
-results.true.repro.weat
-
-
-# recall best models structure and copy it
-mod.surv.pheno$Snow_present
-
-mod.true.repro.weat$Winter_PxT
-
-
-# ===  FINAL MODELS  === # 
-
-surv <- glm(alive_t1 ~ -1 + ageClass/WinSnowsurvT1 + pred,
-            data=df_surv, family="binomial")
-
-
-true <- glmer(true_repro ~ -1 + ageClass/(TWin*PWin) + MassAutumn_tm1 + (1|ID),data=df_fec,
-              family="binomial", control = glmerControl(optimizer="bobyqa",optCtrl = list(maxfun = 200000)))
-
-
-# Important variables : 
-# FROM df_surv : WinSnowsurvT1
-# FROM df_fec : TWin , PWin ,  MassAutumn_tm1
-
-
-
-# ===  LESLIE FUNCTION  === # 
-
-# extract model coefficients with uncertainty and generate NEW predicted leslie matrix 
-# do matrix with true reproduction only ! 
-
-newLeslie <- function(survm=surv, fec = true, env = newdata[1,]){ # here changed for fec = true
-  # ceci sort les bêta des modèles 
-  S = predict(survm, newdata = data.frame(ageClass = c("0","1","2","37","8"), env), type = "link", se.fit = T)
-  myfun <- function(x) predict(x,newdata=data.frame(ageClass = c("3","48","9"), env),type="link",re.form=NA)
-  F1 = as.numeric(bootMer(fec,myfun, nsim = 1)$t) # rajoute l'incetitude ; va juste chercher le chiffre qui nous intéresse dans t 
-  S = rnorm(5, S$fit, S$se.fit)# rajoute de l'incertitude
-  # ceci crée une matrice vide 
-  L <- matrix(0, nrow=9, ncol=9)
-  
-  # survival is lamb overwinter survival * reproduction de la femelle /2 pour compter juste des bébés femelles 
-  L[1,3] <- inv.logit(S[1]) * inv.logit(F1[1])*0.5 # doit fitter avec l'ordre des classes d'age ci-haut # la moitié des agneaux sont femelles 
-  L[1,4] <- inv.logit(S[1]) * inv.logit(F1[2])*0.5 # same
-  L[1,5] <- inv.logit(S[1]) * inv.logit(F1[2])*0.5
-  L[1,6] <- inv.logit(S[1]) * inv.logit(F1[2])*0.5
-  L[1,7] <- inv.logit(S[1]) * inv.logit(F1[2])*0.5
-  L[1,8] <- inv.logit(S[1]) * inv.logit(F1[2])*0.5
-  L[1,9] <- inv.logit(S[1]) * inv.logit(F1[3])*0.5
-  
-  
-  L[2,1] <- inv.logit(S[2])
-  L[3,2] <- inv.logit(S[3])    
-  L[4,3] <- inv.logit(S[4]) 
-  L[5,4] <- inv.logit(S[4])   
-  L[6,5] <- inv.logit(S[4])    
-  L[7,6] <- inv.logit(S[4])  
-  L[8,7] <- inv.logit(S[4])   
-  L[9,8] <- inv.logit(S[5])   
-  L[9,9] <- inv.logit(S[5])  
-  
-  
-  return(L)
-}                                                                                                
-
-
-
-# === PROJECTION DATAFRAMES (TEMPERATURE) === # 
-
+# Create dataframes of environmental conditions 
 # To construct future dataframe, need SD 
-
-load("/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /dataProjectionsSURV.RData")
+load("/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /dataProjectionsSURV copie.RData")
 df_surv <-droplevels(subset(fullSurvDataScled,!(yr %in% c("1999","2000","2016"))))# n= 448
+
+meanSnow<- data.MEAN["WinSnowsurvT1"][[1]]
+
+p5 <- 0.05*meanSnow
+p10 <- 0.10*meanSnow
+p20 <- 0.20*meanSnow
+p30 <- 0.30*meanSnow
+
 
 SD.surv <- data.SD
 
 
+#load("C:/Users/joani/Documents/PhD/Labo/One Week Paper Challenge 2020/dataProjectionsFEC.RData")
 load("/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /dataProjectionsFEC.RData")
 df_fec<-droplevels(subset(fullFecDataScld,!(yr %in% c("1999","2000","2001")))) # n= 274
 
 SD.fec <- data.SD
 
-# this is the data under climate change 
+####========================####
+# Env Databases
+####========================####
+# create dataframes of annual average environmental conditions
+# For survival
+env_annual_surv <- data.frame(
+  year = as.numeric(as.character(unique(df_surv$yr))),
+  WinSnowsurvT1 = c(1:length(unique(df_surv$yr)))
+)
 
-# ATTENTION use EACH VARIABLE'S SD nd add this SD to 1.5 so that everything is on the same SCALE
+for(i in 1:length(unique(df_surv$yr))){
+  df_surv$yr <- as.numeric(as.character(df_surv$yr)) 
+  tmp <- df_surv[which(df_surv$yr == env_annual_surv[i, "year"]),]
+  env_annual_surv$WinSnowsurvT1[i] <- unique(tmp$WinSnowsurvT1)
+}
 
+# For fecundity
+env_annual_fec <- data.frame(
+  year = as.numeric(as.character(unique(df_fec$yr))),
+  TWin = c(1:length(unique(df_fec$yr))),
+  PWin = c(1:length(unique(df_fec$yr)))
+)
 
-
-# this is the actual data 
-# build fictive dataframes to predict lambda on 
-# tricky : Temperature variable in df_fec isn't the same (time lag) than in df_surv. BE CAREFUL
-
-# PRESENT DATA FRAME
-env.now <- data.frame(TWin = mean(df_fec$TWin, na.rm = T), 
-                      PWin = mean(df_fec$PWin, na.rm = T),
-                      MassAutumn_tm1 = mean(df_fec$MassAutumn_tm1, na.rm = T), # variables for reproduction model 
-                      WinSnowsurvT1 = mean(df_surv$WinSnowsurvT1 , na.rm = T), # variables for survival model
-                      pred = "0")                                                                                              
-
-# FROM df_surv : WinSnowsurvT1
-# FROM df_fec : TWin , PWin ,  MassAutumn_tm1                                                                                          
-
-
-# Scaling is done like this :
-# newd$snow_z<-(data.MEAN["SummerEVI"]- data.MEAN)/data.SD
-
-
-# ex when you "unscale" a scaled variable you do this : 
-# newd$snow<-(data.MEAN["SummerEVI"]*data.SD) + data.MEAN
-
-
-# now we want to add 1.5 to TEMPERATURE ONLY on the scale of original variable, by dividing 1.5 by its SD (mean = 0)
-
-# FUTURE DATAFRAME 
-
-env.future <- data.frame(TWin = mean(df_fec$TWin, na.rm = T) + 1.5/SD.fec["TWin"], 
-                         PWin = mean(df_fec$PWin, na.rm = T),
-                         MassAutumn_tm1 = mean(df_fec$MassAutumn_tm1, na.rm = T), 
-                         WinSnowsurvT1 = mean(df_surv$WinSnowsurvT1 , na.rm = T), # variables for survival model,
-                         pred = "0")
+for(i in 1:length(unique(df_fec$yr))){
+  df_fec$yr <- as.numeric(as.character(df_fec$yr)) 
+  tmp <- df_fec[which(df_fec$yr == env_annual_fec[i, "year"]),]
+  env_annual_fec$TWin[i] <- unique(tmp$TWin)
+  env_annual_fec$PWin[i] <- unique(tmp$PWin)
+}
 
 
 
-# === PROJECTION (TEMPERATURE) === # 
+env.now <- data.frame(TWin = mean(env_annual_fec$TWin), 
+                      PWin = mean(env_annual_fec$PWin),
+                      WinSnowsurvT1 = mean(env_annual_surv$WinSnowsurvT1) # variables for survival model,
+)
 
-# make TRUE fecondity 
+#juste pour température
+env.future <- data.frame(TWin = mean(env_annual_fec$TWin) + 1.5 / SD.fec["TWin"][[1]],  # Changer Temperature, influence juste repro
+                         PWin = mean(env_annual_fec$PWin), #Changer TWin pour PWin
+                         WinSnowsurvT1 = mean(env_annual_surv$WinSnowsurvT1)
+                         # - (71.1/ SD.surv["WinSnowsurvT1"][[1]]) # variables for survival model,
+)
 
-lambda.true.now = 
-  sapply(1:10000, function(it){
-    bob = eigen.analysis(newLeslie(fec = true,env = env.now))
-    return(bob$lambda1)
-  })
+env.future_jour <- data.frame(TWin = mean(env_annual_fec$TWin) + 1.5 / SD.fec["TWin"][[1]],  # Changer Temperature, influence juste repro
+                              PWin = mean(env_annual_fec$PWin), #Changer TWin pour PWin
+                              WinSnowsurvT1 = mean(env_annual_surv$WinSnowsurvT1) - (71.1/ SD.surv["WinSnowsurvT1"][[1]]) # variables for survival model,
+)
 
-hist(lambda.true.now)
+# Pour Snow cover (5,10,20,30%)
 
-lambda.true.future = 
-  sapply(1:10000, function(it){ 
-    bob = eigen.analysis(newLeslie(fec = true,env = env.future))
-    return(bob$lambda1)
-  })
+env.future5 <- data.frame(TWin = mean(env_annual_fec$TWin) + 1.5 / SD.fec["TWin"][[1]],  # Changer Temperature, influence juste repro
+                          PWin = mean(env_annual_fec$PWin), #Changer TWin pour PWin
+                          WinSnowsurvT1  = mean(env_annual_surv$WinSnowsurvT1) - (p5/ SD.surv["WinSnowsurvT1"][[1]]) # variables for survival model,
+)
 
-hist(lambda.true.future)
-
-
-lambda <- data.frame(lambda.true.now, 
-                     lambda.true.future)                                                                                               
-
-
-# projection figure FOR TEMPERATURE  -----------------------------------------------------------------
-
-projectionTemp <- ggplot(lambda, aes(lambda.true.now, fill = "Current winter temperature")) + # le fill est transofrmé en facteur, donc le niveau devient en ordre alphab. 
-  geom_density(alpha = 0.5) + 
-  geom_density(aes(lambda.true.future, fill = "Warming of 1.5°C"), alpha = 0.5) + 
-  labs(x=expression('Population growth rate'), 
-       y="Density") +
-  theme_cowplot(14) +
-  theme(legend.title=element_blank(),
-        legend.position = c(0.1, 0.9)) # removed legend title , give it coordinate
-#guides(fill = guide_legend(override.aes = list(colour = NULL)),
-#      color = guide_legend(override.aes = list(colour = NULL)))
-projectionTemp
+#mean(env_annual_surv$WinSnowsurvT1)*SD.surv["WinSnowsurvT1"][[1]] + 
 
 
+env.future10 <- data.frame(TWin = mean(env_annual_fec$TWin) + 1.5 / SD.fec["TWin"][[1]],  # Changer Temperature, influence juste repro
+                           PWin = mean(env_annual_fec$PWin), #Changer TWin pour PWin
+                           WinSnowsurvT1 =  mean(env_annual_surv$WinSnowsurvT1) - (p10/ SD.surv["WinSnowsurvT1"][[1]]) # variables for survival model,
+)
 
+env.future20 <- data.frame(TWin = mean(env_annual_fec$TWin) + 1.5 / SD.fec["TWin"][[1]],  # Changer Temperature, influence juste repro
+                           PWin = mean(env_annual_fec$PWin), #Changer TWin pour PWin
+                           WinSnowsurvT1 =  mean(env_annual_surv$WinSnowsurvT1) - (p20/ SD.surv["WinSnowsurvT1"][[1]]) # variables for survival model,
+)
 
-
-
-# projection figure FOR WINTER DURATION ----------------------------------------------------
-
-
-# final models should be the same than previous projection (but updated)
-
-
-# leslie function is the same 
-
-
-# === PROJECTION DATAFRAMES (Winter duration) === # 
-
-env.now <- data.frame(TWin = mean(df_fec$TWin, na.rm = T), 
-                      PWin = mean(df_fec$PWin, na.rm = T),
-                      MassAutumn_tm1 = mean(df_fec$MassAutumn_tm1, na.rm = T), # variables for reproduction model 
-                      WinSnowsurvT1 = mean(df_surv$WinSnowsurvT1 , na.rm = T), # variables for survival model
-                      pred = "0")    
-
-# 80  years (- 8.9 days per decade)
-
-env.future <- data.frame(TWin = mean(df_fec$TWin, na.rm = T), 
-                         PWin = mean(df_fec$PWin, na.rm = T),
-                         MassAutumn_tm1 = mean(df_fec$MassAutumn_tm1, na.rm = T), # variables for reproduction model 
-                         WinSnowsurvT1 = mean(df_surv$WinSnowsurvT1 , na.rm = T) - ( 71.1 / SD.surv["WinSnowsurvT1"]), # variables for survival model
-                         pred = "0") 
-
-# Sensitivity Test 1% 
-env.future <- data.frame(TWin = mean(df_fec$TWin, na.rm = T), 
-                         PWin = mean(df_fec$PWin, na.rm = T),
-                         MassAutumn_tm1 = mean(df_fec$MassAutumn_tm1, na.rm = T), # variables for reproduction model 
-                         WinSnowsurvT1 = mean(df_surv$WinSnowsurvT1 , na.rm = T) - 0.01 * mean(df_surv$WinSnowsurvT1 , na.rm = T) / SD.surv["WinSnowsurvT1"], # variables for survival model
-                         pred = "0")  
-
-
-# === PROJECTION (Winter duration) === # 
-
-lambda.true.now = 
-  sapply(1:10000, function(it){
-    bob = eigen.analysis(newLeslie(fec = true,env = env.now))
-    return(bob$lambda1)
-  })
-hist(lambda.true.now)
-
-lambda.true.future = 
-  sapply(1:10000, function(it){ 
-    bob = eigen.analysis(newLeslie(fec = true,env = env.future))
-    return(bob$lambda1)
-  })
-hist(lambda.true.future)
-
-
-lambdaPheno <- data.frame(lambda.true.now, 
-                          lambda.true.future)
-
-# figure pheno -----------------------------------------------------------
-
-
-library(scales)
-show_col(hue_pal()(4))
-
-
-projectionPheno <- ggplot(lambdaPheno, aes(lambda.true.now)) + 
-  geom_density(alpha = 0.5, aes(fill = 'now'))+  # same as other fig 
-  geom_density(aes(lambda.true.future, fill = "fut"), alpha = 0.5) + 
-  labs(x=expression('Population growth rate'), 
-       y="Density") +
-  scale_fill_manual(breaks = c("now","fut"),values = c("#00BFC4",'#F8766D'),
-                    labels=c("Current snow cover duration","71.1 days less snow cover"))+ # on force l'ordre de la key + couleur 
-  theme_cowplot() +
-  theme(legend.position = c(0.1, 0.9), 
-        legend.title =element_blank())
-
-
-# === Final Figure  === # 
-
-p <- plot_grid (projectionTemp,
-                projectionPheno, 
-                labels = c("A", "B"), 
-                align = "vh")
-p
-
-#save(lambdaPheno, file = "/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Mai25/lambdaPheno.RData")
-#save(projectionPheno,projectionTemp,file = "/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Mai25/bothProjPlots.RData")
-#save(lambda, file = "/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Mai25/lambdaTemp.RData")
-
-getwd()
-save_plot("/Projections.pdf", p,
-          ncol = 2, # we're saving a grid plot of 2 columns
-          nrow = 1, # and 2 rows
-          base_aspect_ratio = 1.3
+env.future30 <- data.frame(TWin = mean(env_annual_fec$TWin) + 1.5 / SD.fec["TWin"][[1]],  # Changer Temperature, influence juste repro
+                           PWin = mean(env_annual_fec$PWin), #Changer TWin pour PWin
+                           WinSnowsurvT1  = mean(env_annual_surv$WinSnowsurvT1) - (p30/ SD.surv["WinSnowsurvT1"][[1]]) # variables for survival model,
 )
 
 
-se <- function(x) sd(x)/sqrt(length(x))
+####========================####
+# Final Models 
+####========================####
 
-mean(lambda[,1]) # lambda temperature present  = 1.088519
-se(lambda[,1]) #  0.000233001
-sd(lambda[,1]) # 0.0233001
+## SURVIVAL
+# I have removed predation from the models (JV)
+surv <- glm(alive_t1 ~ -1 + ageClass/WinSnowsurvT1,
+            data=df_surv, family="binomial")
+
+## FECUNDITY
+#Enlever masse JV
+true <- glmer(true_repro ~ -1 + ageClass/(TWin*PWin) + (1|ID),data=df_fec,
+              family="binomial", control = glmerControl(optimizer="bobyqa",optCtrl = list(maxfun = 200000)))
 
 
-mean(lambda[,2]) # lambda temperature future = 1.095101
-se(lambda[,2]) # 0.0002327636
-sd(lambda[,2]) # 0.02327636
+
+####========================####
+# Bootstrap projections 
+####========================####
+
+niter <- 10000 # number of bootstraps
 
 
-mean(lambdaPheno[,1]) # lambda pheno present =  1.088665
-se(lambdaPheno[,1]) # 0.0002369745
-sd(lambdaPheno[,1]) # 0.02369745
+# +++++++ SURVIVAL ++++++++ # 
 
-mean(lambdaPheno[,2]) # lambda phene future = 0.9973135
-se(lambdaPheno[,2]) # 0.000694024
-sd(lambdaPheno[,2]) #0.0694024
+df_surv$rowNb <- 1:nrow(df_surv)
+
+boot.surv <- function(df_surv, rowNb){   # Peut être mieux d'utiliser une colonne row number que d'utiliser ID
+  df_surv <- df_surv[rowNb,] # select obs. in bootstrap sample
+  mod <- glm(alive_t1 ~ -1 + ageClass/WinSnowsurvT1,
+             data=df_surv, family="binomial")
+  coefficients(mod) # return coefficient vector
+}
+
+surv.boot <- boot(data=df_surv, boot.surv, niter) 
+head(surv.boot$t) # these are all the bootstraped coefficients
+
+# organise output in a dataframe
+# note here that 
+# t1 = intercept age class 0, 
+# t2 = intercept age class 1
+# t3 = intercept age class 2
+# t4 =  intercept age class 8+   ### Inversé 
+# t5 = intercept age class 3-7  ### Inversé 
+# t6 =  slope age class 0 with snow cover duration
+# t7 =  slope age class 1 with snow cover duration
+# t8 =  slope age class 2 with snow cover duration
+# t9 =  slope age class 8 with snow cover duration ### Inversé 
+# t10 =  slope age class 3-7 with snow cover duration ### Inversé 
+
+data_pred_surv <- data.frame(
+  ageClass = rep(c("0", "1", "2", "37", "8+"), each=niter),
+  Intercept = c(surv.boot$t[,1], surv.boot$t[,2], surv.boot$t[,3], surv.boot$t[,5], surv.boot$t[,4]),
+  Slope = c(surv.boot$t[,6], surv.boot$t[,7], surv.boot$t[,8], surv.boot$t[,10], surv.boot$t[,9])
+)
+
+
+
+# +++++++ FECUNDITY (I.E. REPRODUCTIVE RATE) ++++++++ # 
+
+# now
+myfun_now <- function(x) predict(x,newdata=data.frame(ageClass = c("3","48","9"),
+                                                      env.now),
+                                 type="link",re.form=NA)
+Fec_now = bootMer(true,myfun_now, nsim = niter) 
+
+head(Fec_now$t)
+
+# future
+myfun_future <- function(x) predict(x,newdata=data.frame(ageClass = c("3","48","9"),
+                                                         env.future),       #### ENV FUTUR A CHANGER SI CHANGE CONDITION (JUSTE TEMPERATURE QUI INFLUENCE)
+                                    type="link",re.form=NA)
+Fec_future = bootMer(true,myfun_future, nsim = niter) 
+
+# Save bootstrap iterations in RData
+save(data_pred_surv,Fec_now,Fec_future, file = "/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Juillet 7/bootstrapPred.RData")
+load("/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Juillet 7/bootstrapPred.RData")
+
+
+####========================####
+# Population Models NOW
+####========================####
+
+# Create aposterior an empty dataframe which will later contain the estimated lambdas  
+# For now
+Lambda_now <- data.frame(
+  iteration = c(1:niter),
+  lambda = c(1:niter)
+)
+
+# Fill the dataframe
+for(i in 1:niter){
+  
+  S0 <- data_pred_surv[which(data_pred_surv$ageClass=="0"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="0"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  S1 <- data_pred_surv[which(data_pred_surv$ageClass=="1"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="1"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  S2 <- data_pred_surv[which(data_pred_surv$ageClass=="2"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="2"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  S37 <- data_pred_surv[which(data_pred_surv$ageClass=="37"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="37"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  S8 <- data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  # Reproductive rates
+  R3 <- Fec_now$t[i,1]
+  R48 <- Fec_now$t[i,2]
+  R9 <- Fec_now$t[i,3]
+  
+  # Create the matrix
+  L <- matrix(0, nrow=9, ncol=9)
+  
+  
+  L[1,3] <- inv.logit(S2)*inv.logit(R3)/2 # F2
+  L[1,4] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,5] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,6] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,7] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,8] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,9] <- inv.logit(S8)*inv.logit(R9)/2 #F37
+  
+  
+  L[2,1] <- inv.logit(S0)
+  L[3,2] <- inv.logit(S1)  
+  L[4,3] <- inv.logit(S2) 
+  L[5,4] <- inv.logit(S37)   
+  L[6,5] <- inv.logit(S37)    
+  L[7,6] <- inv.logit(S37)  
+  L[8,7] <- inv.logit(S37)   
+  L[9,8] <- inv.logit(S37)   
+  L[9,9] <- inv.logit(S8)
+  
+  Lambda_now$lambda[i] <- eigen.analysis(L)$lambda #extract lambdas
+}
+
+
+####========================####
+# Projections TEMPERATURE
+####========================####
+
+  # For future conditions
+  # Pour la température
+  Lambda_future <- data.frame(
+    iteration = c(1:niter),
+    lambda = c(1:niter)
+  )
+
+for(i in 1:niter){
+  
+  S0 <- data_pred_surv[which(data_pred_surv$ageClass=="0"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="0"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  S1 <- data_pred_surv[which(data_pred_surv$ageClass=="1"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="1"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  S2 <- data_pred_surv[which(data_pred_surv$ageClass=="2"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="2"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  S37 <- data_pred_surv[which(data_pred_surv$ageClass=="37"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="37"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  S8 <- data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Slope"][i]*env.now["WinSnowsurvT1"][[1]]
+  
+  # Reproductive rates
+  R3 <- Fec_future$t[i,1]
+  R48 <- Fec_future$t[i,2]
+  R9 <- Fec_future$t[i,3]
+  
+  # Create the matrix
+  L <- matrix(0, nrow=9, ncol=9)
+  
+  
+  L[1,3] <- inv.logit(S2)*inv.logit(R3)/2 # F2
+  L[1,4] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,5] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,6] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,7] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,8] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,9] <- inv.logit(S8)*inv.logit(R9)/2 #F37
+  
+  
+  L[2,1] <- inv.logit(S0)
+  L[3,2] <- inv.logit(S1)  
+  L[4,3] <- inv.logit(S2) 
+  L[5,4] <- inv.logit(S37)   
+  L[6,5] <- inv.logit(S37)    
+  L[7,6] <- inv.logit(S37)  
+  L[8,7] <- inv.logit(S37)   
+  L[9,8] <- inv.logit(S37)   
+  L[9,9] <- inv.logit(S8)
+  
+  Lambda_future$lambda[i] <- eigen.analysis(L)$lambda
+}
+
+
+
+# +++++++ Figure  ++++++++ # 
+
+# make density plots to compare the distributions
+dens_x1 <- density(Lambda_now$lambda)
+dens_x2 <- density(Lambda_future$lambda)
+
+xlim <- c(0.8, 1.2)
+ylim <- c(0,20)
+
+col1 <- rgb(0.973,0.463,0.427,0.6) # Couleur original de Limoilou #f8766d, couleur de Joanie : rgb(0,0,0.3,0.6)
+col2 <-rgb(0,0.749,0.769,0.6) # Couleur original de Limoilou #00bfc4, couleur de Joanie : rgb(0.3,0,0.2,0.6) # 4e terme = transparence 
+
+par(mfrow=c(1,1))
+
+tiff("PredTemp.tiff", res = 600, height=10, width=16, units="cm", pointsize=12)
+
+
+plot(dens_x1, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual temperature','Warming of 1.5 degree Celsius'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+dev.off()
+
+
+
+
+
+
+
+
+####========================####
+# Projections SNOW DURATION
+####========================####
+
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++
+# Predictions 5% moins snow cover 
+# Rien de fixé
+
+Lambda_future5 <- data.frame(
+  iteration = c(1:niter),
+  lambda = c(1:niter)
+)
+
+for(i in 1:niter){
+  
+  S0 <- data_pred_surv[which(data_pred_surv$ageClass=="0"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="0"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  S1 <- data_pred_surv[which(data_pred_surv$ageClass=="1"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="1"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  S2 <- data_pred_surv[which(data_pred_surv$ageClass=="2"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="2"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  S37 <- data_pred_surv[which(data_pred_surv$ageClass=="37"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="37"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  S8 <- data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  # Reproductive rates
+  R3 <- Fec_now$t[i,1]
+  R48 <- Fec_now$t[i,2]
+  R9 <- Fec_now$t[i,3]
+  
+  # Create the matrix
+  L <- matrix(0, nrow=9, ncol=9)
+  
+  
+  L[1,3] <- inv.logit(S2)*inv.logit(R3)/2 # F2
+  L[1,4] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,5] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,6] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,7] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,8] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,9] <- inv.logit(S8)*inv.logit(R9)/2 #F37
+  
+  
+  L[2,1] <- inv.logit(S0)
+  L[3,2] <- inv.logit(S1)  
+  L[4,3] <- inv.logit(S2) 
+  L[5,4] <- inv.logit(S37)   
+  L[6,5] <- inv.logit(S37)    
+  L[7,6] <- inv.logit(S37)  
+  L[8,7] <- inv.logit(S37)   
+  L[9,8] <- inv.logit(S37)   
+  L[9,9] <- inv.logit(S8)
+  
+  Lambda_future5$lambda[i] <- eigen.analysis(L)$lambda
+}
+
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++
+# Predictions 10% moins snow cover 
+# Rien de fixé
+
+Lambda_future10 <- data.frame(
+  iteration = c(1:niter),
+  lambda = c(1:niter)
+)
+
+for(i in 1:niter){
+  
+  S0 <- data_pred_surv[which(data_pred_surv$ageClass=="0"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="0"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  S1 <- data_pred_surv[which(data_pred_surv$ageClass=="1"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="1"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  S2 <- data_pred_surv[which(data_pred_surv$ageClass=="2"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="2"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  S37 <- data_pred_surv[which(data_pred_surv$ageClass=="37"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="37"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  S8 <- data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  # Reproductive rates
+  R3 <- Fec_now$t[i,1]
+  R48 <- Fec_now$t[i,2]
+  R9 <- Fec_now$t[i,3]
+  
+  # Create the matrix
+  L <- matrix(0, nrow=9, ncol=9)
+  
+  
+  L[1,3] <- inv.logit(S2)*inv.logit(R3)/2 # F2
+  L[1,4] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,5] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,6] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,7] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,8] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,9] <- inv.logit(S8)*inv.logit(R9)/2 #F37
+  
+  
+  L[2,1] <- inv.logit(S0)
+  L[3,2] <- inv.logit(S1)  
+  L[4,3] <- inv.logit(S2) 
+  L[5,4] <- inv.logit(S37)   
+  L[6,5] <- inv.logit(S37)    
+  L[7,6] <- inv.logit(S37)  
+  L[8,7] <- inv.logit(S37)   
+  L[9,8] <- inv.logit(S37)   
+  L[9,9] <- inv.logit(S8)
+  
+  Lambda_future10$lambda[i] <- eigen.analysis(L)$lambda
+}
+
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++
+# Predictions 20% moins snow cover 
+# Rien de fixé
+
+Lambda_future20 <- data.frame(
+  iteration = c(1:niter),
+  lambda = c(1:niter)
+)
+
+for(i in 1:niter){
+  
+  S0 <- data_pred_surv[which(data_pred_surv$ageClass=="0"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="0"),"Slope"][i]*env.future20["WinSnowsurvT1"][[1]]
+  
+  S1 <- data_pred_surv[which(data_pred_surv$ageClass=="1"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="1"),"Slope"][i]*env.future20["WinSnowsurvT1"][[1]]
+  
+  S2 <- data_pred_surv[which(data_pred_surv$ageClass=="2"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="2"),"Slope"][i]*env.future20["WinSnowsurvT1"][[1]]
+  
+  S37 <- data_pred_surv[which(data_pred_surv$ageClass=="37"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="37"),"Slope"][i]*env.future20["WinSnowsurvT1"][[1]]
+  
+  S8 <- data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Slope"][i]*env.future20["WinSnowsurvT1"][[1]]
+  
+  # Reproductive rates
+  R3 <- Fec_now$t[i,1]
+  R48 <- Fec_now$t[i,2]
+  R9 <- Fec_now$t[i,3]
+  
+  # Create the matrix
+  L <- matrix(0, nrow=9, ncol=9)
+  
+  
+  L[1,3] <- inv.logit(S2)*inv.logit(R3)/2 # F2
+  L[1,4] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,5] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,6] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,7] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,8] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,9] <- inv.logit(S8)*inv.logit(R9)/2 #F37
+  
+  
+  L[2,1] <- inv.logit(S0)
+  L[3,2] <- inv.logit(S1)  
+  L[4,3] <- inv.logit(S2) 
+  L[5,4] <- inv.logit(S37)   
+  L[6,5] <- inv.logit(S37)    
+  L[7,6] <- inv.logit(S37)  
+  L[8,7] <- inv.logit(S37)   
+  L[9,8] <- inv.logit(S37)   
+  L[9,9] <- inv.logit(S8)
+  
+  Lambda_future20$lambda[i] <- eigen.analysis(L)$lambda
+}
+
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# 30% less snow cover
+
+
+Lambda_future30 <- data.frame(
+  iteration = c(1:niter),
+  lambda = c(1:niter)
+)
+
+for(i in 1:niter){
+  
+  S0 <- data_pred_surv[which(data_pred_surv$ageClass=="0"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="0"),"Slope"][i]*env.future30["WinSnowsurvT1"][[1]]
+  
+  S1 <- data_pred_surv[which(data_pred_surv$ageClass=="1"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="1"),"Slope"][i]*env.future30["WinSnowsurvT1"][[1]]
+  
+  S2 <- data_pred_surv[which(data_pred_surv$ageClass=="2"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="2"),"Slope"][i]*env.future30["WinSnowsurvT1"][[1]]
+  
+  S37 <- data_pred_surv[which(data_pred_surv$ageClass=="37"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="37"),"Slope"][i]*env.future30["WinSnowsurvT1"][[1]]
+  
+  S8 <- data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Slope"][i]*env.future30["WinSnowsurvT1"][[1]]
+  
+  # Reproductive rates
+  R3 <- Fec_now$t[i,1]
+  R48 <- Fec_now$t[i,2]
+  R9 <- Fec_now$t[i,3]
+  
+  # Create the matrix
+  L <- matrix(0, nrow=9, ncol=9)
+  
+  
+  L[1,3] <- inv.logit(S2)*inv.logit(R3)/2 # F2
+  L[1,4] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,5] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,6] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,7] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,8] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,9] <- inv.logit(S8)*inv.logit(R9)/2 #F37
+  
+  
+  L[2,1] <- inv.logit(S0)
+  L[3,2] <- inv.logit(S1)  
+  L[4,3] <- inv.logit(S2) 
+  L[5,4] <- inv.logit(S37)   
+  L[6,5] <- inv.logit(S37)    
+  L[7,6] <- inv.logit(S37)  
+  L[8,7] <- inv.logit(S37)   
+  L[9,8] <- inv.logit(S37)   
+  L[9,9] <- inv.logit(S8)
+  
+  Lambda_future30$lambda[i] <- eigen.analysis(L)$lambda
+}
+
+
+#save(Lambda_now, Lambda_future,Lambda_future5,Lambda_future10,Lambda_future20,Lambda_future30, file = "/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Juillet 7/LambdaIterations.RData")
+
+
+#++++++++++++++++++++++++++++++ FIGURE ALL ++++++++++++++++++++++++++++++# 
+
+
+# 5% 
+
+# make density plots to compare the distributions
+
+col1 <- rgb(0.973,0.463,0.427,0.6) # Couleur original de Limoilou #f8766d, couleur de Joanie : rgb(0,0,0.3,0.6)
+col2 <-rgb(0,0.749,0.769,0.5) # Couleur original de Limoilou #00bfc4, couleur de Joanie : rgb(0.3,0,0.2,0.6) # 4e terme = transparence 
+
+xlim <- c(0.8, 1.2)
+ylim <- c(0,20)
+
+
+dens_x1.a <- density(Lambda_now$lambda)
+dens_x1.b <- density(Lambda_now$lambda)
+dens_x1.c <- density(Lambda_now$lambda)
+dens_x1.d <- density(Lambda_now$lambda)
+
+dens_x2.a <- density(Lambda_future5$lambda) # Changer lambda future
+dens_x2.b <- density(Lambda_future10$lambda)
+dens_x2.c <- density(Lambda_future20$lambda)
+dens_x2.d <- density(Lambda_future30$lambda)
+
+
+tiff("Pred_SnowDuration.tiff", res = 600, height=10, width=16, units="cm", pointsize=10)
+
+par(mfrow=c(2,2),mar=c(2,2,2,2)) #mar = c(bas, gauche, haut, droite)
+
+plot(dens_x1.a, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.a,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
+legend('topleft',legend=c('Actual snow','5% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 10 % 
+
+plot(dens_x1.b, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.b,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','10% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 20% 
+# make density plots to compare the distributions
+
+plot(dens_x1.c, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.c,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.c,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','20% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 30%
+
+# make density plots to compare the distributions
+
+plot(dens_x1.d, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.d,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.d,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','30% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+dev.off()
+
+
+
