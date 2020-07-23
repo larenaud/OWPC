@@ -923,5 +923,362 @@ legend('topleft',legend=c('Actual snow','10% less duration, fixed'),
 
 dev.off()
 
+####============================================####
+# Projections COMBINATION
+####============================================####
+
+
+#Predictions 5% moins snow cover   + TEMP 
+# Rien de fixé
+
+Lambda_future5_comb <- data.frame(
+  iteration = c(1:niter),
+  lambda = c(1:niter)
+)
+
+for(i in 1:niter){
+  
+  S0 <- data_pred_surv[which(data_pred_surv$ageClass=="0"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="0"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  S1 <- data_pred_surv[which(data_pred_surv$ageClass=="1"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="1"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  S2 <- data_pred_surv[which(data_pred_surv$ageClass=="2"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="2"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  S37 <- data_pred_surv[which(data_pred_surv$ageClass=="37"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="37"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  S8 <- data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Slope"][i]*env.future5["WinSnowsurvT1"][[1]]
+  
+  # Reproductive rates
+  R3 <- Fec_future$t[i,1]
+  R48 <- Fec_future$t[i,2]
+  R9 <- Fec_future$t[i,3]
+  
+  # Create the matrix
+  L <- matrix(0, nrow=9, ncol=9)
+  
+  
+  L[1,3] <- inv.logit(S2)*inv.logit(R3)/2 # F2
+  L[1,4] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,5] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,6] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,7] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,8] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,9] <- inv.logit(S8)*inv.logit(R9)/2 #F37
+  
+  
+  L[2,1] <- inv.logit(S0)
+  L[3,2] <- inv.logit(S1)  
+  L[4,3] <- inv.logit(S2) 
+  L[5,4] <- inv.logit(S37)   
+  L[6,5] <- inv.logit(S37)    
+  L[7,6] <- inv.logit(S37)  
+  L[8,7] <- inv.logit(S37)   
+  L[9,8] <- inv.logit(S37)   
+  L[9,9] <- inv.logit(S8)
+  
+  Lambda_future5_comb$lambda[i] <- eigen.analysis(L)$lambda
+}
+
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++
+# Predictions 10% moins snow cover  + TEMP
+# Rien de fixé
+
+Lambda_future10_comb <- data.frame(
+  iteration = c(1:niter),
+  lambda = c(1:niter)
+)
+
+for(i in 1:niter){
+  
+  S0 <- data_pred_surv[which(data_pred_surv$ageClass=="0"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="0"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  S1 <- data_pred_surv[which(data_pred_surv$ageClass=="1"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="1"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  S2 <- data_pred_surv[which(data_pred_surv$ageClass=="2"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="2"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  S37 <- data_pred_surv[which(data_pred_surv$ageClass=="37"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="37"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  S8 <- data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Intercept"][i] + 
+    data_pred_surv[which(data_pred_surv$ageClass=="8+"),"Slope"][i]*env.future10["WinSnowsurvT1"][[1]]
+  
+  # Reproductive rates
+  R3 <- Fec_future$t[i,1]
+  R48 <- Fec_future$t[i,2]
+  R9 <- Fec_future$t[i,3]
+  
+  # Create the matrix
+  L <- matrix(0, nrow=9, ncol=9)
+  
+  
+  L[1,3] <- inv.logit(S2)*inv.logit(R3)/2 # F2
+  L[1,4] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,5] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,6] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,7] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,8] <- inv.logit(S37)*inv.logit(R48)/2 #F37
+  L[1,9] <- inv.logit(S8)*inv.logit(R9)/2 #F37
+  
+  
+  L[2,1] <- inv.logit(S0)
+  L[3,2] <- inv.logit(S1)  
+  L[4,3] <- inv.logit(S2) 
+  L[5,4] <- inv.logit(S37)   
+  L[6,5] <- inv.logit(S37)    
+  L[7,6] <- inv.logit(S37)  
+  L[8,7] <- inv.logit(S37)   
+  L[9,8] <- inv.logit(S37)   
+  L[9,9] <- inv.logit(S8)
+  
+  Lambda_future10_comb$lambda[i] <- eigen.analysis(L)$lambda
+}
+
+
+# +++++++ Figure ++++++++ # 
+
+
+col1 <- rgb(0.973,0.463,0.427,0.6) # Couleur original de Limoilou #f8766d, couleur de Joanie : rgb(0,0,0.3,0.6)
+col2 <-rgb(0,0.749,0.769,0.5) # Couleur original de Limoilou #00bfc4, couleur de Joanie : rgb(0.3,0,0.2,0.6) # 4e terme = transparence 
+
+xlim <- c(0.8, 1.2)
+ylim <- c(0,20)
+
+
+dens_x1.a <- density(Lambda_now$lambda)
+dens_x1.b <- density(Lambda_now$lambda)
+dens_x1.c <- density(Lambda_now$lambda)
+dens_x1.d <- density(Lambda_now$lambda)
+dens_x1.e <- density(Lambda_now$lambda)
+dens_x1.f <- density(Lambda_now$lambda)
+dens_x1.g <- density(Lambda_now$lambda)
+
+dens_x2.a <- density(Lambda_future5$lambda) 
+dens_x2.b <- density(Lambda_future10$lambda)
+dens_x2.c <- density(Lambda_future5_fixed$lambda)
+dens_x2.d <- density(Lambda_future10_fixed$lambda)
+dens_x2.e <- density(Lambda_future$lambda) # représente Temperature seulement
+dens_x2.f <- density(Lambda_future5_comb$lambda)
+dens_x2.g <- density(Lambda_future10_comb$lambda)
+
+
+tiff("Pred_SnowDuration_Comb.tiff", res = 600, height=10, width=16, units="cm", pointsize=9)
+
+par(mfrow=c(4,2),mar=c(2,2,2,2)) #mar = c(bas, gauche, haut, droite)
+
+plot(dens_x1.a, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.a,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
+legend('topleft',legend=c('Actual snow','5% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 10 % 
+
+plot(dens_x1.b, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.b,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','10% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 5% fixed
+# make density plots to compare the distributions
+
+plot(dens_x1.c, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.c,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.c,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','5% less duration, fixed'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 10% fixed
+
+# make density plots to compare the distributions
+
+plot(dens_x1.d, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.d,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.d,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','10% less duration, fixed'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+#Temp
+
+plot(dens_x1.e, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.e,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.e,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','+1.5C warming'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 5% + Temp
+
+plot(dens_x1.f, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.f,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.f,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','5% less duration + 1.5C warming'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 10% + Temp
+
+plot(dens_x1.g, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.g,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.g,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','10% less duration + 1.5C warming'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+
+
+dev.off()
+
+
+
+
+
+
+
+tiff("Pred_SnowDuration_Comb_2.tiff", res = 600, height=10, width=16, units="cm", pointsize=9)
+
+par(mfrow=c(2,3),mar=c(2,2,2,2)) #mar = c(bas, gauche, haut, droite)
+
+plot(dens_x1.a, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.a,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
+legend('topleft',legend=c('Actual snow','5% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 10 % 
+
+plot(dens_x1.b, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.b,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','10% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+#Temp
+
+plot(dens_x1.e, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.e,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.e,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','+1.5C warming'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 5% + Temp
+
+plot(dens_x1.f, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.f,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.f,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','5% less duration + 1.5C warming'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 10% + Temp
+
+plot(dens_x1.g, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+
+#put our density plots in
+polygon(dens_x1.g,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.g,  col = col2, lty=1, lwd=2)
+
+legend('topleft',legend=c('Actual snow','10% less duration + 1.5C warming'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+
+
+dev.off()
 
 
