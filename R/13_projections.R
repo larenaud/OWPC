@@ -611,6 +611,7 @@ for(i in 1:niter){
 #save(Lambda_now, Lambda_future,Lambda_future5,Lambda_future10,Lambda_future20,Lambda_future30, file = "/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Juillet 7/LambdaIterations.RData")
 
 
+
 #++++++++++++++++++++++++++++++ FIGURE ALL ++++++++++++++++++++++++++++++# 
 
 
@@ -647,7 +648,7 @@ axis(2, at=seq(0, 20,1), cex.axis =1)
 
 #put our density plots in
 polygon(dens_x1.a,  col = col1,  lty=2, lwd=2)
-polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
+polygon(dens_x2.a,  col = col2, lty=1, lwd=2)
 legend('topleft',legend=c('Actual snow','5% less duration'),
        fill = c(col1, col2), bty = 'n',
        border = T, lty=c(2,1))
@@ -1043,8 +1044,15 @@ for(i in 1:niter){
 }
 
 
-# +++++++ Figure ++++++++ # 
 
+####============================================####
+# FIGURES FINALES
+####============================================####
+
+
+#save(Lambda_now,Lambda_future5,Lambda_future10,Lambda_future5_fixed,Lambda_future10_fixed,Lambda_future,Lambda_future5_comb,Lambda_future10_comb,file = "/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Juillet 7/LambdaFigures.RData")
+
+load("/Users/Sandrine/Documents/Sherbrooke/OWPC/Post_OWPC/Projections /Juillet 7/LambdaFigures.RData")
 
 col1 <- rgb(0.973,0.463,0.427,0.6) # Couleur original de Limoilou #f8766d, couleur de Joanie : rgb(0,0,0.3,0.6)
 col2 <-rgb(0,0.749,0.769,0.5) # Couleur original de Limoilou #00bfc4, couleur de Joanie : rgb(0.3,0,0.2,0.6) # 4e terme = transparence 
@@ -1070,52 +1078,136 @@ dens_x2.f <- density(Lambda_future5_comb$lambda)
 dens_x2.g <- density(Lambda_future10_comb$lambda)
 
 
-tiff("Pred_SnowDuration_Comb.tiff", res = 600, height=10, width=16, units="cm", pointsize=9)
 
-par(mfrow=c(4,2),mar=c(2,2,2,2)) #mar = c(bas, gauche, haut, droite)
 
-plot(dens_x1.a, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+# Figure 5 panels
+# 5%, 10%, +1.5, combination 5%, combination 10% 
+# Projections with everything but S1 fixed, in supplementary 
+
+tiff("Pojection_Options2.tiff", res = 600, height=12, width=16, units="cm", pointsize=9)
+
+
+par(mfrow=c(3,2),mar=c(4,5,2,2)) #mar = c(bas, gauche, haut, droite)
+
+# 5%
+plot(dens_x1.a, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+#mtext(side=2, "Frequency", line=2.5)
+text(0.82, 18, labels="(a)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.a,  col = col1,  lty=2, lwd=2)
-polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
-legend('topleft',legend=c('Actual snow','5% less duration'),
+polygon(dens_x2.a,  col = col2, lty=1, lwd=2)
+legend(0.78,14,legend=c('Actual snow','5% less duration'),
        fill = c(col1, col2), bty = 'n',
        border = T, lty=c(2,1))
 
 
 # 10 % 
 
-plot(dens_x1.b, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+plot(dens_x1.b, xlim = xlim, ylim = ylim, xlab = "" , ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(b)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.b,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
 
-legend('topleft',legend=c('Actual snow','10% less duration'),
+legend(0.78,14,legend=c('Actual snow','10% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+#Temp
+
+plot(dens_x1.e, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(c)", cex=1.5)
+
+#put our density plots in
+polygon(dens_x1.e,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.e,  col = col2, lty=1, lwd=2)
+
+legend(0.78,14,legend=c('Actual snow','+1.5C warming'),
        fill = c(col1, col2), bty = 'n',
        border = T, lty=c(2,1))
 
 
-# 5% fixed
-# make density plots to compare the distributions
+# 5% + Temp
 
-plot(dens_x1.c, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+plot(dens_x1.f, xlim = xlim, ylim = ylim, xlab = "", ylab= "Density",axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(d)", cex=1.5)
+
+#put our density plots in
+polygon(dens_x1.f,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.f,  col = col2, lty=1, lwd=2)
+
+legend(0.78,14,legend=c('Actual snow','5% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+legend(0.80,10,legend=c('+1.5C warming'),
+       bty = 'n',border = F, lty=c(2,1), col = "white")
+
+
+# 10% + Temp
+
+plot(dens_x1.g, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(e)", cex=1.5)
+
+#put our density plots in
+polygon(dens_x1.g,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.g,  col = col2, lty=1, lwd=2)
+
+legend(0.78,14,legend=c('Actual snow','10% less duration'),
+       fill = c(col1, col2,"white"), bty = 'n',
+       border = T, lty=c(2,1))
+legend(0.80,10,legend=c('+1.5C warming'),
+       bty = 'n', border = F, lty=c(2,1), col = "white")
+
+dev.off()
+
+
+
+
+
+# Second Figure with everything fixed but S1 
+# In supplementary
+
+ tiff("Projection_Option2_Supplementary.tiff", res = 600, height=9, width=14, units="cm", pointsize=9)
+
+# 5% fixed
+# make density plots to compare the distributions
+
+par(mfrow=c(2,1),mar=c(4,5,2,2)) #mar = c(bas, gauche, haut, droite)
+
+plot(dens_x1.c, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 1.2)
+text(0.805, 18, labels="(a)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.c,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.c,  col = col2, lty=1, lwd=2)
 
-legend('topleft',legend=c('Actual snow','5% less duration, fixed'),
+legend(0.78,14,legend=c('Actual snow','5% less duration, fixed'),
        fill = c(col1, col2), bty = 'n',
        border = T, lty=c(2,1))
 
@@ -1124,68 +1216,20 @@ legend('topleft',legend=c('Actual snow','5% less duration, fixed'),
 
 # make density plots to compare the distributions
 
-plot(dens_x1.d, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+plot(dens_x1.d, xlim = xlim, ylim = ylim, xlab = "", ylab= "Density",axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 1.2)
+text(0.805, 18, labels="(b)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.d,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.d,  col = col2, lty=1, lwd=2)
 
-legend('topleft',legend=c('Actual snow','10% less duration, fixed'),
+legend(0.78,14,legend=c('Actual snow','10% less duration, fixed'),
        fill = c(col1, col2), bty = 'n',
        border = T, lty=c(2,1))
-
-
-#Temp
-
-plot(dens_x1.e, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
-     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
-axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
-axis(2, at=seq(0, 20,1), cex.axis =1)
-
-#put our density plots in
-polygon(dens_x1.e,  col = col1,  lty=2, lwd=2)
-polygon(dens_x2.e,  col = col2, lty=1, lwd=2)
-
-legend('topleft',legend=c('Actual snow','+1.5C warming'),
-       fill = c(col1, col2), bty = 'n',
-       border = T, lty=c(2,1))
-
-
-# 5% + Temp
-
-plot(dens_x1.f, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
-     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
-axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
-axis(2, at=seq(0, 20,1), cex.axis =1)
-
-#put our density plots in
-polygon(dens_x1.f,  col = col1,  lty=2, lwd=2)
-polygon(dens_x2.f,  col = col2, lty=1, lwd=2)
-
-legend('topleft',legend=c('Actual snow','5% less duration + 1.5C warming'),
-       fill = c(col1, col2), bty = 'n',
-       border = T, lty=c(2,1))
-
-
-# 10% + Temp
-
-plot(dens_x1.g, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
-     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
-axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
-axis(2, at=seq(0, 20,1), cex.axis =1)
-
-#put our density plots in
-polygon(dens_x1.g,  col = col1,  lty=2, lwd=2)
-polygon(dens_x2.g,  col = col2, lty=1, lwd=2)
-
-legend('topleft',legend=c('Actual snow','10% less duration + 1.5C warming'),
-       fill = c(col1, col2), bty = 'n',
-       border = T, lty=c(2,1))
-
-
 
 
 dev.off()
@@ -1193,92 +1237,168 @@ dev.off()
 
 
 
+# Figure 7 panels 
+# Nothing in Supplementary 
+
+col1 <- rgb(0.973,0.463,0.427,0.6) # Couleur original de Limoilou #f8766d, couleur de Joanie : rgb(0,0,0.3,0.6)
+col2 <-rgb(0,0.749,0.769,0.5) # Couleur original de Limoilou #00bfc4, couleur de Joanie : rgb(0.3,0,0.2,0.6) # 4e terme = transparence 
+
+xlim <- c(0.8, 1.2)
+ylim <- c(0,20)
 
 
+dens_x1.a <- density(Lambda_now$lambda)
+dens_x1.b <- density(Lambda_now$lambda)
+dens_x1.c <- density(Lambda_now$lambda)
+dens_x1.d <- density(Lambda_now$lambda)
+dens_x1.e <- density(Lambda_now$lambda)
+dens_x1.f <- density(Lambda_now$lambda)
+dens_x1.g <- density(Lambda_now$lambda)
 
-tiff("Pred_SnowDuration_Comb_2.tiff", res = 600, height=10, width=16, units="cm", pointsize=9)
+dens_x2.a <- density(Lambda_future5$lambda) 
+dens_x2.b <- density(Lambda_future10$lambda)
+dens_x2.c <- density(Lambda_future5_fixed$lambda)
+dens_x2.d <- density(Lambda_future10_fixed$lambda)
+dens_x2.e <- density(Lambda_future$lambda) # représente Temperature seulement
+dens_x2.f <- density(Lambda_future5_comb$lambda)
+dens_x2.g <- density(Lambda_future10_comb$lambda)
 
-par(mfrow=c(2,3),mar=c(2,2,2,2)) #mar = c(bas, gauche, haut, droite)
 
-plot(dens_x1.a, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+tiff("Projection_Option1.tiff", res = 600, height=13, width=16.5, units="cm", pointsize=9)
+
+par(mfrow=c(4,2),mar=c(4,5,2,2)) #mar = c(bas, gauche, haut, droite)
+
+plot(dens_x1.a, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+#mtext(side=2, "Frequency", line=2.5)
+text(0.82, 18, labels="(a)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.a,  col = col1,  lty=2, lwd=2)
-polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
-legend('topleft',legend=c('Actual snow','5% less duration'),
+polygon(dens_x2.a,  col = col2, lty=1, lwd=2)
+legend(0.78,14,legend=c('Actual snow','5% less duration'),
        fill = c(col1, col2), bty = 'n',
        border = T, lty=c(2,1))
 
 
 # 10 % 
 
-plot(dens_x1.b, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+plot(dens_x1.b, xlim = xlim, ylim = ylim, xlab = "" , ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(b)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.b,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
 
-legend('topleft',legend=c('Actual snow','10% less duration'),
+legend(0.78,14,legend=c('Actual snow','10% less duration'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 5% fixed
+# make density plots to compare the distributions
+
+plot(dens_x1.c, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(c)", cex=1.5)
+
+
+#put our density plots in
+polygon(dens_x1.c,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.c,  col = col2, lty=1, lwd=2)
+
+legend(0.78,14,legend=c('Actual snow','5% less duration, fixed'),
+       fill = c(col1, col2), bty = 'n',
+       border = T, lty=c(2,1))
+
+
+# 10% fixed
+
+# make density plots to compare the distributions
+
+plot(dens_x1.d, xlim = xlim, ylim = ylim, xlab = "", ylab= "Density",axes=F,
+     main = '', cex.axis=1.2, cex.lab=1.2, type="n")
+axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
+axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(d)", cex=1.5)
+
+#put our density plots in
+polygon(dens_x1.d,  col = col1,  lty=2, lwd=2)
+polygon(dens_x2.d,  col = col2, lty=1, lwd=2)
+
+legend(0.78,14,legend=c('Actual snow','10% less duration, fixed'),
        fill = c(col1, col2), bty = 'n',
        border = T, lty=c(2,1))
 
 
 #Temp
 
-plot(dens_x1.e, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+plot(dens_x1.e, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(e)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.e,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.e,  col = col2, lty=1, lwd=2)
 
-legend('topleft',legend=c('Actual snow','+1.5C warming'),
+legend(0.78,14,legend=c('Actual snow','+1.5C warming'),
        fill = c(col1, col2), bty = 'n',
        border = T, lty=c(2,1))
 
 
 # 5% + Temp
 
-plot(dens_x1.f, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+plot(dens_x1.f, xlim = xlim, ylim = ylim, xlab = "", ylab= "Density",axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(f)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.f,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.f,  col = col2, lty=1, lwd=2)
 
-legend('topleft',legend=c('Actual snow','5% less duration + 1.5C warming'),
+legend(0.78,14,legend=c('Actual snow','5% less duration'),
        fill = c(col1, col2), bty = 'n',
        border = T, lty=c(2,1))
+legend(0.80,8,legend=c('+1.5C warming'),
+       bty = 'n',border = F, lty=c(2,1), col = "white")
 
 
 # 10% + Temp
 
-plot(dens_x1.g, xlim = xlim, ylim = ylim, xlab = "Lambda", axes=F,
+plot(dens_x1.g, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
+mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+text(0.82, 18, labels="(g)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.g,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.g,  col = col2, lty=1, lwd=2)
 
-legend('topleft',legend=c('Actual snow','10% less duration + 1.5C warming'),
-       fill = c(col1, col2), bty = 'n',
+legend(0.78,14,legend=c('Actual snow','10% less duration'),
+       fill = c(col1, col2,"white"), bty = 'n',
        border = T, lty=c(2,1))
-
-
+legend(0.80,8,legend=c('+1.5C warming'),
+       bty = 'n', border = F, lty=c(2,1), col = "white")
 
 
 dev.off()
-
 
