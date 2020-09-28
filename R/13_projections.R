@@ -1402,3 +1402,52 @@ legend(0.80,8,legend=c('+1.5C warming'),
 
 dev.off()
 
+####============================================####
+# Get the means and SD
+####============================================####
+
+# Lambda now 
+mean(Lambda_now$lambda) # 1.066446
+sd(Lambda_now$lambda) # 0.02252336
+
+q <- quantile(Lambda_now$lambda, 0.975) # 1.109802 
+
+
+# Lambda 5% 
+mean(Lambda_future5$lambda) # 1.071571
+sd(Lambda_future5$lambda) # 0.02433054
+# Proportion lambda > 97.5 quartile of lambda now
+length(which(Lambda_future5[,2] > q)) / (nrow(Lambda_future5)) # 0.0559
+
+
+# Lambda 10% 
+mean(Lambda_future10$lambda) # 1.073211
+sd(Lambda_future10$lambda) # 0.02864516
+length(which(Lambda_future10[,2] > q)) / (nrow(Lambda_future10)) #0.0975
+
+
+# Lambda Temperature 
+mean(Lambda_future$lambda) # 1.071984
+sd(Lambda_future$lambda) # 0.02308012
+length(which(Lambda_future[,2] > q)) / (nrow(Lambda_future)) # 0.049
+
+# Combined 5% 
+mean(Lambda_future5_comb$lambda) # 1.077196
+sd(Lambda_future5_comb$lambda) # 0.02483625
+length(which(Lambda_future5_comb[,2] > q)) / (nrow(Lambda_future5_comb)) # 0.0936
+
+# Combined 10% 
+mean(Lambda_future10_comb$lambda) # 1.078819
+sd(Lambda_future10_comb$lambda) # 0.02909688
+length(which(Lambda_future10_comb[,2] > q)) / (nrow(Lambda_future10_comb)) # 0.1455
+
+#Fixed 5% 
+mean(Lambda_future5_fixed$lambda) # 1.06988
+sd(Lambda_future5_fixed$lambda) # 0.02226941
+length(which(Lambda_future5_fixed[,2] > q)) / (nrow(Lambda_future5_fixed)) # 0.0342
+
+
+#Fixed 10% 
+mean(Lambda_future10_fixed$lambda) # 1.071331
+sd(Lambda_future10_fixed$lambda) # 0.02219305
+length(which(Lambda_future10_fixed[,2] > q)) / (nrow(Lambda_future10_fixed)) # 0.0391
