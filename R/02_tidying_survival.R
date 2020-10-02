@@ -39,7 +39,7 @@ setwd("")
 # skip and go to step 2  
 
 
-# drive_download("OWPC/Analyses/data/Raw/pheno_ram.csv", overwrite = T) # where to get file
+# drive_download("OWPC/Analyses/data/Raw/Pheno/pheno_ram.csv", overwrite = T) # where to get file
 # pheno <- read.csv2("pheno_ram.csv", sep = ",")
 
 head(pheno)
@@ -375,8 +375,8 @@ ggsave("BiplotWinterSURV.pdf", width = 130, height = 130, units = "mm", pointsiz
 
 colnames(pheno_surv)
 
-lengths2 <- pheno_surv[c( "NDVIsurvT","EVIsurvT","LAIsurvT","GPPsurvT", "PSNNETsurvT", "FPARsurvT", # removed snow 
-                          "NDVIsurvT1","EVIsurvT1","LAIsurvT1","GPPsurvT1","PSNNETsurvT1", "FPARsurvT1")] 
+lengths2 <- pheno_surv[c( "NDVIsurvT","EVIsurvT","LAIsurvT","GPPsurvT", "PSNNETsurvT", "FPARsurvT")]
+
 hist(unlist(lengths2))# need multinormal distn
 
 lengths2 <- na.omit(lengths2) 
@@ -465,7 +465,7 @@ montly_climate = montly_climate[, -14]
 #write.csv(montly_climate, "montly_climate_ram.csv", row.names = FALSE)
 
 # Load database in R environment
-data<-read.csv("montly_climate_ram.csv")
+data<-read.csv("monthly_climate_ram.csv")
 
 # See values for December PDOs
 data$PDO.DEC
@@ -775,9 +775,9 @@ rm(tmp,tmp1, tmp2, tmp3)
 getwd()
 
 
-# save(sheep_data, pheno_surv, clim_surv, weather_surv, fullSurvDataScled, dataSurvUnscld, dataSurvScld,
+#save(sheep_data, pheno_surv, clim_surv, weather_surv, fullSurvDataScled, dataSurvUnscld, dataSurvScld,
 #       file = "dataSurvivalModels.RData")
-# drive_upload("dataSurvivalModels.RData",
+#drive_upload("dataSurvivalModels.RData",
 #               path = "OWPC/Analyses/cache/dataSurvivalModels.RData", overwrite = T)
 
 
