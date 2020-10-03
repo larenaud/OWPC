@@ -25,7 +25,7 @@ library(AICcmodavg)
 library(readxl)
 library(vegan)
 library(knitr)
-
+library(kableExtra)
 # clean up 
 
 rm(list = ls())
