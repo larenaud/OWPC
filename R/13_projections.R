@@ -1087,6 +1087,7 @@ dens_x2.g <- density(Lambda_future10_comb$lambda)
 tiff("Pojection_Options2.tiff", res = 600, height=12, width=16, units="cm", pointsize=9)
 
 
+ 
 par(mfrow=c(3,2),mar=c(4,5,2,2)) #mar = c(bas, gauche, haut, droite)
 
 # 5%
@@ -1094,16 +1095,17 @@ plot(dens_x1.a, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
-mtext(side=1, "Lambda", line=2.5,cex = 0.8)
+mtext(side=1, expression(lambda), line=2.5,cex = 1.2)
 #mtext(side=2, "Frequency", line=2.5)
-text(0.82, 18, labels="(a)", cex=1.5)
+#text(0.82, 18, labels="(a)", cex=1.5)
+mtext(side = 3,"(a)", line = 0.6, at = 0.75)
 
 #put our density plots in
 polygon(dens_x1.a,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.a,  col = col2, lty=1, lwd=2)
-legend(0.78,14,legend=c('Actual snow','5% less duration'),
+legend(0.78,19,legend=c('Actual conditions','5% reduction'),
        fill = c(col1, col2), bty = 'n',
-       border = T, lty=c(2,1))
+       border = T, lty=c(2,1),x.intersp	= 0.2,cex = 1.2)
 
 
 # 10 % 
@@ -1112,16 +1114,18 @@ plot(dens_x1.b, xlim = xlim, ylim = ylim, xlab = "" , ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
-mtext(side=1, "Lambda", line=2.5,cex = 0.8)
-text(0.82, 18, labels="(b)", cex=1.5)
+mtext(side=1, expression(lambda), line=2.5,cex = 1.2)
+#text(0.82, 18, labels="(b)", cex=1.5)
+mtext(side = 3,"(b)",line = 0.6, at = 0.75)
 
 #put our density plots in
 polygon(dens_x1.b,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.b,  col = col2, lty=1, lwd=2)
 
-legend(0.78,14,legend=c('Actual snow','10% less duration'),
+legend(0.78,19,legend=c('Actual conditions','10% reduction'),
        fill = c(col1, col2), bty = 'n',
-       border = T, lty=c(2,1))
+       border = T, lty=c(2,1),x.intersp	= 0.2,cex = 1.2
+       )
 
 #Temp
 
@@ -1129,16 +1133,17 @@ plot(dens_x1.e, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
-mtext(side=1, "Lambda", line=2.5,cex = 0.8)
-text(0.82, 18, labels="(c)", cex=1.5)
+mtext(side=1, expression(lambda), line=2.5,cex = 1.2)
+mtext(side = 3,"(c)", line = 0.6, at = 0.75)
+#text(0.75, 21, labels="(c)", cex=1.5)
 
 #put our density plots in
 polygon(dens_x1.e,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.e,  col = col2, lty=1, lwd=2)
 
-legend(0.78,14,legend=c('Actual snow','+1.5C warming'),
+legend(0.78,19,legend=c('Actual conditions', expression("1.5 "^"o"*"C increase")),
        fill = c(col1, col2), bty = 'n',
-       border = T, lty=c(2,1))
+       border = T, lty=c(2,1),x.intersp	= 0.2,cex = 1.2)
 
 
 # 5% + Temp
@@ -1147,18 +1152,20 @@ plot(dens_x1.f, xlim = xlim, ylim = ylim, xlab = "", ylab= "Density",axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
-mtext(side=1, "Lambda", line=2.5,cex = 0.8)
-text(0.82, 18, labels="(d)", cex=1.5)
+mtext(side=1, expression(lambda), line=2.5,cex = 1.2)
+#text(0.82, 18, labels="(d)", cex=1.5)
+mtext(side = 3,"(d)", line = 0.6, at = 0.75)
+
 
 #put our density plots in
 polygon(dens_x1.f,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.f,  col = col2, lty=1, lwd=2)
 
-legend(0.78,14,legend=c('Actual snow','5% less duration'),
+legend(0.78,19,legend=c('Actual conditions','5% reduction'),
        fill = c(col1, col2), bty = 'n',
-       border = T, lty=c(2,1))
-legend(0.80,10,legend=c('+1.5C warming'),
-       bty = 'n',border = F, lty=c(2,1), col = "white")
+       border = T, lty=c(2,1),x.intersp	= 0.2,cex = 1.2)
+legend(0.80,11,legend= expression("1.5 "^"o"*"C increase"),
+       bty = 'n',border = F, lty=c(2,1), col = "white",x.intersp	= 0.2,cex = 1.2)
 
 
 # 10% + Temp
@@ -1167,18 +1174,22 @@ plot(dens_x1.g, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
-mtext(side=1, "Lambda", line=2.5,cex = 0.8)
-text(0.82, 18, labels="(e)", cex=1.5)
+mtext(side=1, expression(lambda), line=2.5,cex = 1.2)
+#text(0.82, 18, labels="(e)", cex=1.5)
+mtext(side = 3,"(e)", line = 0.6, at = 0.75)
 
 #put our density plots in
 polygon(dens_x1.g,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.g,  col = col2, lty=1, lwd=2)
 
-legend(0.78,14,legend=c('Actual snow','10% less duration'),
+legend(0.78,19,legend=c('Actual conditions','10% reduction'),
        fill = c(col1, col2,"white"), bty = 'n',
-       border = T, lty=c(2,1))
-legend(0.80,10,legend=c('+1.5C warming'),
-       bty = 'n', border = F, lty=c(2,1), col = "white")
+       border = T, lty=c(2,1),x.intersp	= 0.2,cex = 1.2)
+legend(0.80,11,legend= expression("1.5 "^"o"*"C increase"),
+       bty = 'n', border = F, lty=c(2,1), col = "white",x.intersp	= 0.2,cex = 1.2)
+
+
+
 
 dev.off()
 
@@ -1200,16 +1211,16 @@ plot(dens_x1.c, xlim = xlim, ylim = ylim, xlab = "",ylab= "Density", axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
-mtext(side=1, "Lambda", line=2.5,cex = 1.2)
-text(0.805, 18, labels="(a)", cex=1.5)
+mtext(side=1, expression(lambda), line=2.5,cex = 1.2)
+mtext(side = 3,"(a)", line = 0.6, at = 0.75, cex = 1.2)
 
 #put our density plots in
 polygon(dens_x1.c,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.c,  col = col2, lty=1, lwd=2)
 
-legend(0.78,14,legend=c('Actual snow','5% less duration, fixed'),
+legend(0.78,14,legend=c('Actual conditions','5% reduction, fixed'),
        fill = c(col1, col2), bty = 'n',
-       border = T, lty=c(2,1))
+       border = T, lty=c(2,1), cex = 0.9)
 
 
 # 10% fixed
@@ -1220,16 +1231,16 @@ plot(dens_x1.d, xlim = xlim, ylim = ylim, xlab = "", ylab= "Density",axes=F,
      main = '', cex.axis=1.2, cex.lab=1.2, type="n")
 axis(1, at=seq(0.8, 1.2, 0.01), cex.axis=1)
 axis(2, at=seq(0, 20,1), cex.axis =1)
-mtext(side=1, "Lambda", line=2.5,cex = 1.2)
-text(0.805, 18, labels="(b)", cex=1.5)
+mtext(side=1, expression(lambda), line=2.5,cex = 1.2)
+mtext(side = 3,"(b)", line = 0.6, at = 0.75, cex = 1.2)
 
 #put our density plots in
 polygon(dens_x1.d,  col = col1,  lty=2, lwd=2)
 polygon(dens_x2.d,  col = col2, lty=1, lwd=2)
 
-legend(0.78,14,legend=c('Actual snow','10% less duration, fixed'),
+legend(0.78,14,legend=c('Actual conditions','10% reduction, fixed'),
        fill = c(col1, col2), bty = 'n',
-       border = T, lty=c(2,1))
+       border = T, lty=c(2,1), cex = 0.9)
 
 
 dev.off()
