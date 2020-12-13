@@ -49,7 +49,7 @@ rm(clim_fec,pheno_fec,weather_fec,sheep_data,dataFecScld,fullFecDataScld)
 
 # Final models ------------------------------------------------------------------------------------------------------------
 finalSurv <- glm(alive_t1 ~ -1 + ageClass/WinSnowsurvT1 + pred, data=df_surv, family="binomial")
-
+summary(finalSurv)
 finalTrue <- glmer(true_repro ~ -1 + ageClass/(TWin*PWin) + MassAutumn_tm1 + (1|ID),
                    data=df_fec, family="binomial", control = glmerControl(optimizer="bobyqa",
                                                                           optCtrl = list(maxfun = 2000000)))
@@ -134,7 +134,7 @@ lwr2<- exp(lwr)/(1+exp(lwr))
 newd.a37$lwr <- lwr2 
 newd.a37$upr <- upr2 
 newd.a37$fit <- fit2
-
+sd(dataSurvUnscld$WinSnowsurvT1, na.rm=T)
 # Age class : 8
 newd<- data.frame()
 newdata = expand.grid(WinSnowsurvT1  = seq(min(df_surv$WinSnowsurvT1 , na.rm = T),
@@ -342,6 +342,9 @@ true_PWin
 
 
 # True reproduction ~ PWin*Twin for age class 4-8 yrs -------------------------------------------------------------------------------------------------------------------------------
+df3<-filter(fec.uns, ageClass==3)
+df48<-filter(fec.uns, ageClass==48)
+df9<-filter(fec.uns, ageClass==9)
 
 # visreg sets it at 10, 50 90th percentile
 T.Q<-quantile(df48$TWin, c(0.10, 0.50, 0.90))
@@ -426,36 +429,41 @@ true.txp48.med$PWin.uns<-(true.txp48.med[,"PWin"]*q.SD) + q.MEAN
 true.txp48.high$PWin.uns<-(true.txp48.high[,"PWin"]*q.SD) + q.MEAN
 
 # Figure
-colors<-c("-7.8C" = "#00FFD9", "-4.5C" = "#FFB700", "-1.9C" = "#FF0400")
+colors<-c("-7.8°C" = "#00BFC4", "-4.5°C" = "#FFB700", "-1.9°C" = "#F8766D")
 
 true_PWinxTWin <-
   
   ggplot(true.txp48.low, aes(x=PWin.uns)) + 
-  geom_line(data=true.txp48.low, aes(y=predi, color="-7.8C"), size=3) +
-  geom_ribbon(data=true.txp48.low, aes(ymin = lwr, ymax = upr), fill="grey", alpha=0.5) +  
-  geom_jitter(data = T.low, aes(x = PWin, y = as.numeric(true_repro)-1), width = 1, height = 0, color="#00FFD9", alpha=0.7, size=2) + # pour mettre la distribution des points brutes 
+  geom_line(data=true.txp48.low, aes(y=predi, color="-7.8°C"), size=1.5) +
+  geom_ribbon(data=true.txp48.low, aes(ymin = lwr, ymax = upr), fill="#00BFC4", alpha=0.2) +  
+  geom_jitter(data = T.low, aes(x = PWin, y = as.numeric(true_repro)-1), width = 1, height = 0, color="#00BFC4", alpha=0.7, size=1.5) + # pour mettre la distribution des points brutes 
   
-  geom_line(data=true.txp48.med, aes(y=predi, color="-4.5C"), size=3) + 
-  geom_ribbon(data=true.txp48.med, aes(ymin = lwr, ymax = upr), fill="grey", alpha=0.5) +  
-  geom_jitter(data = T.med, aes(x = PWin, y = as.numeric(true_repro)-1), width=1, height = 0, color="#FFB700", alpha=0.7, size=2) + # pour mettre la distribution des points brutes 
+  geom_line(data=true.txp48.med, aes(y=predi, color="-4.5°C"), size=1.5) + 
+  geom_ribbon(data=true.txp48.med, aes(ymin = lwr, ymax = upr), fill="#FFB700", alpha=0.2) +  
+  geom_jitter(data = T.med, aes(x = PWin, y = as.numeric(true_repro)-1), width=1, height = 0, color="#FFB700", alpha=0.7, size=1.5) + # pour mettre la distribution des points brutes 
   
-  geom_line(data=true.txp48.high, aes(y=predi, color="-1.9C"), size=3) +
-  geom_ribbon(data=true.txp48.high, aes(ymin = lwr, ymax = upr), fill="grey", alpha=0.5) +  
-  geom_jitter(data = T.high, aes(x = PWin, y = as.numeric(true_repro)-1), width = 1, height = 0, color="#FF0400", alpha=0.7, size=2) + # pour mettre la distribution des points brutes 
+  geom_line(data=true.txp48.high, aes(y=predi, color="-1.9°C"), size=1.5) +
+  geom_ribbon(data=true.txp48.high, aes(ymin = lwr, ymax = upr), fill="#F8766D", alpha=0.2) +  
+  geom_jitter(data = T.high, aes(x = PWin, y = as.numeric(true_repro)-1), width = 1, height = 0, color="#F8766D", alpha=0.7, size=1.5) + # pour mettre la distribution des points brutes 
   
   theme(text = element_text(size = 20)) +
+
+ # theme(plot.background = element_blank(),panel.background = element_blank(), panel.grid.major=element_blank(),
+  #      panel.grid.minor=element_blank(), panel.border=element_blank()) +
   
-  theme(plot.background = element_blank(),panel.background = element_blank(), panel.grid.major=element_blank(),
-        panel.grid.minor=element_blank(), panel.border=element_blank()) +
   theme(axis.line=element_line(color="black")) +
-  theme(legend.position = c(0.15, 0.8), legend.background = element_rect(), legend.title = element_blank()) +
-  guides(color=guide_legend(override.aes=list(fill=NA)))  +
+  theme(axis.text=element_text(size=10), 
+        axis.title = element_text(size =10),
+        plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) + 
+  #guides(color=guide_legend(override.aes=list(fill=NA))) +
   scale_y_continuous(label=scales::percent)+
-  labs(y="Probability to reproduce", x="Winter Precipitation (mm)", color="Legend") +
+  labs(y="Probability to reproduce", x="Winter precipitation (mm)") +
   scale_color_manual(values=colors) +
+  guides(color=guide_legend(title="Temperature")) +
+#  theme(legend.position = c(0.15, 0.8), legend.key.width = unit(1,"cm")) + +
+  theme(legend.title=element_blank(), legend.position = c(0.3, 0.4)) +
   theme_pander() 
 
-x11()
 true_PWinxTWin
 
 
